@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cargar Reclamo — ReclamiOps</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--a500:#f59e0b;
+  --rad:8px;--rad-lg:12px;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh}
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:44px 16px 80px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.brand-icon{width:34px;height:34px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand h1{font-size:15px;font-weight:600;color:var(--g900)}
+.brand p{font-size:12px;color:var(--g400);margin-top:1px}
+.card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 3px rgba(0,0,0,.07);width:100%;max-width:660px;padding:28px 32px}
+.card-title{font-size:18px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.card-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.steps{display:flex;margin-bottom:28px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.step::before{content:'';position:absolute;top:12px;left:calc(-50% + 12px);right:calc(50% + 12px);height:1px;background:var(--g200)}
+.step:first-child::before{display:none}
+.step.done::before{background:var(--b500)}
+.snum{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1.5px solid var(--g300);background:var(--w);color:var(--g400);z-index:1;position:relative}
+.step.done .snum{border-color:var(--b500);background:var(--b500);color:#fff}
+.step.active .snum{border-color:var(--b600);color:var(--b600);background:var(--w)}
+.slbl{font-size:10px;color:var(--g400);margin-top:5px;white-space:nowrap}
+.step.active .slbl{color:var(--b600);font-weight:500}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
+.type-card{border:1.5px solid var(--g200);border-radius:var(--rad-lg);padding:18px 16px;cursor:pointer;transition:all .13s;text-align:left;background:var(--w)}
+.type-card:hover{border-color:var(--b500);background:var(--b50)}
+.type-card.sel{border-color:var(--b500);background:var(--b50);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.tc-icon{font-size:24px;margin-bottom:9px}
+.tc-title{font-size:13px;font-weight:600;color:var(--g900);margin-bottom:3px}
+.tc-desc{font-size:11px;color:var(--g500);line-height:1.5}
+.fsec{margin-bottom:22px}
+.fsec-label{font-size:10px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--g100)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.frow.full{grid-template-columns:1fr}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+label{font-size:12px;font-weight:500;color:var(--g700)}
+.req{color:var(--r500);margin-left:2px}
+input[type=text],input[type=email],input[type=date],select,textarea{width:100%;padding:8px 11px;border:1px solid var(--g300);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g900);background:var(--w);outline:none;transition:border-color .13s,box-shadow .13s;-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+textarea{resize:vertical;min-height:78px;line-height:1.5}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{padding:6px 13px;border:1px solid var(--g200);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;color:var(--g600);background:var(--w);transition:all .12s;font-family:inherit}
+.pill:hover{border-color:var(--b500);color:var(--b600)}
+.pill.on{border-color:var(--b500);background:var(--b50);color:var(--b700)}
+.toggle-wrap{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:2px 12px}
+.trow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--g100)}
+.trow:last-child{border-bottom:none}
+.trow span{font-size:13px;color:var(--g700)}
+.tog{width:34px;height:19px;border-radius:10px;background:var(--g200);cursor:pointer;position:relative;border:none;transition:background .18s;flex-shrink:0}
+.tog.on{background:var(--b500)}
+.tog::after{content:'';position:absolute;top:2.5px;left:2.5px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .18s;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.tog.on::after{transform:translateX(15px)}
+.cx-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cx-opt{border:1.5px solid var(--g200);border-radius:var(--rad);padding:11px 13px;cursor:pointer;transition:all .12s;background:var(--w)}
+.cx-opt:hover{border-color:var(--b500)}
+.cx-opt.on{border-color:var(--b500);background:var(--b50)}
+.cx-opt strong{display:block;font-size:13px;color:var(--g900);margin-bottom:2px}
+.cx-opt span{font-size:11px;color:var(--g500)}
+.upload{border:1.5px dashed var(--g300);border-radius:var(--rad);padding:18px;text-align:center;cursor:pointer;background:var(--g50);transition:all .13s}
+.upload:hover{border-color:var(--b500);background:var(--b50)}
+.upload.ok{border-color:var(--gr500);background:var(--gr50)}
+.upload-icon{font-size:20px;margin-bottom:5px}
+.upload p{font-size:12px;color:var(--g500)}
+.upload .hint{font-size:11px;color:var(--g400);margin-top:2px}
+.upload .ok-text{font-size:12px;color:var(--gr600);font-weight:500}
+.alert{display:flex;gap:8px;padding:10px 13px;border-radius:var(--rad);font-size:12px;margin-bottom:13px;line-height:1.5}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
+.err-msg{font-size:11px;color:var(--r500);margin-top:4px}
+.btn-row{display:flex;gap:9px;margin-top:24px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .12s}
+.btn-primary{background:var(--b600);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--b700)}
+.btn-primary:disabled{opacity:.42;cursor:default}
+.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-ghost:hover{background:var(--g50);border-color:var(--g300)}
+.spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.success{text-align:center;padding:12px 0 4px}
+.success-icon{font-size:46px;margin-bottom:13px}
+.success h2{font-size:19px;font-weight:600;color:var(--g900);margin-bottom:6px}
+.success p{font-size:13px;color:var(--g500);margin-bottom:18px}
+.id-badge{display:inline-block;background:var(--b50);border:1px solid var(--b100);color:var(--b700);font-size:17px;font-weight:700;padding:9px 22px;border-radius:var(--rad);font-family:'Courier New',monospace;letter-spacing:.04em}
+.success-note{font-size:12px;color:var(--g400);margin-top:13px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g50);padding:24px}
+.login-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 14px rgba(0,0,0,.07);padding:36px;width:100%;max-width:340px;text-align:center}
+.login-card h2{font-size:17px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.login-card p{font-size:13px;color:var(--g500);margin-bottom:28px}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;border:1px solid var(--g200);border-radius:var(--rad);background:var(--w);font-size:13px;font-weight:500;color:var(--g700);cursor:pointer;transition:all .12s;font-family:inherit}
+.btn-google:hover{background:var(--g50);border-color:var(--g300)}
+.domain-note{font-size:11px;color:var(--g400);margin-top:16px}
+.login-err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:9px 12px;font-size:12px;margin-bottom:14px;text-align:left}
+.confirm-box{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:16px;margin-bottom:4px}
+.confirm-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--g100)}
+.confirm-row:last-child{border-bottom:none}
+.ck{color:var(--g500)}
+.cv{font-weight:500;color:var(--g900)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// =====================================================
+//  CONFIGURACION — reemplazar con valores reales
+// =====================================================
+const SUPABASE_URL   = 'https://azlkmzmlcuwwujjuykzl.supabase.co';
+const SUPABASE_ANON  = 'sb_publishable_mQ5qoAj7VXSvKPVR7MtFEQ_NpIh75lX';
+const ALLOWED_DOMAIN = 'ocasa.com';
+const GS_WEBHOOK     = 'https://script.google.com/macros/s/AKfycbxkWZecH06HPK8huTMrO-ROa_DvZeA94fJ0mUcHOsnY4r0j8JVSytoS7x2MQqE3_LKM/exec';
+// =====================================================
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+async function saveTicket(ticket) {
+  const table = ticket.tipo === 'postal' ? 'reclamos_postales' : 'siniestros';
+  const { error } = await sb.from(table).insert([ticket]);
+  if (error) throw error;
+  try {
+    await fetch(GS_WEBHOOK, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(ticket) });
+  } catch(e) { console.warn('GS sync:', e); }
+}
+
+const { useState, useCallback, useEffect } = React;
+const h = React.createElement;
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    sb.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false); });
+    const { data: sub } = sb.auth.onAuthStateChange((_, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+  if (loading) return h('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',color:'#9ca3af',fontSize:13} }, 'Cargando...');
+  if (!session) return h(LoginPage, { onLogin: s => setSession(s) });
+  return h(FormPage, { user: session.user });
+}
+
+function LoginPage({ onLogin }) {
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        const email = data.session.user.email || '';
+        if (ALLOWED_DOMAIN !== 'tuempresa.com' && !email.endsWith('@' + ALLOWED_DOMAIN)) {
+          sb.auth.signOut();
+          setErr('Acceso solo para cuentas @' + ALLOWED_DOMAIN);
+        } else {
+          onLogin(data.session);
+        }
+      }
+    });
+  }, []);
+
+  const loginGoogle = async () => {
+    setLoading(true); setErr('');
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href, queryParams: { hd: ALLOWED_DOMAIN } }
+    });
+    if (error) { setErr('Error al iniciar sesion con Google.'); setLoading(false); }
+  };
+
+  return h('div', { className:'login-wrap' },
+    h('div', { className:'login-card' },
+      h('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:20} },
+        h('div', { className:'brand-icon' }, '📦'),
+        h('div', { style:{textAlign:'left'} },
+          h('h2', { style:{margin:0} }, 'ReclamiOps'),
+          h('p', { style:{margin:0,fontSize:11,color:'#9ca3af'} }, 'Formulario de reclamos')
+        )
+      ),
+      h('p', null, 'Ingresa con tu cuenta Google corporativa para cargar un reclamo.'),
+      err && h('div', { className:'login-err' }, err),
+      h('button', { className:'btn-google', onClick:loginGoogle, disabled:loading },
+        loading
+          ? h('span', { className:'spinner', style:{borderColor:'rgba(0,0,0,.12)',borderTopColor:'#374151'} })
+          : h('svg', { width:18, height:18, viewBox:'0 0 48 48' },
+              h('path', { fill:'#4285F4', d:'M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-19.9 0-1.3-.1-2.7-.5-5.1z' })
+            ),
+        'Continuar con Google'
+      ),
+      h('p', { className:'domain-note' }, 'Solo cuentas @' + ALLOWED_DOMAIN)
+    )
+  );
+}
+
+function FormPage({ user }) {
+  const [step, setStep] = useState(1);
+  const [tipo, setTipo] = useState('');
+  const [form, setForm] = useState({});
+  const [tarjeta, setTarjeta] = useState('');
+  const [complejidad, setComplejidad] = useState('Simple');
+  const [contactless, setContactless] = useState(false);
+  const [presencial, setPresencial] = useState(false);
+  const [excelFile, setExcelFile] = useState(null);
+  const [excelErr, setExcelErr] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState(null);
+  const set = useCallback((k, v) => { setForm(f => ({ ...f, [k]: v })); setFieldErrors(e => ({ ...e, [k]: '' })); }, []);
+
+  const handleExcel = e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!/\.(xlsx|xls|csv)$/i.test(f.name)) {
+      setExcelErr('El archivo no cumple con el formato requerido. Descargue la plantilla correcta e intente nuevamente.');
+      setExcelFile(null); return;
+    }
+    setExcelErr(''); setExcelFile(f);
+  };
+
+  // Valida el paso 2 postal y devuelve true si todo OK
+  const validatePostalStep2 = () => {
+    const errs = {};
+    if (!form.cliente?.trim()) errs.cliente = 'Este campo es obligatorio';
+    if (!form.titular?.trim()) errs.titular = 'Este campo es obligatorio';
+    if (!tarjeta) errs.tarjeta = 'Selecciona un tipo de tarjeta';
+    if (!form.fraude) errs.fraude = 'Este campo es obligatorio';
+    // Fechas+comercios o Excel: al menos uno
+    const tieneFechas = form.fechas?.trim() && form.comercios?.trim();
+    const tieneExcel = !!excelFile;
+    if (!tieneFechas && !tieneExcel) errs.fechas = 'Completá las fechas y comercios, o adjuntá el archivo Excel';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validateSiniestroStep2 = () => {
+    const errs = {};
+    if (!form.cliente) errs.cliente = 'Este campo es obligatorio';
+    if (!form.concesionario?.trim()) errs.concesionario = 'Este campo es obligatorio';
+    if (!form.tipo_reclamo) errs.tipo_reclamo = 'Este campo es obligatorio';
+    if (!form.descripcion?.trim()) errs.descripcion = 'Este campo es obligatorio';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const goToStep3 = () => {
+    const ok = tipo === 'postal' ? validatePostalStep2() : validateSiniestroStep2();
+    if (ok) setStep(3);
+  };
+
+  const submit = async () => {
+    setSaving(true);
+    const hoy = new Date();
+    const dias = 7; // Complejidad la define Operaciones, SLA default 7 días
+    let excelUrl = null;
+    // Subir Excel a Supabase Storage si existe
+    if (excelFile) {
+      try {
+        const path = `excel/${Date.now()}_${excelFile.name}`;
+        const { data: upData, error: upErr } = await sb.storage.from('adjuntos').upload(path, excelFile);
+        if (!upErr && upData) {
+          const { data: urlData } = sb.storage.from('adjuntos').getPublicUrl(upData.path);
+          excelUrl = urlData?.publicUrl || null;
+        }
+      } catch(e) { console.warn('Upload excel:', e); }
+    }
+    const ticket = {
+      id: (tipo === 'postal' ? 'REC' : 'SIN') + '-' + Date.now().toString().slice(-6),
+      tipo, estado: 'Nuevo', sla_pct: 2,
+      cliente: form.cliente || '', titular: form.titular || '', tarjeta,
+      fraude: form.fraude || '', descripcion: form.descripcion || '',
+      complejidad: 'Pendiente', // Lo define Operaciones
+      concesionario: form.concesionario || '', repuesto: form.repuesto || '',
+      tipo_reclamo: form.tipo_reclamo || '', carta_porte: form.carta_porte || '',
+      fechas: form.fechas || '', comercios: form.comercios || '',
+      contactless, presencial, responsable: '', prioridad: 'Media',
+      creado: hoy.toISOString().slice(0, 10),
+      vence: new Date(hoy.getTime() + dias * 86400000).toISOString().slice(0, 10),
+      creado_por: user.email,
+      excel_nombre: excelFile ? excelFile.name : null,
+      excel_url: excelUrl,
+      adjuntos: excelFile ? [{ nombre: excelFile.name, url: excelUrl, tipo: 'excel', subido_por: user.email, fecha: hoy.toISOString().slice(0,10) }] : [],
+      comments: [],
+      historial: [{ ts: hoy.toISOString().slice(0,16).replace('T',' '), accion: 'Ticket creado', usuario: user.email }]
+    };
+    try { await saveTicket(ticket); } catch(e) { console.warn(e); }
+    setCreated(ticket); setSaving(false);
+  };
+
+  const reset = () => { setStep(1);setTipo('');setForm({});setTarjeta('');setExcelFile(null);setExcelErr('');setCreated(null);setFieldErrors({}); };
+
+  if (created) return h('div', { className:'page' },
+    h('div', { className:'brand' }, h('div',{className:'brand-icon'},'📦'), h('div',null,h('h1',null,'ReclamiOps'),h('p',null,user.email))),
+    h('div', { className:'card' },
+      h('div', { className:'success' },
+        h('div',{className:'success-icon'},'✅'),
+        h('h2',null,'Reclamo registrado'),
+        h('p',null,'Tu reclamo fue enviado y esta en el sistema de Operaciones.'),
+        h('div',{className:'id-badge'},created.id),
+        h('p',{className:'success-note'},'Guarda este numero para hacer seguimiento.'),
+        h('button',{className:'btn btn-ghost',style:{margin:'18px auto 0',display:'flex'},onClick:reset},'+ Cargar otro reclamo')
+      )
+    )
+  );
+
+  return h('div', { className:'page' },
+    h('div', { className:'brand' }, h('div',{className:'brand-icon'},'📦'), h('div',null,h('h1',null,'ReclamiOps'),h('p',null,user.email))),
+    h('div', { className:'card' },
+      h('h2',{className:'card-title'},'Nuevo reclamo'),
+      h('p',{className:'card-sub'},'Completa los datos para registrar el reclamo en el sistema.'),
+      h('div',{className:'steps'},
+        ['Tipo','Datos','Confirmar'].map((s,i) =>
+          h('div',{key:i,className:'step'+(step===i+1?' active':step>i+1?' done':'')},
+            h('div',{className:'snum'},step>i+1?'✓':i+1),
+            h('div',{className:'slbl'},s)
+          )
+        )
+      ),
+
+      step===1 && h('div',null,
+        h('p',{style:{fontSize:13,color:'var(--g600)',marginBottom:14}},'Que tipo de reclamo queres cargar?'),
+        h('div',{className:'type-grid'},
+          h('div',{className:'type-card'+(tipo==='postal'?' sel':''),onClick:()=>setTipo('postal')},
+            h('div',{className:'tc-icon'},'📬'),
+            h('div',{className:'tc-title'},'Reclamo Postal / Fraude'),
+            h('div',{className:'tc-desc'},'Fraudes, desconocimientos de consumo, reclamos postales con tarjetas VISA, Mastercard o Debito.')
+          ),
+          h('div',{className:'type-card'+(tipo==='siniestro'?' sel':''),onClick:()=>setTipo('siniestro')},
+            h('div',{className:'tc-icon'},'🚗'),
+            h('div',{className:'tc-title'},'Siniestro Renault / Mercedes'),
+            h('div',{className:'tc-desc'},'Roturas, faltantes, siniestros PAQ o Supply de repuestos automotrices.')
+          )
+        ),
+        h('div',{className:'btn-row'},
+          h('button',{className:'btn btn-ghost',onClick:()=>sb.auth.signOut()},'Salir'),
+          h('button',{className:'btn btn-primary',disabled:!tipo,onClick:()=>setStep(2)},'Continuar →')
+        )
+      ),
+
+      step===2 && tipo==='postal' && h('div',null,
+        h('div',{className:'fsec'},
+          h('div',{className:'fsec-label'},'Informacion del reclamo'),
+          h('div',{className:'frow'},
+            h('div',{className:'fgroup'},
+              h('label',null,'Cliente / Banco',h('span',{className:'req'},'*')),
+              h('input',{type:'text',placeholder:'Ej: Banco Galicia',onChange:e=>set('cliente',e.target.value)}),
+              fieldErrors.cliente&&h('p',{className:'err-msg'},fieldErrors.cliente)
+            ),
+            h('div',{className:'fgroup'},
+              h('label',null,'Nombre titular',h('span',{className:'req'},'*')),
+              h('input',{type:'text',placeholder:'Nombre completo',onChange:e=>set('titular',e.target.value)}),
+              fieldErrors.titular&&h('p',{className:'err-msg'},fieldErrors.titular)
+            )
+          ),
+          h('div',{className:'fgroup',style:{marginBottom:12}},
+            h('label',null,'Tipo de tarjeta',h('span',{className:'req'},'*')),
+            h('div',{className:'pills'},['VISA','Mastercard','Debito'].map(op=>h('button',{key:op,className:'pill'+(tarjeta===op?' on':''),onClick:()=>{setTarjeta(op);setFieldErrors(e=>({...e,tarjeta:''}));} },op))),
+            fieldErrors.tarjeta&&h('p',{className:'err-msg'},fieldErrors.tarjeta)
+          ),
+          tarjeta==='VISA' && h('div',{className:'fgroup',style:{marginBottom:12}},h('label',null,'Numero de secuencia'),h('input',{type:'text',onChange:e=>set('secuencia',e.target.value)})),
+          (tarjeta==='Mastercard'||tarjeta==='Debito') && h('div',{className:'fgroup',style:{marginBottom:12}},h('label',null,'Numero de tarjeta'),h('input',{type:'text',placeholder:'XXXX XXXX XXXX XXXX',onChange:e=>set('num_tarjeta',e.target.value)}))
+        ),
+        h('div',{className:'fsec'},
+          h('div',{className:'fsec-label'},'Datos del reclamo'),
+          h('div',{className:'fgroup',style:{marginBottom:12}},
+            h('label',null,'Tipo de fraude',h('span',{className:'req'},'*')),
+            h('select',{defaultValue:'',onChange:e=>{set('fraude',e.target.value);}},
+              h('option',{value:'',disabled:true},'— Seleccionar —'),
+              ['Desconocimiento de consumo','Fraude','Otro'].map(op=>h('option',{key:op,value:op},op))
+            ),
+            fieldErrors.fraude&&h('p',{className:'err-msg'},fieldErrors.fraude)
+          ),
+          h('div',{className:'frow full'},h('div',{className:'fgroup'},h('label',null,'Detalle del reclamo'),h('textarea',{placeholder:'Describe el reclamo (opcional)...',onChange:e=>set('descripcion',e.target.value)}))),
+          h('div',{className:'alert al-blue',style:{marginTop:8}},'📋 Completá las fechas y comercios, O adjuntá el Excel con el detalle. Tenés que hacer al menos uno de los dos.'),
+          h('div',{className:'frow'},
+            h('div',{className:'fgroup'},
+              h('label',null,'Fechas de consumo',h('span',{className:'req'},' *')),
+              h('input',{type:'text',placeholder:'10/01, 12/01...',onChange:e=>set('fechas',e.target.value)})
+            ),
+            h('div',{className:'fgroup'},
+              h('label',null,'Comercios involucrados',h('span',{className:'req'},' *')),
+              h('input',{type:'text',placeholder:'Carrefour, YPF...',onChange:e=>set('comercios',e.target.value)})
+            )
+          ),
+          h('div',{className:'fgroup',style:{marginTop:4,marginBottom:4}},
+            h('label',null,'O adjuntá el Excel con el detalle'),
+            h('div',{className:'upload'+(excelFile?' ok':''),onClick:()=>document.getElementById('xl-inp').click()},
+              h('input',{id:'xl-inp',type:'file',accept:'.xlsx,.xls,.csv',style:{display:'none'},onChange:handleExcel}),
+              excelFile
+                ? h('div',null,h('div',{className:'upload-icon'},'✅'),h('p',{className:'ok-text'},excelFile.name))
+                : h('div',null,h('div',{className:'upload-icon'},'📎'),h('p',null,'Clic para adjuntar Excel'),h('p',{className:'hint'},'.xlsx .xls .csv'))
+            ),
+            excelErr&&h('p',{className:'err-msg'},excelErr),
+            fieldErrors.fechas&&h('p',{className:'err-msg'},fieldErrors.fechas)
+          ),
+          h('div',{className:'toggle-wrap'},
+            h('div',{className:'trow'},h('span',null,'Consumo presencial'),h('button',{className:'tog'+(presencial?' on':''),onClick:()=>setPresencial(p=>!p)})),
+            h('div',{className:'trow'},h('span',null,'Contactless'),h('button',{className:'tog'+(contactless?' on':''),onClick:()=>setContactless(c=>!c)}))
+          )
+        ),
+        h('div',{className:'btn-row'},h('button',{className:'btn btn-ghost',onClick:()=>setStep(1)},'← Atras'),h('button',{className:'btn btn-primary',onClick:goToStep3},'Continuar →'))
+      ),
+
+      step===2 && tipo==='siniestro' && h('div',null,
+        h('div',{className:'fsec'},
+          h('div',{className:'fsec-label'},'Datos del siniestro'),
+          h('div',{className:'frow'},
+            h('div',{className:'fgroup'},
+              h('label',null,'Cliente',h('span',{className:'req'},'*')),
+              h('div',{className:'pills'},['Renault','Mercedes'].map(op=>h('button',{key:op,className:'pill'+(form.cliente===op?' on':''),onClick:()=>set('cliente',op)},op))),
+              fieldErrors.cliente&&h('p',{className:'err-msg'},fieldErrors.cliente)
+            ),
+            h('div',{className:'fgroup'},
+              h('label',null,'Concesionario',h('span',{className:'req'},'*')),
+              h('input',{type:'text',onChange:e=>set('concesionario',e.target.value)}),
+              fieldErrors.concesionario&&h('p',{className:'err-msg'},fieldErrors.concesionario)
+            )
+          ),
+          h('div',{className:'frow'},
+            h('div',{className:'fgroup'},h('label',null,'Repuesto'),h('input',{type:'text',onChange:e=>set('repuesto',e.target.value)})),
+            h('div',{className:'fgroup'},h('label',null,'N carta porte'),h('input',{type:'text',onChange:e=>set('carta_porte',e.target.value)}))
+          ),
+          h('div',{className:'frow'},
+            h('div',{className:'fgroup'},h('label',null,'N reclamo cliente'),h('input',{type:'text',onChange:e=>set('num_reclamo',e.target.value)})),
+            h('div',{className:'fgroup'},h('label',null,'N bulto / ID SAP'),h('input',{type:'text',onChange:e=>set('num_bulto',e.target.value)}))
+          ),
+          h('div',{className:'fgroup',style:{marginBottom:12}},
+            h('label',null,'Tipo de reclamo',h('span',{className:'req'},'*')),
+            h('select',{defaultValue:'',onChange:e=>set('tipo_reclamo',e.target.value)},
+              h('option',{value:'',disabled:true},'— Seleccionar —'),
+              ['Rotura','Faltante','Siniestro PAQ','Siniestro Supply','Otro'].map(op=>h('option',{key:op,value:op},op))
+            ),
+            fieldErrors.tipo_reclamo&&h('p',{className:'err-msg'},fieldErrors.tipo_reclamo)
+          ),
+          form.tipo_reclamo==='Faltante' && h('div',{className:'alert al-amber'},'⚠ Verifica consistencia entre carta de porte y remito del concesionario antes de enviar.'),
+          h('div',{className:'frow full'},
+            h('div',{className:'fgroup'},
+              h('label',null,'Descripcion',h('span',{className:'req'},'*')),
+              h('textarea',{onChange:e=>set('descripcion',e.target.value)}),
+              fieldErrors.descripcion&&h('p',{className:'err-msg'},fieldErrors.descripcion)
+            )
+          ),
+          h('div',{className:'fsec-label',style:{marginTop:16}},'Documentacion adjunta'),
+          h('div',{className:'fgroup',style:{marginBottom:10}},
+            h('label',null,'Evidencia fotografica (opcional)'),
+            h('div',{className:'upload',onClick:()=>document.getElementById('ph-inp').click()},
+              h('input',{id:'ph-inp',type:'file',accept:'image/*',multiple:true,style:{display:'none'}}),
+              h('div',{className:'upload-icon'},'📷'),h('p',null,'Clic para adjuntar imagenes'),h('p',{className:'hint'},'JPG, PNG')
+            )
+          ),
+          h('div',{className:'fgroup',style:{marginBottom:10}},
+            h('label',null,'Carta de porte (PDF)'),
+            h('div',{className:'upload',onClick:()=>document.getElementById('cp-inp').click()},h('input',{id:'cp-inp',type:'file',accept:'.pdf',style:{display:'none'}}),h('div',{className:'upload-icon'},'📄'),h('p',null,'Adjuntar PDF'))
+          ),
+          h('div',{className:'fgroup'},
+            h('label',null,'Remito concesionario'),
+            h('div',{className:'upload',onClick:()=>document.getElementById('rm-inp').click()},h('input',{id:'rm-inp',type:'file',style:{display:'none'}}),h('div',{className:'upload-icon'},'📄'),h('p',null,'Adjuntar remito'))
+          )
+        ),
+        h('div',{className:'btn-row'},h('button',{className:'btn btn-ghost',onClick:()=>setStep(1)},'← Atras'),h('button',{className:'btn btn-primary',onClick:goToStep3},'Continuar →'))
+      ),
+
+      step===3 && h('div',null,
+        h('div',{className:'fsec'},
+          h('div',{className:'fsec-label'},'Confirmacion'),
+          h('div',{className:'alert al-blue'},'Revisa los datos antes de enviar. No podras modificar el reclamo desde este formulario una vez enviado.'),
+          h('div',{className:'confirm-box'},
+            [
+              ['Tipo', tipo==='postal'?'Reclamo Postal / Fraude':'Siniestro Renault/Mercedes'],
+              ['Cliente', form.cliente||'—'],
+              tipo==='postal' ? ['Titular', form.titular||'—'] : ['Concesionario', form.concesionario||'—'],
+              tipo==='postal' ? ['Tipo fraude', form.fraude||'—'] : ['Tipo reclamo', form.tipo_reclamo||'—'],
+              tipo==='postal' && excelFile ? ['Excel adjunto', excelFile.name] : null,
+              tipo==='postal' && (form.fechas||form.comercios) ? ['Fechas / Comercios', (form.fechas||'')+(form.fechas&&form.comercios?' — ':''+(form.comercios||''))] : null,
+            ].filter(Boolean).map(([k,v])=>h('div',{key:k,className:'confirm-row'},h('span',{className:'ck'},k),h('span',{className:'cv'},v)))
+          ),
+          tipo==='postal' && h('div',{style:{marginTop:12}},
+            h('div',{className:'fgroup'},
+              h('label',null,'Acuses de retiro (opcional)'),
+              h('div',{className:'upload',onClick:()=>document.getElementById('ac-inp').click()},
+                h('input',{id:'ac-inp',type:'file',style:{display:'none'}}),
+                h('div',{className:'upload-icon'},'📄'),h('p',null,'Adjuntar acuses (opcional)'))
+            )
+          )
+        ),
+        h('div',{className:'btn-row'},
+          h('button',{className:'btn btn-ghost',onClick:()=>setStep(2)},'← Atras'),
+          h('button',{className:'btn btn-primary',onClick:submit,disabled:saving},saving?h('span',{className:'spinner'}):null,'Enviar reclamo')
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

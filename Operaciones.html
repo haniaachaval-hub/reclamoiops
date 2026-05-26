@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operaciones — ReclamiOps</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g800:#1f2937;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b400:#60a5fa;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;--gr700:#15803d;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--a100:#fef3c7;--a500:#f59e0b;--a600:#d97706;
+  --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
+  --t50:#f0fdfa;--t500:#14b8a6;--t600:#0d9488;
+  --rad:7px;--rad-lg:11px;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:208px;min-width:208px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb-logo{padding:15px 15px 12px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:9px}
+.sb-logo-icon{width:29px;height:29px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo h1{font-size:13px;font-weight:600;color:var(--g900)}
+.sb-logo p{font-size:10px;color:var(--g400);margin-top:1px}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.sb-section{font-size:9px;font-weight:600;color:var(--g400);letter-spacing:.07em;text-transform:uppercase;padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .11s;margin-bottom:1px;user-select:none}
+.nav-item:hover{background:var(--g50);color:var(--g900)}
+.nav-item.active{background:var(--b50);color:var(--b700);font-weight:500}
+.nav-icon{width:15px;text-align:center;font-size:13px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:9px;background:var(--r100);color:var(--r600)}
+.sb-footer{padding:9px 12px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit;transition:all .11s}
+.btn-out:hover{color:var(--g600);border-color:var(--g300)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:48px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0}
+.topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.sb-pill{display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:5px}
+.sb-pill.ok{background:var(--gr50);border:1px solid var(--gr100);color:var(--gr700)}
+.sb-pill.err{background:var(--r50);border:1px solid var(--r100);color:var(--r600)}
+.sb-pill.load{background:var(--b50);border:1px solid var(--b100);color:var(--b600)}
+.sdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.sdot.pulse{animation:pulse 1.3s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.content{flex:1;overflow-y:auto;padding:18px 20px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:9px;margin-bottom:18px}
+.kpi{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:13px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.kpi-lbl{font-size:10px;color:var(--g400);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
+.kpi-val{font-size:24px;font-weight:600;line-height:1;color:var(--g900)}
+.kpi-sub{font-size:10px;color:var(--g400);margin-top:4px}
+.kpi.danger .kpi-val{color:var(--r500)}
+.kpi.warning .kpi-val{color:var(--a500)}
+.kpi.success .kpi-val{color:var(--gr600)}
+.kpi.info .kpi-val{color:var(--b600)}
+.kpi.purple .kpi-val{color:var(--p600)}
+.kpi.teal .kpi-val{color:var(--t600)}
+.charts{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:9px;margin-bottom:18px}
+.chart-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.chart-title{font-size:10px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:11px}
+.br{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.br-lbl{font-size:10px;color:var(--g500);width:64px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.br-track{flex:1;height:5px;background:var(--g100);border-radius:3px;overflow:hidden}
+.br-fill{height:100%;border-radius:3px}
+.br-val{font-size:10px;color:var(--g400);width:18px;text-align:right;flex-shrink:0}
+.leg-item{display:flex;align-items:center;gap:5px;margin-bottom:5px;font-size:11px;color:var(--g600)}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.filters{display:flex;align-items:center;gap:6px;margin-bottom:11px;flex-wrap:wrap}
+.fpill{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--g200);background:var(--w);color:var(--g500);transition:all .11s;font-family:inherit}
+.fpill:hover{border-color:var(--g300);color:var(--g800)}
+.fpill.on{background:var(--b600);border-color:var(--b600);color:#fff}
+.fsep{width:1px;height:16px;background:var(--g200);flex-shrink:0;margin:0 1px}
+.search{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:6px 10px;font-size:12px;color:var(--g700);font-family:inherit;outline:none;width:170px;transition:all .11s}
+.search:focus{border-color:var(--b400);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.shdr h2{font-size:13px;font-weight:600;color:var(--g900)}
+.tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:9px 11px;border-bottom:1px solid var(--g200);background:var(--g50);white-space:nowrap}
+tbody td{padding:10px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--b50);cursor:pointer}
+.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--b600)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap}
+.bn{background:var(--b50);color:var(--b700)}
+.ba{background:var(--p50);color:var(--p600)}
+.bp{background:var(--a50);color:var(--a600)}
+.bg{background:var(--t50);color:var(--t600)}
+.bi{background:var(--gr50);color:var(--gr700)}
+.be{background:var(--b50);color:var(--b700);border:1px solid var(--b100)}
+.bfin{background:var(--gr100);color:var(--gr700);border:1px solid var(--gr500)}
+.bc{background:var(--g100);color:var(--g500)}
+.bv{background:var(--r50);color:var(--r600)}
+.tp{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:500}
+.tp-p{background:var(--p50);color:var(--p600)}
+.tp-s{background:var(--t50);color:var(--t600)}
+.sem{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.sv{background:var(--gr500)}
+.sam{background:var(--a500)}
+.sr{background:var(--r500);box-shadow:0 0 0 2px var(--r100)}
+.sgr{background:var(--g300)}
+.sla-wrap{display:flex;align-items:center;gap:4px}
+.sla-bar{width:38px;height:4px;background:var(--g100);border-radius:2px;overflow:hidden}
+.sla-fill{height:100%;border-radius:2px}
+.sla-pct{font-size:10px;color:var(--g400);min-width:24px}
+.overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
+.panel{background:var(--w);width:560px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ph{padding:15px 18px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5}
+.ph-top{display:flex;align-items:flex-start;gap:9px;margin-bottom:5px}
+.ph-info{flex:1;min-width:0}
+.ph-info h2{font-size:14px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.ph-info p{font-size:11px;color:var(--g500);line-height:1.4}
+.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:15px;flex-shrink:0}
+.close:hover{color:var(--g700)}
+.ptabs{display:flex;border-bottom:1px solid var(--g200);padding:0 18px;overflow-x:auto}
+.ptab{padding:8px 11px;font-size:11px;cursor:pointer;color:var(--g400);border-bottom:2px solid transparent;font-weight:500;transition:all .11s;white-space:nowrap}
+.ptab.on{color:var(--b600);border-bottom-color:var(--b500)}
+.pbody{padding:18px}
+.dsec{margin-bottom:18px}
+.dsec-title{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dfield{background:var(--g50);border-radius:var(--rad);padding:8px 10px;border:1px solid var(--g100)}
+.dlbl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.dval{font-size:12px;color:var(--g900);font-weight:500}
+.tl-item{display:flex;gap:9px;padding-bottom:12px}
+.tl-l{display:flex;flex-direction:column;align-items:center}
+.tl-dot{width:7px;height:7px;border-radius:50%;background:var(--b400);flex-shrink:0;margin-top:3px}
+.tl-ln{width:1px;background:var(--g200);flex:1;min-height:12px;margin:3px 0}
+.tl-txt{font-size:11px;color:var(--g700);line-height:1.5}
+.tl-meta{font-size:10px;color:var(--g400);margin-top:1px}
+.cc{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:9px 11px;margin-bottom:7px}
+.cc-author{font-size:10px;font-weight:600;color:var(--g700);margin-bottom:2px}
+.cc-ts{font-size:9px;color:var(--g400);margin-left:7px;font-weight:400}
+.cc-text{font-size:11px;color:var(--g600);line-height:1.5}
+.cinp{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;min-height:65px;transition:all .11s}
+.cinp:focus{border-color:var(--b400);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+.sla-d-top{display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px}
+.sla-d-track{height:7px;background:var(--g100);border-radius:3px;overflow:hidden;margin-bottom:13px}
+.sla-d-fill{height:100%;border-radius:3px}
+.mail-composer{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden;margin-bottom:14px}
+.mc-header{padding:10px 14px;background:var(--w);border-bottom:1px solid var(--g200);font-size:11px;font-weight:600;color:var(--g700)}
+.mc-body{padding:12px 14px}
+.mc-field{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mc-field label{color:var(--g500);width:44px;flex-shrink:0;font-size:11px}
+.mc-field input{flex:1;padding:5px 8px;border:1px solid var(--g200);border-radius:5px;font-size:12px;font-family:inherit;color:var(--g900);background:var(--w);outline:none}
+.mc-field input:focus{border-color:var(--b400)}
+.mc-textarea{width:100%;min-height:110px;padding:9px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;line-height:1.6}
+.mc-textarea:focus{border-color:var(--b400)}
+.al{display:flex;gap:7px;padding:9px 12px;border-radius:var(--rad);font-size:12px;margin-bottom:12px;line-height:1.5}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.al-green{background:var(--gr50);border:1px solid var(--gr100);color:var(--gr700)}
+.al-red{background:var(--r50);border:1px solid var(--r100);color:var(--r600)}
+.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .11s}
+.btn-primary{background:var(--b600);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--b700)}
+.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-ghost:hover{background:var(--g50);border-color:var(--g300)}
+.btn-success{background:var(--gr50);color:var(--gr700);border:1px solid var(--gr100)}
+.btn-success:hover{background:var(--gr100)}
+.btn-danger{background:var(--r50);color:var(--r600);border:1px solid var(--r100)}
+.btn-danger:hover{background:var(--r100)}
+.btn-sm{padding:5px 9px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:default}
+.act-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.spinner{width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px 20px;color:var(--g400)}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.45}
+.empty p{font-size:12px}
+.cfg{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:16px;margin-bottom:12px}
+.cfg h3{font-size:12px;font-weight:600;color:var(--g900);margin-bottom:12px}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--g100)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-row label{font-size:11px;color:var(--g600)}
+.cfg-row input[type=number]{background:var(--g50);border:1px solid var(--g200);border-radius:5px;padding:4px 8px;color:var(--g900);font-size:12px;width:76px;text-align:center;outline:none;font-family:inherit}
+.cfg-row input[type=text]{background:var(--g50);border:1px solid var(--g200);border-radius:5px;padding:4px 8px;color:var(--g900);font-size:12px;width:190px;outline:none;font-family:inherit}
+.urow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--g100)}
+.urow:last-child{border-bottom:none}
+.uname{font-size:12px;font-weight:500;color:var(--g900);flex:1}
+.uemail{font-size:10px;color:var(--g400)}
+.rtag{padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600}
+.rt-ops{background:var(--b50);color:var(--b700)}
+.rt-sup{background:var(--p50);color:var(--p600)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g50);padding:24px}
+.login-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 14px rgba(0,0,0,.07);padding:34px;width:100%;max-width:320px;text-align:center}
+.login-card h2{font-size:16px;font-weight:600;color:var(--g900);margin-bottom:3px}
+.login-card p{font-size:12px;color:var(--g500);margin-bottom:24px}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:10px;border:1px solid var(--g200);border-radius:var(--rad);background:var(--w);font-size:13px;font-weight:500;color:var(--g700);cursor:pointer;transition:all .11s;font-family:inherit}
+.btn-google:hover{background:var(--g50)}
+.lg-err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:8px 11px;font-size:11px;margin-bottom:12px;text-align:left}
+.toast-wrap{position:fixed;bottom:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:9px 13px;font-size:12px;color:var(--g700);max-width:280px;box-shadow:0 4px 12px rgba(0,0,0,.08);animation:tin .18s ease}
+.toast.ok{border-left:3px solid var(--gr500)}
+.toast.err{border-left:3px solid var(--r500)}
+.toast.info{border-left:3px solid var(--b500)}
+@keyframes tin{from{transform:translateX(14px);opacity:0}to{transform:none;opacity:1}}
+input,select,textarea{-webkit-appearance:none;appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toast-wrap" id="toasts"></div>
+<script>
+// =====================================================
+//  CONFIGURACION — reemplazar con valores reales
+// =====================================================
+const SUPABASE_URL   = 'https://azlkmzmlcuwwujjuykzl.supabase.co';
+const SUPABASE_ANON  = 'sb_publishable_mQ5qoAj7VXSvKPVR7MtFEQ_NpIh75lX';
+const ALLOWED_DOMAIN = 'ocasa.com';
+// =====================================================
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function toast(msg, type) {
+  if (!type) type = 'info';
+  var w = document.getElementById('toasts');
+  var d = document.createElement('div');
+  d.className = 'toast ' + type;
+  d.textContent = msg;
+  w.appendChild(d);
+  setTimeout(function() { d.remove(); }, 3500);
+}
+
+async function fetchAll() {
+  const [p, s] = await Promise.all([
+    sb.from('reclamos_postales').select('*').order('creado', { ascending: false }),
+    sb.from('siniestros').select('*').order('creado', { ascending: false })
+  ]);
+  const postales = (p.data || []).map(function(r) { return Object.assign({}, r, { tipo: 'postal', comments: r.comments || [], historial: r.historial || [] }); });
+  const sins = (s.data || []).map(function(r) { return Object.assign({}, r, { tipo: 'siniestro', comments: r.comments || [], historial: r.historial || [] }); });
+  return postales.concat(sins).sort(function(a, b) { return (b.creado || '').localeCompare(a.creado || ''); });
+}
+
+async function updateT(id, tipo, fields) {
+  const table = tipo === 'postal' ? 'reclamos_postales' : 'siniestros';
+  const { error } = await sb.from(table).update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+const DEMO = [
+  { id:'REC-001', tipo:'postal', cliente:'Banco Galicia', titular:'Maria Gonzalez', tarjeta:'VISA', fraude:'Desconocimiento de consumo', descripcion:'Cliente desconoce 3 consumos en CABA durante enero. Total: $42.500.', complejidad:'Complejo', estado:'En analisis', responsable:'Carlos Lopez', creado:'2025-01-15', vence:'2025-01-29', sla_pct:72, prioridad:'Alta', comments:[{ autor:'Carlos Lopez', ts:'2025-01-16 10:23', texto:'Verificaciones iniciadas con el comercio. Pendiente respuesta.' }], historial:[{ ts:'2025-01-15 09:00', accion:'Ticket creado', usuario:'Sistema' },{ ts:'2025-01-16 08:30', accion:'Estado: En analisis', usuario:'Carlos Lopez' }] },
+  { id:'SIN-002', tipo:'siniestro', cliente:'Renault', concesionario:'Auto Norte SA', repuesto:'Caja de cambios DCT', tipo_reclamo:'Rotura', descripcion:'Pieza recibida con rotura en la carcasa.', estado:'Nuevo', responsable:'', creado:'2025-01-17', vence:'2025-01-24', sla_pct:15, prioridad:'Media', comments:[], historial:[{ ts:'2025-01-17 11:30', accion:'Ticket creado', usuario:'Sistema' }] },
+  { id:'REC-003', tipo:'postal', cliente:'BBVA', titular:'Jorge Fernandez', tarjeta:'Mastercard', fraude:'Fraude', descripcion:'Consumos en el exterior no reconocidos.', complejidad:'Complejo', estado:'Informe listo', responsable:'Ana Ruiz', creado:'2025-01-10', vence:'2025-01-25', sla_pct:88, prioridad:'Alta', comments:[], historial:[] },
+  { id:'SIN-004', tipo:'siniestro', cliente:'Mercedes', concesionario:'MB Center Cordoba', repuesto:'Panel de puerta', tipo_reclamo:'Faltante', descripcion:'Bulto recibido sin el repuesto declarado en carta de porte.', estado:'Pendiente informacion', responsable:'Luis Herrera', creado:'2025-01-08', vence:'2025-01-22', sla_pct:105, prioridad:'Alta', comments:[], historial:[] },
+  { id:'REC-005', tipo:'postal', cliente:'Santander', titular:'Laura Perez', tarjeta:'Debito', fraude:'Otro', descripcion:'Envio postal no entregado.', complejidad:'Simple', estado:'Cerrado', responsable:'Carlos Lopez', creado:'2025-01-01', vence:'2025-01-08', sla_pct:100, prioridad:'Baja', comments:[], historial:[] },
+  { id:'SIN-006', tipo:'siniestro', cliente:'Renault', concesionario:'Renault Sur', repuesto:'Amortiguadores x2', tipo_reclamo:'Siniestro PAQ', descripcion:'Dano en transito detectado al momento de recepcion.', estado:'Enviado a Legales', responsable:'Ana Ruiz', creado:'2025-01-12', vence:'2025-01-26', sla_pct:60, prioridad:'Media', comments:[], historial:[] },
+];
+
+const DEMO_USERS = [
+  { id:1, nombre:'Carlos Lopez', email:'c.lopez@tuempresa.com', rol:'operaciones', color:'#2563eb' },
+  { id:2, nombre:'Ana Ruiz', email:'a.ruiz@tuempresa.com', rol:'operaciones', color:'#7c3aed' },
+  { id:3, nombre:'Martin Garcia', email:'m.garcia@tuempresa.com', rol:'supervisor', color:'#0d9488' },
+  { id:4, nombre:'Luis Herrera', email:'l.herrera@tuempresa.com', rol:'operaciones', color:'#d97706' },
+];
+
+const { useState, useEffect, useMemo } = React;
+const h = React.createElement;
+
+function Av(props) {
+  var name = props.name || '?'; var color = props.color; var size = props.size || 26;
+  var ini = name.split(' ').map(function(w) { return w[0]; }).slice(0, 2).join('');
+  return h('div', { style:{ width:size, height:size, borderRadius:'50%', background:color+'18', border:'1px solid '+color+'33', display:'flex', alignItems:'center', justifyContent:'center', fontSize:size*.36, fontWeight:600, color:color, flexShrink:0 } }, ini);
+}
+
+function getSC(pct, estado) {
+  if (['Cerrado','Finalizado'].includes(estado)) return 'sgr';
+  return pct >= 100 ? 'sr' : pct >= 75 ? 'sam' : 'sv';
+}
+
+function getBC(estado) {
+  var m = { 'Nuevo':'bn','En analisis':'ba','En análisis':'ba','Pendiente informacion':'bp','Pendiente información':'bp','En gestion terceros':'bg','En gestión terceros':'bg','Informe listo':'bi','Enviado a Legales':'be','Cerrado':'bc','Finalizado':'bfin','Vencido':'bv','Rechazado':'bv' };
+  return m[estado] || 'bn';
+}
+
+function Login(props) {
+  var onLogin = props.onLogin;
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(function() {
+    sb.auth.getSession().then(function(result) {
+      var data = result.data;
+      if (data.session) {
+        var email = data.session.user.email || '';
+        if (ALLOWED_DOMAIN !== 'tuempresa.com' && !email.endsWith('@' + ALLOWED_DOMAIN)) {
+          sb.auth.signOut();
+          setErr('Acceso restringido a cuentas @' + ALLOWED_DOMAIN);
+        } else {
+          onLogin(data.session);
+        }
+      }
+    });
+  }, []);
+
+  function loginGoogle() {
+    setLoading(true); setErr('');
+    sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:window.location.href, queryParams:{ hd:ALLOWED_DOMAIN } } });
+  }
+
+  return h('div', { className:'login-wrap' },
+    h('div', { className:'login-card' },
+      h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:9, marginBottom:18 } },
+        h('div', { style:{ width:29,height:29,borderRadius:'var(--rad)',background:'var(--b600)',color:'#fff',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center' } }, '📦'),
+        h('div', { style:{textAlign:'left'} }, h('h2',{style:{margin:0}},'ReclamiOps'), h('p',{style:{margin:0,fontSize:10,color:'#9ca3af'}},'Operaciones'))
+      ),
+      h('p', null, 'Ingresa con tu cuenta Google corporativa.'),
+      err && h('div', { className:'lg-err' }, err),
+      h('button', { className:'btn-google', onClick:loginGoogle, disabled:loading },
+        loading
+          ? h('span', { className:'spinner', style:{ borderColor:'rgba(0,0,0,.12)', borderTopColor:'#374151' } })
+          : h('svg', { width:17,height:17,viewBox:'0 0 48 48' }, h('path', { fill:'#4285F4', d:'M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-19.9 0-1.3-.1-2.7-.5-5.1z' })),
+        'Continuar con Google'
+      ),
+      h('p', { style:{fontSize:10,color:'#9ca3af',marginTop:13} }, 'Solo cuentas @' + ALLOWED_DOMAIN)
+    )
+  );
+}
+
+function Dashboard(props) {
+  var tickets = props.tickets; var onOpen = props.onOpen;
+  var ab = tickets.filter(function(t) { return !['Cerrado','Finalizado'].includes(t.estado); }).length;
+  var venc = tickets.filter(function(t) { return t.sla_pct >= 100 && !['Cerrado','Finalizado'].includes(t.estado); }).length;
+  var prox = tickets.filter(function(t) { return t.sla_pct >= 75 && t.sla_pct < 100 && !['Cerrado','Finalizado'].includes(t.estado); }).length;
+  var cerr = tickets.filter(function(t) { return ['Cerrado','Finalizado'].includes(t.estado); }).length;
+  var post = tickets.filter(function(t) { return t.tipo === 'postal'; }).length;
+  var sini = tickets.filter(function(t) { return t.tipo === 'siniestro'; }).length;
+  var sinR = tickets.filter(function(t) { return !t.responsable && !['Cerrado','Finalizado'].includes(t.estado); }).length;
+  var slaOk = tickets.length ? Math.round(tickets.filter(function(t) { return t.sla_pct < 75; }).length / tickets.length * 100) : 0;
+  var byR = {}; tickets.forEach(function(t) { if (t.responsable) byR[t.responsable] = (byR[t.responsable] || 0) + 1; });
+  var byE = {}; tickets.forEach(function(t) { byE[t.estado] = (byE[t.estado] || 0) + 1; });
+  var maxR = Math.max.apply(null, Object.values(byR).concat([1]));
+  var tot = post + sini || 1;
+  var urgentes = tickets.filter(function(t) { return t.sla_pct >= 75 && !['Cerrado','Finalizado'].includes(t.estado); }).slice(0, 5);
+
+  return h('div', null,
+    h('div', { className:'kpi-row' },
+      h('div',{className:'kpi info'},h('div',{className:'kpi-lbl'},'Abiertos'),h('div',{className:'kpi-val'},ab),h('div',{className:'kpi-sub'},'en seguimiento')),
+      h('div',{className:'kpi danger'},h('div',{className:'kpi-lbl'},'Vencidos'),h('div',{className:'kpi-val'},venc),h('div',{className:'kpi-sub'},'SLA superado')),
+      h('div',{className:'kpi warning'},h('div',{className:'kpi-lbl'},'Por vencer'),h('div',{className:'kpi-val'},prox),h('div',{className:'kpi-sub'},'>=75% SLA')),
+      h('div',{className:'kpi success'},h('div',{className:'kpi-lbl'},'SLA OK'),h('div',{className:'kpi-val'},slaOk+'%'),h('div',{className:'kpi-sub'},'dentro de plazo')),
+      h('div',{className:'kpi purple'},h('div',{className:'kpi-lbl'},'Postales'),h('div',{className:'kpi-val'},post),h('div',{className:'kpi-sub'},'fraude/postal')),
+      h('div',{className:'kpi teal'},h('div',{className:'kpi-lbl'},'Siniestros'),h('div',{className:'kpi-val'},sini),h('div',{className:'kpi-sub'},'Renault/Mercedes')),
+      h('div',{className:'kpi success'},h('div',{className:'kpi-lbl'},'Cerrados'),h('div',{className:'kpi-val'},cerr),h('div',{className:'kpi-sub'},'finalizados')),
+      h('div',{className:'kpi danger'},h('div',{className:'kpi-lbl'},'Sin responsable'),h('div',{className:'kpi-val'},sinR),h('div',{className:'kpi-sub'},'sin asignar'))
+    ),
+    h('div', { className:'charts' },
+      h('div',{className:'chart-card'},
+        h('div',{className:'chart-title'},'Por responsable'),
+        Object.entries(byR).length
+          ? Object.entries(byR).map(function(entry) { var r=entry[0];var n=entry[1]; return h('div',{key:r,className:'br'},h('div',{className:'br-lbl'},r.split(' ')[0]),h('div',{className:'br-track'},h('div',{className:'br-fill',style:{width:Math.round(n/maxR*100)+'%',background:'var(--b500)'}})),h('div',{className:'br-val'},n)); })
+          : h('p',{style:{fontSize:11,color:'var(--g400)'}},'Sin datos')
+      ),
+      h('div',{className:'chart-card'},
+        h('div',{className:'chart-title'},'Distribucion'),
+        h('div',{style:{display:'flex',alignItems:'center',gap:14}},
+          h('svg',{width:64,height:64,viewBox:'0 0 64 64'},
+            h('circle',{cx:32,cy:32,r:24,fill:'none',stroke:'var(--g100)',strokeWidth:11}),
+            h('circle',{cx:32,cy:32,r:24,fill:'none',stroke:'var(--p500)',strokeWidth:11,strokeDasharray:String(post/tot*150.8)+' 150.8',strokeDashoffset:37.7,strokeLinecap:'round'}),
+            h('circle',{cx:32,cy:32,r:24,fill:'none',stroke:'var(--t500)',strokeWidth:11,strokeDasharray:String(sini/tot*150.8)+' 150.8',strokeDashoffset:37.7-post/tot*150.8,strokeLinecap:'round'}),
+            h('text',{x:32,y:36,textAnchor:'middle',fill:'var(--g900)',fontSize:11,fontWeight:600},tickets.length)
+          ),
+          h('div',null,
+            h('div',{className:'leg-item'},h('div',{className:'leg-dot',style:{background:'var(--p500)'}}),('Postales ('+post+')')),
+            h('div',{className:'leg-item'},h('div',{className:'leg-dot',style:{background:'var(--t500)'}}),('Siniestros ('+sini+')'))
+          )
+        )
+      ),
+      h('div',{className:'chart-card'},
+        h('div',{className:'chart-title'},'Por estado'),
+        Object.entries(byE).slice(0,6).map(function(entry) { var e=entry[0];var n=entry[1]; return h('div',{key:e,className:'br'},h('div',{className:'br-lbl',style:{width:88}},e),h('div',{className:'br-track'},h('div',{className:'br-fill',style:{width:Math.round(n/tickets.length*100)+'%',background:'var(--t500)'}})),h('div',{className:'br-val'},n)); })
+      )
+    ),
+    urgentes.length > 0 && h('div', null,
+      h('div',{className:'shdr'},h('h2',null,'Requieren atencion inmediata')),
+      h('div',{className:'tw'},
+        h('table',null,
+          h('thead',null,h('tr',null,h('th',null,''),h('th',null,'ID'),h('th',null,'Cliente'),h('th',null,'Tipo'),h('th',null,'Estado'),h('th',null,'SLA'),h('th',null,'Responsable'))),
+          h('tbody',null, urgentes.map(function(t) {
+            return h('tr',{key:t.id,onClick:function(){onOpen(t);}},
+              h('td',null,h('span',{className:'sem '+getSC(t.sla_pct,t.estado)})),
+              h('td',null,h('span',{className:'tid'},t.id)),
+              h('td',{style:{fontWeight:500,color:'var(--g900)',fontSize:11}},t.cliente),
+              h('td',null,h('span',{className:'tp '+(t.tipo==='postal'?'tp-p':'tp-s')},t.tipo==='postal'?'Postal':'Siniestro')),
+              h('td',null,h('span',{className:'badge '+getBC(t.estado)},t.estado)),
+              h('td',null,h('div',{className:'sla-wrap'},h('span',{className:'sem '+getSC(t.sla_pct,t.estado)}),h('span',{style:{fontSize:10,color:'var(--g500)'}},t.sla_pct+'%'))),
+              h('td',null,t.responsable||h('span',{style:{color:'var(--r500)',fontSize:10}},'Sin asignar'))
+            );
+          }))
+        )
+      )
+    )
+  );
+}
+
+function Ticketera(props) {
+  var tickets = props.tickets; var onOpen = props.onOpen;
+  const [ft, setFt] = useState('todos');
+  const [fe, setFe] = useState('todos');
+  const [q, setQ] = useState('');
+
+  var filtered = useMemo(function() {
+    var r = tickets;
+    if (ft !== 'todos') r = r.filter(function(t) { return t.tipo === ft; });
+    if (fe === 'vencidos') r = r.filter(function(t) { return t.sla_pct >= 100 && !['Cerrado','Finalizado'].includes(t.estado); });
+    else if (fe === 'proximos') r = r.filter(function(t) { return t.sla_pct >= 75 && t.sla_pct < 100; });
+    else if (fe === 'sinresp') r = r.filter(function(t) { return !t.responsable && !['Cerrado','Finalizado'].includes(t.estado); });
+    else if (fe !== 'todos') r = r.filter(function(t) { return t.estado === fe; });
+    if (q) r = r.filter(function(t) { return t.id.toLowerCase().includes(q.toLowerCase()) || t.cliente.toLowerCase().includes(q.toLowerCase()); });
+    return r;
+  }, [tickets, ft, fe, q]);
+
+  var filterLabels = { todos:'Todos',vencidos:'🔴 Vencidos',proximos:'🟡 Por vencer',sinresp:'Sin responsable',Nuevo:'Nuevo','En analisis':'En analisis','Informe listo':'Informe listo','Enviado a Legales':'En Legales',Cerrado:'Cerrado' };
+
+  return h('div', null,
+    h('div',{className:'shdr'},h('h2',null,'Ticketera operativa'),h('input',{className:'search',placeholder:'Buscar ID o cliente...',value:q,onChange:function(e){setQ(e.target.value);}})),
+    h('div',{className:'filters'},
+      ['todos','postal','siniestro'].map(function(f) { return h('button',{key:f,className:'fpill'+(ft===f?' on':''),onClick:function(){setFt(f);}},{todos:'Todos',postal:'Postales',siniestro:'Siniestros'}[f]); }),
+      h('div',{className:'fsep'}),
+      ['todos','vencidos','proximos','sinresp','Nuevo','En analisis','Informe listo','Enviado a Legales','Cerrado'].map(function(f) { return h('button',{key:f,className:'fpill'+(fe===f?' on':''),onClick:function(){setFe(f);},style:{fontSize:10}},filterLabels[f]||f); })
+    ),
+    h('div',{className:'tw'},
+      h('table',null,
+        h('thead',null,h('tr',null,h('th',null,''),h('th',null,'ID'),h('th',null,'Tipo'),h('th',null,'Cliente'),h('th',null,'Descripcion'),h('th',null,'Estado'),h('th',null,'Responsable'),h('th',null,'SLA'),h('th',null,'Vence'))),
+        h('tbody',null,
+          filtered.length === 0
+            ? h('tr',null,h('td',{colSpan:9},h('div',{className:'empty'},h('div',{className:'empty-icon'},'📭'),h('p',null,'Sin resultados'))))
+            : filtered.map(function(t) {
+                var sc = getSC(t.sla_pct, t.estado);
+                var fillC = sc==='sv'?'var(--gr500)':sc==='sam'?'var(--a500)':'var(--r500)';
+                return h('tr',{key:t.id,onClick:function(){onOpen(t);}},
+                  h('td',null,h('span',{className:'sem '+sc})),
+                  h('td',null,h('span',{className:'tid'},t.id)),
+                  h('td',null,h('span',{className:'tp '+(t.tipo==='postal'?'tp-p':'tp-s')},t.tipo==='postal'?'Postal':'Siniestro')),
+                  h('td',{style:{fontWeight:500,color:'var(--g900)',fontSize:11}},t.cliente),
+                  h('td',{style:{maxWidth:170,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},t.descripcion||'—'),
+                  h('td',null,h('span',{className:'badge '+getBC(t.estado)},t.estado)),
+                  h('td',null,t.responsable
+                    ? h('div',{style:{display:'flex',alignItems:'center',gap:5}},
+                        h('div',{style:{width:18,height:18,borderRadius:'50%',background:'var(--b50)',border:'1px solid var(--b100)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'var(--b600)'}},t.responsable.split(' ').map(function(w){return w[0];}).slice(0,2).join('')),
+                        h('span',{style:{fontSize:10}},t.responsable.split(' ')[0])
+                      )
+                    : h('span',{style:{color:'var(--r500)',fontSize:10}},'Sin asignar')
+                  ),
+                  h('td',null,h('div',{className:'sla-wrap'},h('div',{className:'sla-bar'},h('div',{className:'sla-fill',style:{width:Math.min(t.sla_pct,100)+'%',background:fillC}})),h('span',{className:'sla-pct'},t.sla_pct+'%'))),
+                  h('td',{style:{fontSize:10,color:sc==='sr'?'var(--r500)':sc==='sam'?'var(--a500)':'var(--g400)'}},t.vence)
+                );
+              })
+        )
+      )
+    )
+  );
+}
+
+function TicketPanel(props) {
+  var ticket = props.ticket; var setTickets = props.setTickets; var onClose = props.onClose;
+  const [tab, setTab] = useState('info');
+  const [lt, setLt] = useState(ticket);
+  const [comment, setComment] = useState('');
+  const [resp, setResp] = useState(ticket.responsable || '');
+  const [complejidad, setComplejidad] = useState(ticket.complejidad || 'Pendiente');
+  const [saving, setSaving] = useState(false);
+  const [mailTo, setMailTo] = useState('legales@tuempresa.com');
+  const [mailCC, setMailCC] = useState('');
+  const [mailBody, setMailBody] = useState('');
+  const [mailSent, setMailSent] = useState(false);
+
+  useEffect(function() {
+    setMailBody(
+      'Estimado equipo de Legales,\n\n' +
+      'Les informamos que el reclamo ' + lt.id + ' (' + lt.cliente + ') ha sido analizado por Operaciones y esta listo para su revision.\n\n' +
+      'Descripcion del caso:\n' + (lt.descripcion || '—') + '\n\n' +
+      'Tipo: ' + (lt.tipo === 'postal' ? 'Reclamo Postal / Fraude' : 'Siniestro Automotriz') + '\n' +
+      'Responsable operativo: ' + (lt.responsable || '—') + '\n' +
+      'Fecha creacion: ' + (lt.creado || '—') + '\n' +
+      'Vencimiento SLA: ' + (lt.vence || '—') + '\n' +
+      (lt.complejidad ? 'Complejidad: ' + lt.complejidad + '\n' : '') +
+      (lt.fraude ? 'Tipo fraude: ' + lt.fraude + '\n' : '') +
+      (lt.tipo_reclamo ? 'Tipo reclamo: ' + lt.tipo_reclamo + '\n' : '') +
+      '\nPor favor confirmar recepcion y resolucion del caso respondiendo a este correo.\n\n' +
+      'Saludos,\nEquipo de Operaciones — ReclamiOps'
+    );
+  }, [lt.id]);
+
+  function getNow() { return new Date().toISOString().slice(0,16).replace('T',' '); }
+  function sync(updated) { setLt(updated); setTickets(function(ts) { return ts.map(function(t) { return t.id === ticket.id ? updated : t; }); }); }
+
+  async function changeEstado(estado) {
+    setSaving(true);
+    var newH = { ts:getNow(), accion:'Estado: '+estado, usuario:'Operaciones' };
+    var updated = Object.assign({}, lt, { estado:estado, historial:(lt.historial||[]).concat([newH]) });
+    try { await updateT(lt.id, lt.tipo, { estado:estado, historial:updated.historial }); } catch(e) { console.warn(e); }
+    sync(updated); toast('Estado: '+estado, 'ok'); setSaving(false);
+  }
+
+  async function assignResp() {
+    if (!resp) return; setSaving(true);
+    var newH = { ts:getNow(), accion:'Asignado a '+resp, usuario:'Operaciones' };
+    try { await updateT(lt.id, lt.tipo, { responsable:resp }); } catch(e) { console.warn(e); }
+    sync(Object.assign({}, lt, { responsable:resp, historial:(lt.historial||[]).concat([newH]) }));
+    toast('Asignado a '+resp, 'ok'); setSaving(false);
+  }
+
+  async function saveComplejidad(val) {
+    setComplejidad(val); setSaving(true);
+    var newH = { ts:getNow(), accion:'Complejidad definida: '+val, usuario:'Operaciones' };
+    var updated = Object.assign({}, lt, { complejidad:val, historial:(lt.historial||[]).concat([newH]) });
+    try { await updateT(lt.id, lt.tipo, { complejidad:val, historial:updated.historial }); } catch(e) { console.warn(e); }
+    sync(updated); toast('Complejidad: '+val, 'ok'); setSaving(false);
+  }
+
+  async function addComment() {
+    if (!comment.trim()) return; setSaving(true);
+    var c = { autor:'Operaciones', ts:getNow(), texto:comment };
+    var updated = Object.assign({}, lt, { comments:(lt.comments||[]).concat([c]) });
+    try { await updateT(lt.id, lt.tipo, { comments:updated.comments }); } catch(e) { console.warn(e); }
+    sync(updated); setComment(''); toast('Comentario guardado', 'ok'); setSaving(false);
+  }
+
+  function openMailClient() {
+    var subject = encodeURIComponent('[ReclamiOps] Reclamo '+lt.id+' — '+lt.cliente+' — Requiere revision');
+    var cc = mailCC ? '&cc='+encodeURIComponent(mailCC) : '';
+    var body = encodeURIComponent(mailBody);
+    window.open('mailto:'+mailTo+'?subject='+subject+cc+'&body='+body);
+    changeEstado('Enviado a Legales');
+    setMailSent(true);
+  }
+
+  var sc = getSC(lt.sla_pct, lt.estado);
+  var fillC = sc==='sv'?'var(--gr500)':sc==='sam'?'var(--a500)':'var(--r500)';
+
+  return h('div', { className:'overlay', onClick:function(e){ if(e.target.className==='overlay')onClose(); } },
+    h('div', { className:'panel' },
+      h('div',{className:'ph'},
+        h('div',{className:'ph-top'},
+          h('div',{className:'ph-info'},
+            h('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:5,flexWrap:'wrap'}},
+              h('span',{className:'tid',style:{fontSize:11}},lt.id),
+              h('span',{className:'tp '+(lt.tipo==='postal'?'tp-p':'tp-s')},lt.tipo==='postal'?'Postal':'Siniestro'),
+              h('span',{className:'badge '+getBC(lt.estado)},lt.estado),
+              h('span',{className:'sem '+sc,style:{marginLeft:2}})
+            ),
+            h('h2',null,lt.cliente+(lt.titular?' — '+lt.titular:lt.concesionario?' — '+lt.concesionario:'')),
+            h('p',null,lt.descripcion)
+          ),
+          h('button',{className:'close',onClick:onClose},'✕')
+        )
+      ),
+      h('div',{className:'ptabs'},
+        [['info','Informacion'],['hist','Historial'],['cmts','Comentarios ('+((lt.comments||[]).length)+')'],['sla','SLA'],['acc','Acciones']].map(function(item) {
+          return h('div',{key:item[0],className:'ptab'+(tab===item[0]?' on':''),onClick:function(){setTab(item[0]);}},item[1]);
+        })
+      ),
+      h('div',{className:'pbody'},
+
+        tab==='info' && h('div',null,
+          lt.sla_pct>=100 && h('div',{className:'al al-red'},'🚨 Ticket VENCIDO — requiere atencion inmediata.'),
+          lt.sla_pct>=75&&lt.sla_pct<100 && h('div',{className:'al al-amber'},'⚠ Proximo a vencer.'),
+          lt.tipo==='siniestro'&&lt.tipo_reclamo==='Faltante' && h('div',{className:'al al-amber'},'⚠ Posible inconsistencia documental.'),
+          lt.estado==='Finalizado' && h('div',{className:'al al-green'},'✅ Caso cerrado y aprobado por Legales.'),
+          h('div',{className:'dsec'},h('div',{className:'dsec-title'},'General'),
+            h('div',{className:'dgrid'},
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'ID'),h('div',{className:'dval',style:{fontFamily:'monospace',color:'var(--b600)'}},lt.id)),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Cliente'),h('div',{className:'dval'},lt.cliente)),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Creado'),h('div',{className:'dval'},lt.creado)),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Vence'),h('div',{className:'dval',style:{color:lt.sla_pct>=100?'var(--r500)':'inherit'}},lt.vence)),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Responsable'),h('div',{className:'dval'},lt.responsable||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Prioridad'),h('div',{className:'dval'},lt.prioridad||'—'))
+            )
+          ),
+          lt.tipo==='postal' && h('div',{className:'dsec'},h('div',{className:'dsec-title'},'Reclamo postal'),
+            h('div',{className:'dgrid'},
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Titular'),h('div',{className:'dval'},lt.titular||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Tarjeta'),h('div',{className:'dval'},lt.tarjeta||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Tipo fraude'),h('div',{className:'dval'},lt.fraude||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Fechas consumo'),h('div',{className:'dval'},lt.fechas||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Comercios'),h('div',{className:'dval'},lt.comercios||'—')),
+              h('div',{className:'dfield',style:{gridColumn:'1/-1'}},
+                h('div',{className:'dlbl'},'Complejidad'),
+                (lt.complejidad==='Pendiente'||!lt.complejidad)
+                  ? h('div',null,
+                      h('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:8}},
+                        h('span',{style:{background:'var(--a50)',border:'1px solid #fcd34d',color:'#92400e',padding:'2px 8px',borderRadius:5,fontSize:10,fontWeight:600}},'⚠ Pendiente — definir complejidad'),
+                      ),
+                      h('div',{style:{display:'flex',gap:7}},
+                        h('button',{
+                          style:{flex:1,padding:'8px',border:'1.5px solid var(--g200)',borderRadius:'var(--rad)',cursor:'pointer',fontSize:12,fontWeight:500,background:'var(--w)',transition:'all .12s',color:'var(--g700)'},
+                          onClick:function(){saveComplejidad('Simple');}
+                        },'Simple — Gasto único'),
+                        h('button',{
+                          style:{flex:1,padding:'8px',border:'1.5px solid var(--g200)',borderRadius:'var(--rad)',cursor:'pointer',fontSize:12,fontWeight:500,background:'var(--w)',transition:'all .12s',color:'var(--g700)'},
+                          onClick:function(){saveComplejidad('Complejo');}
+                        },'Complejo — Múltiples consumos')
+                      )
+                    )
+                  : h('div',{style:{display:'flex',alignItems:'center',gap:8}},
+                      h('span',{
+                        style:{
+                          background: complejidad==='Simple' ? 'var(--gr50)' : 'var(--p50)',
+                          border: '1px solid '+(complejidad==='Simple'?'var(--gr100)':'var(--p500)33'),
+                          color: complejidad==='Simple' ? 'var(--gr700)' : 'var(--p600)',
+                          padding:'3px 10px', borderRadius:5, fontSize:11, fontWeight:600
+                        }
+                      }, complejidad),
+                      h('button',{
+                        style:{fontSize:10,color:'var(--g400)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'},
+                        onClick:function(){saveComplejidad('Pendiente');}
+                      },'cambiar')
+                    )
+              )
+            )
+          ),
+          // Adjuntos
+          (lt.adjuntos&&lt.adjuntos.length>0||lt.excel_url||lt.excel_nombre) && h('div',{className:'dsec'},
+            h('div',{className:'dsec-title'},'Adjuntos'),
+            h('div',{style:{display:'flex',flexDirection:'column',gap:6}},
+              (lt.adjuntos&&lt.adjuntos.length>0
+                ? lt.adjuntos
+                : [{nombre:lt.excel_nombre,url:lt.excel_url,tipo:'excel'}]
+              ).map(function(adj,i){
+                return h('div',{key:i,style:{display:'flex',alignItems:'center',gap:9,background:'var(--g50)',border:'1px solid var(--g200)',borderRadius:'var(--rad)',padding:'8px 11px'}},
+                  h('span',{style:{fontSize:16}},adj.tipo==='excel'?'📊':'📄'),
+                  h('div',{style:{flex:1,minWidth:0}},
+                    h('div',{style:{fontSize:12,fontWeight:500,color:'var(--g900)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},adj.nombre||'Archivo adjunto'),
+                    adj.fecha&&h('div',{style:{fontSize:10,color:'var(--g400)'}},adj.fecha+(adj.subido_por?' · '+adj.subido_por:''))
+                  ),
+                  adj.url
+                    ? h('a',{href:adj.url,target:'_blank',rel:'noopener',style:{fontSize:11,color:'var(--b600)',fontWeight:500,textDecoration:'none',border:'1px solid var(--b100)',padding:'3px 9px',borderRadius:5,background:'var(--b50)',whiteSpace:'nowrap'}},'⬇ Descargar')
+                    : h('span',{style:{fontSize:10,color:'var(--g400)'}},'Sin URL')
+                );
+              })
+            )
+          ),
+          lt.tipo==='siniestro' && h('div',{className:'dsec'},h('div',{className:'dsec-title'},'Siniestro'),
+            h('div',{className:'dgrid'},
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Concesionario'),h('div',{className:'dval'},lt.concesionario||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Repuesto'),h('div',{className:'dval'},lt.repuesto||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Tipo'),h('div',{className:'dval'},lt.tipo_reclamo||'—')),
+              h('div',{className:'dfield'},h('div',{className:'dlbl'},'Carta porte'),h('div',{className:'dval'},lt.carta_porte||'—'))
+            )
+          )
+        ),
+
+        tab==='hist' && h('div',null,
+          (lt.historial||[]).length===0
+            ? h('p',{style:{fontSize:12,color:'var(--g400)'}},'Sin historial.')
+            : (lt.historial||[]).map(function(e,i) {
+                return h('div',{key:i,className:'tl-item'},
+                  h('div',{className:'tl-l'},h('div',{className:'tl-dot'}),i<lt.historial.length-1&&h('div',{className:'tl-ln'})),
+                  h('div',null,h('div',{className:'tl-txt'},e.accion),h('div',{className:'tl-meta'},e.ts+' · '+e.usuario))
+                );
+              })
+        ),
+
+        tab==='cmts' && h('div',null,
+          (lt.comments||[]).length===0 && h('p',{style:{fontSize:12,color:'var(--g400)',marginBottom:12}},'Sin comentarios.'),
+          (lt.comments||[]).map(function(c,i) {
+            return h('div',{key:i,className:'cc'},h('div',{className:'cc-author'},c.autor,h('span',{className:'cc-ts'},c.ts)),h('p',{className:'cc-text'},c.texto));
+          }),
+          h('textarea',{className:'cinp',placeholder:'Comentario interno...',value:comment,onChange:function(e){setComment(e.target.value);}}),
+          h('div',{style:{marginTop:7}},h('button',{className:'btn btn-primary btn-sm',onClick:addComment,disabled:saving},saving?h('span',{className:'spinner'}):null,'Agregar'))
+        ),
+
+        tab==='sla' && h('div',null,
+          h('div',{className:'sla-d-top'},
+            h('span',{style:{fontWeight:500,color:'var(--g800)',fontSize:12}},complejidad==='Pendiente'?'⚠ Complejidad pendiente':complejidad),
+            h('span',{style:{color:fillC,fontWeight:600,fontSize:12}},lt.sla_pct+'%')
+          ),
+          h('div',{className:'sla-d-track'},h('div',{className:'sla-d-fill',style:{width:Math.min(lt.sla_pct,100)+'%',background:fillC}})),
+          h('div',{className:'dgrid'},
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Creado'),h('div',{className:'dval'},lt.creado)),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Vence'),h('div',{className:'dval'},lt.vence)),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Estado'),h('div',{className:'dval',style:{color:fillC}},sc==='sv'?'✅ En plazo':sc==='sam'?'⚠ Por vencer':'🚨 Vencido')),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Complejidad'),h('div',{className:'dval',style:{color:complejidad==='Pendiente'?'var(--a500)':'inherit'}},complejidad))
+          )
+        ),
+
+        tab==='acc' && h('div',null,
+          h('div',{className:'dsec'},
+            h('div',{className:'dsec-title'},'Asignar responsable'),
+            h('div',{style:{display:'flex',gap:7,marginBottom:18}},
+              h('select',{style:{flex:1,padding:'7px 10px',border:'1px solid var(--g200)',borderRadius:'var(--rad)',fontSize:12,fontFamily:'inherit',color:'var(--g900)',background:'var(--w)',outline:'none'},value:resp,onChange:function(e){setResp(e.target.value);}},
+                h('option',{value:''},'— Seleccionar —'),
+                DEMO_USERS.map(function(u){ return h('option',{key:u.id,value:u.nombre},u.nombre); })
+              ),
+              h('button',{className:'btn btn-primary btn-sm',onClick:assignResp,disabled:saving||!resp},'Asignar')
+            )
+          ),
+          h('div',{className:'dsec'},
+            h('div',{className:'dsec-title'},'Cambiar estado'),
+            h('div',{className:'act-row'},
+              ['En analisis','Pendiente informacion','En gestion terceros','Informe listo'].map(function(e) {
+                return h('button',{key:e,className:'btn btn-ghost btn-sm',onClick:function(){changeEstado(e);},style:{fontSize:10}},e);
+              })
+            )
+          ),
+          h('div',{className:'dsec'},
+            h('div',{className:'dsec-title'},'Envio a Legales'),
+            h('div',{style:{background:'var(--g50)',border:'1px solid var(--g200)',borderRadius:'var(--rad)',padding:'11px 13px',marginBottom:12,fontSize:12,color:'var(--g600)',lineHeight:1.65}},
+              h('p',{style:{fontWeight:600,color:'var(--g800)',marginBottom:5}},'Como funciona:'),
+              h('p',null,'1. El mail ya esta precargado con el resumen del caso.'),
+              h('p',null,'2. Edita el contenido si hace falta.'),
+              h('p',null,'3. Clic en "Abrir en cliente de correo" — se abre Gmail/Outlook listo para enviar.'),
+              h('p',null,'4. Podes cerrar el ticket en cualquier momento, sin esperar respuesta.')
+            ),
+            mailSent && h('div',{className:'al al-green',style:{marginBottom:10}},'✅ Mail abierto — ticket marcado como "Enviado a Legales".'),
+            h('div',{className:'mail-composer'},
+              h('div',{className:'mc-header'},'✉ Redactar mail para Legales'),
+              h('div',{className:'mc-body'},
+                h('div',{className:'mc-field'},h('label',null,'Para:'),h('input',{type:'text',value:mailTo,onChange:function(e){setMailTo(e.target.value);}})),
+                h('div',{className:'mc-field'},h('label',null,'CC:'),h('input',{type:'text',value:mailCC,onChange:function(e){setMailCC(e.target.value);},placeholder:'opcional'})),
+                h('textarea',{className:'mc-textarea',value:mailBody,onChange:function(e){setMailBody(e.target.value);}})
+              )
+            ),
+            h('div',{style:{display:'flex',gap:7,flexWrap:'wrap'}},
+              h('button',{className:'btn btn-primary',onClick:openMailClient},'✉ Abrir en cliente de correo'),
+              h('button',{className:'btn btn-success',onClick:function(){changeEstado('Finalizado');},disabled:saving},'✅ Marcar como Finalizado'),
+              h('button',{className:'btn btn-ghost btn-sm',onClick:function(){changeEstado('Cerrado');},disabled:saving},'Cerrar sin aprobacion'),
+              h('button',{className:'btn btn-danger btn-sm',onClick:function(){changeEstado('Rechazado');},disabled:saving},'❌ Rechazar')
+            ),
+            h('p',{style:{fontSize:10,color:'var(--g400)',marginTop:7,lineHeight:1.5}},'Finalizado = resuelto y aprobado. Cerrado = cierre operativo. Ambos finalizan el SLA.')
+          )
+        )
+      )
+    )
+  );
+}
+
+function Config() {
+  return h('div',null,
+    h('div',{className:'shdr'},h('h2',null,'Configuracion')),
+    h('div',{className:'cfg'},h('h3',null,'Conexion'),
+      h('div',{className:'cfg-row'},h('label',null,'Supabase URL'),h('input',{type:'text',defaultValue:SUPABASE_URL})),
+      h('div',{className:'cfg-row'},h('label',null,'Dominio permitido'),h('input',{type:'text',defaultValue:ALLOWED_DOMAIN})),
+      h('div',{className:'cfg-row'},h('label',null,'Google Sheets Webhook'),h('input',{type:'text',defaultValue:'https://script.google.com/...'}))
+    ),
+    h('div',{className:'cfg'},h('h3',null,'SLA — Postales'),
+      h('div',{className:'cfg-row'},h('label',null,'Simple alerta (horas)'),h('input',{type:'number',defaultValue:62})),
+      h('div',{className:'cfg-row'},h('label',null,'Simple vencido (horas)'),h('input',{type:'number',defaultValue:92})),
+      h('div',{className:'cfg-row'},h('label',null,'Complejo alerta (dias)'),h('input',{type:'number',defaultValue:7})),
+      h('div',{className:'cfg-row'},h('label',null,'Complejo vencido (dias)'),h('input',{type:'number',defaultValue:14}))
+    ),
+    h('div',{className:'cfg'},h('h3',null,'SLA — Siniestros'),
+      h('div',{className:'cfg-row'},h('label',null,'Alerta (dias)'),h('input',{type:'number',defaultValue:5})),
+      h('div',{className:'cfg-row'},h('label',null,'Vencido (dias)'),h('input',{type:'number',defaultValue:7}))
+    ),
+    h('button',{className:'btn btn-primary',style:{marginTop:4}},'Guardar')
+  );
+}
+
+function Users() {
+  const [users, setUsers] = useState(DEMO_USERS);
+  const [showAdd, setShowAdd] = useState(false);
+  const [nu, setNu] = useState({ nombre:'', email:'', rol:'operaciones' });
+
+  function add() {
+    if (!nu.nombre || !nu.email) return;
+    setUsers(function(u) { return u.concat([Object.assign({}, nu, { id:Date.now(), color:'#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0') })]); });
+    setShowAdd(false); setNu({ nombre:'', email:'', rol:'operaciones' });
+    toast('Usuario agregado', 'ok');
+  }
+
+  return h('div',null,
+    h('div',{className:'shdr'},h('h2',null,'Usuarios'),h('button',{className:'btn btn-primary btn-sm',onClick:function(){setShowAdd(function(s){return !s;})}},'+ Nuevo')),
+    showAdd && h('div',{className:'cfg',style:{marginBottom:12}},
+      h('h3',null,'Nuevo usuario'),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}},
+        h('div',{style:{display:'flex',flexDirection:'column',gap:5}},
+          h('label',{style:{fontSize:11,fontWeight:500,color:'var(--g700)'}},'Nombre'),
+          h('input',{style:{padding:'7px 9px',border:'1px solid var(--g200)',borderRadius:'var(--rad)',fontSize:12,fontFamily:'inherit',color:'var(--g900)',background:'var(--w)',outline:'none'},type:'text',value:nu.nombre,onChange:function(e){setNu(function(n){return Object.assign({},n,{nombre:e.target.value});});}})),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:5}},
+          h('label',{style:{fontSize:11,fontWeight:500,color:'var(--g700)'}},'Email'),
+          h('input',{style:{padding:'7px 9px',border:'1px solid var(--g200)',borderRadius:'var(--rad)',fontSize:12,fontFamily:'inherit',color:'var(--g900)',background:'var(--w)',outline:'none'},type:'email',value:nu.email,onChange:function(e){setNu(function(n){return Object.assign({},n,{email:e.target.value});});}}))
+      ),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:5,marginBottom:10}},
+        h('label',{style:{fontSize:11,fontWeight:500,color:'var(--g700)'}},'Rol'),
+        h('select',{style:{padding:'7px 9px',border:'1px solid var(--g200)',borderRadius:'var(--rad)',fontSize:12,fontFamily:'inherit',color:'var(--g900)',background:'var(--w)',outline:'none'},value:nu.rol,onChange:function(e){setNu(function(n){return Object.assign({},n,{rol:e.target.value});});}},
+          h('option',{value:'operaciones'},'Operaciones'),
+          h('option',{value:'supervisor'},'Supervisor')
+        )
+      ),
+      h('button',{className:'btn btn-primary btn-sm',onClick:add},'Agregar')
+    ),
+    h('div',{className:'cfg'},
+      users.map(function(u) {
+        return h('div',{key:u.id,className:'urow'},
+          h(Av,{name:u.nombre,color:u.color,size:28}),
+          h('div',{style:{flex:1}},h('div',{className:'uname'},u.nombre),h('div',{className:'uemail'},u.email)),
+          h('span',{className:'rtag rt-'+(u.rol==='supervisor'?'sup':'ops')},u.rol==='supervisor'?'Supervisor':'Operaciones'),
+          h('button',{className:'btn btn-ghost btn-sm',style:{marginLeft:7,fontSize:10}},'Editar')
+        );
+      })
+    )
+  );
+}
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState('dashboard');
+  const [tickets, setTickets] = useState(DEMO);
+  const [sel, setSel] = useState(null);
+  const [gsStatus, setGsStatus] = useState('load');
+
+  useEffect(function() {
+    sb.auth.getSession().then(function(result) { setSession(result.data.session); setLoading(false); });
+    var sub = sb.auth.onAuthStateChange(function(_, s) { setSession(s); });
+    return function() { sub.data.subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(function() {
+    if (!session) return;
+    fetchAll()
+      .then(function(data) {
+        if (data.length) { setTickets(data); toast(data.length+' tickets cargados', 'ok'); }
+        else toast('Supabase OK — sin datos aun, mostrando demo', 'info');
+        setGsStatus('ok');
+      })
+      .catch(function() { setGsStatus('err'); toast('Supabase no conectado — modo demo', 'err'); });
+  }, [session]);
+
+  if (loading) return h('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',color:'#9ca3af',fontSize:12} }, 'Cargando...');
+  if (!session) return h(Login, { onLogin:function(s){setSession(s);} });
+
+  var venc = tickets.filter(function(t) { return t.sla_pct >= 100 && !['Cerrado','Finalizado'].includes(t.estado); }).length;
+  var nav = [
+    { id:'dashboard', lbl:'Dashboard', icon:'◈' },
+    { id:'ticketera', lbl:'Ticketera', icon:'☰', badge:venc||null },
+    { id:'config', lbl:'Configuracion', icon:'⚙' },
+    { id:'usuarios', lbl:'Usuarios', icon:'👥' },
+  ];
+  var email = session.user ? session.user.email || '' : '';
+  var pageTitles = { dashboard:'Dashboard operativo', ticketera:'Ticketera', config:'Configuracion', usuarios:'Usuarios' };
+
+  return h('div', { className:'app' },
+    h('div',{className:'sidebar'},
+      h('div',{className:'sb-logo'},
+        h('div',{className:'sb-logo-icon'},'📦'),
+        h('div',null,h('h1',null,'ReclamiOps'),h('p',null,'Operaciones'))
+      ),
+      h('div',{className:'sb-nav'},
+        h('div',{className:'sb-section'},'Menu'),
+        nav.map(function(item) {
+          return h('div',{key:item.id,className:'nav-item'+(page===item.id?' active':''),onClick:function(){setPage(item.id);}},
+            h('span',{className:'nav-icon'},item.icon),
+            h('span',null,item.lbl),
+            item.badge&&h('span',{className:'nav-badge'},item.badge)
+          );
+        })
+      ),
+      h('div',{className:'sb-footer'},
+        h(Av,{name:email,color:'#2563eb',size:24}),
+        h('span',{className:'sf-name'},email.split('@')[0]),
+        h('button',{className:'btn-out',onClick:function(){sb.auth.signOut();}},'Salir')
+      )
+    ),
+    h('div',{className:'main'},
+      h('div',{className:'topbar'},
+        h('h2',null,pageTitles[page]||page),
+        venc>0&&h('div',{style:{background:'var(--r50)',border:'1px solid var(--r100)',color:'var(--r600)',padding:'3px 9px',borderRadius:5,fontSize:10,fontWeight:600,cursor:'pointer'},onClick:function(){setPage('ticketera');}},'🚨 '+venc+' vencido'+(venc>1?'s':'')),
+        h('div',{className:'topbar-right'},
+          h('div',{className:'sb-pill '+(gsStatus==='ok'?'ok':gsStatus==='err'?'err':'load')},
+            h('div',{className:'sdot'+(gsStatus==='load'?' pulse':'')}),
+            'Supabase '+(gsStatus==='load'?'...':gsStatus==='ok'?'OK':'Error')
+          )
+        )
+      ),
+      h('div',{className:'content'},
+        page==='dashboard'&&h(Dashboard,{tickets:tickets,onOpen:setSel}),
+        page==='ticketera'&&h(Ticketera,{tickets:tickets,onOpen:setSel}),
+        page==='config'&&h(Config,{}),
+        page==='usuarios'&&h(Users,{})
+      )
+    ),
+    sel&&h(TicketPanel,{ticket:sel,setTickets:setTickets,onClose:function(){setSel(null);}})
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
