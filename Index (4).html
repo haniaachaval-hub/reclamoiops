@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclamiOps — Portal Cliente</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--a500:#f59e0b;
+  --rad:8px;--rad-lg:12px;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh}
+/* Login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g50);padding:24px}
+.login-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 14px rgba(0,0,0,.07);padding:36px;width:100%;max-width:340px;text-align:center}
+.login-card h2{font-size:17px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.login-card p{font-size:13px;color:var(--g500);margin-bottom:28px}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;border:1px solid var(--g200);border-radius:var(--rad);background:var(--w);font-size:13px;font-weight:500;color:var(--g700);cursor:pointer;transition:all .12s;font-family:inherit}
+.btn-google:hover{background:var(--g50)}
+.lg-err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:8px 11px;font-size:11px;margin-bottom:12px;text-align:left}
+/* Main page */
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:44px 16px 80px}
+.topbar-client{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:34px;height:34px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand h1{font-size:15px;font-weight:600;color:var(--g900)}
+.brand p{font-size:12px;color:var(--g400);margin-top:1px}
+.btn-out{padding:5px 11px;border:1px solid var(--g200);border-radius:var(--rad);background:transparent;color:var(--g500);font-size:11px;cursor:pointer;font-family:inherit;transition:all .11s}
+.btn-out:hover{color:var(--g700);border-color:var(--g300)}
+.home-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 3px rgba(0,0,0,.07);width:100%;max-width:700px;padding:28px 32px}
+.home-title{font-size:20px;font-weight:600;color:var(--g900);margin-bottom:6px}
+.home-sub{font-size:13px;color:var(--g500);margin-bottom:28px}
+.ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.ticket-grid{grid-template-columns:1fr}}
+.ticket-type{border:1.5px solid var(--g200);border-radius:var(--rad-lg);padding:22px 18px;cursor:pointer;transition:all .13s;text-align:left;background:var(--w);position:relative}
+.ticket-type:hover{border-color:var(--b500);background:var(--b50)}
+.ticket-type.sel{border-color:var(--b500);background:var(--b50);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.ticket-type.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.tt-icon{font-size:26px;margin-bottom:10px}
+.tt-title{font-size:14px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.tt-desc{font-size:12px;color:var(--g500);line-height:1.5}
+.coming-badge{position:absolute;top:10px;right:10px;background:var(--g100);color:var(--g500);font-size:9px;font-weight:600;padding:2px 7px;border-radius:9px}
+/* Card (form) */
+.card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 3px rgba(0,0,0,.07);width:100%;max-width:660px;padding:28px 32px}
+.card-title{font-size:18px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.card-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.steps{display:flex;margin-bottom:28px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.step::before{content:'';position:absolute;top:12px;left:calc(-50% + 12px);right:calc(50% + 12px);height:1px;background:var(--g200)}
+.step:first-child::before{display:none}
+.step.done::before{background:var(--b500)}
+.snum{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1.5px solid var(--g300);background:var(--w);color:var(--g400);z-index:1;position:relative}
+.step.done .snum{border-color:var(--b500);background:var(--b500);color:#fff}
+.step.active .snum{border-color:var(--b600);color:var(--b600);background:var(--w)}
+.slbl{font-size:10px;color:var(--g400);margin-top:5px;white-space:nowrap}
+.step.active .slbl{color:var(--b600);font-weight:500}
+/* Form elements */
+.fsec{margin-bottom:22px}
+.fsec-label{font-size:10px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--g100)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.frow.full{grid-template-columns:1fr}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+label{font-size:12px;font-weight:500;color:var(--g700)}
+.req{color:var(--r500);margin-left:2px}
+input[type=text],input[type=email],select,textarea{width:100%;padding:8px 11px;border:1px solid var(--g300);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g900);background:var(--w);outline:none;transition:border-color .13s,box-shadow .13s;-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+textarea{resize:vertical;min-height:78px;line-height:1.5}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{padding:6px 13px;border:1px solid var(--g200);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;color:var(--g600);background:var(--w);transition:all .12s;font-family:inherit}
+.pill:hover{border-color:var(--b500);color:var(--b600)}
+.pill.on{border-color:var(--b500);background:var(--b50);color:var(--b700)}
+.upload{border:1.5px dashed var(--g300);border-radius:var(--rad);padding:18px;text-align:center;cursor:pointer;background:var(--g50);transition:all .13s}
+.upload:hover{border-color:var(--b500);background:var(--b50)}
+.upload.ok{border-color:var(--gr500);background:var(--gr50)}
+.upload-icon{font-size:20px;margin-bottom:5px}
+.upload p{font-size:12px;color:var(--g500)}
+.upload .hint{font-size:11px;color:var(--g400);margin-top:2px}
+.upload .ok-text{font-size:12px;color:var(--gr600);font-weight:500}
+.alert{display:flex;gap:8px;padding:10px 13px;border-radius:var(--rad);font-size:12px;margin-bottom:13px;line-height:1.5}
+.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.err-msg{font-size:11px;color:var(--r500);margin-top:4px}
+.btn-row{display:flex;gap:9px;margin-top:24px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .12s}
+.btn-primary{background:var(--b600);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--b700)}
+.btn-primary:disabled{opacity:.42;cursor:default}
+.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-ghost:hover{background:var(--g50);border-color:var(--g300)}
+.spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Resumen paso 2 */
+.confirm-box{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);overflow:hidden;margin-bottom:16px}
+.confirm-row{display:flex;align-items:flex-start;gap:8px;padding:9px 13px;border-bottom:1px solid var(--g100)}
+.confirm-row:last-child{border-bottom:none}
+.ck{font-size:11px;font-weight:600;color:var(--g400);width:140px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
+.cv{font-size:12px;color:var(--g900);flex:1;line-height:1.5}
+.edit-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--g400);padding:0 4px;transition:color .12s;flex-shrink:0}
+.edit-btn:hover{color:var(--b500)}
+/* Success */
+.success{text-align:center;padding:12px 0 4px}
+.success-icon{font-size:46px;margin-bottom:13px}
+.success h2{font-size:19px;font-weight:600;color:var(--g900);margin-bottom:6px}
+.success p{font-size:13px;color:var(--g500);margin-bottom:18px}
+.id-badge{display:inline-block;background:var(--b50);border:1px solid var(--b100);color:var(--b700);font-size:17px;font-weight:700;padding:9px 22px;border-radius:var(--rad);font-family:'Courier New',monospace;letter-spacing:.04em}
+.success-note{font-size:12px;color:var(--g400);margin-top:13px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// =====================================================
+//  CONFIGURACION
+// =====================================================
+const SUPABASE_URL  = 'https://azlkmzmlcuwwujjuykzl.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_mQ5qoAj7VXSvKPVR7MtFEQ_NpIh75lX';
+// URL de tu Netlify function o backend para enviar mails
+const MAIL_WEBHOOK  = '/api/send-mail'; // ajustar según tu setup
+// =====================================================
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+const { useState, useEffect, useRef } = React;
+const h = React.createElement;
+
+// ------- helpers -------
+function genId() {
+  var n = Math.floor(Math.random() * 900000) + 100000;
+  return 'REC-' + n;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  var p = d.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ------- Upload helper -------
+async function uploadFile(file, bucket, path) {
+  var { data, error } = await sb.storage.from(bucket).upload(path, file, { upsert: true });
+  if (error) throw error;
+  var { data: pub } = sb.storage.from(bucket).getPublicUrl(path);
+  return pub.publicUrl;
+}
+
+// ------- Login -------
+function Login({ onLogin }) {
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(function() {
+    sb.auth.getSession().then(function(r) {
+      if (r.data.session) onLogin(r.data.session);
+    });
+  }, []);
+
+  function loginGoogle() {
+    setLoading(true); setErr('');
+    sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  }
+
+  return h('div', { className: 'login-wrap' },
+    h('div', { className: 'login-card' },
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 18 } },
+        h('div', { style: { width: 29, height: 29, borderRadius: 'var(--rad)', background: 'var(--b600)', color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' } }, '📋'),
+        h('div', { style: { textAlign: 'left' } },
+          h('h2', { style: { margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--g900)' } }, 'ReclamiOps'),
+          h('p', { style: { margin: 0, fontSize: 10, color: '#9ca3af' } }, 'Portal de Clientes')
+        )
+      ),
+      h('p', null, 'Ingresá con tu cuenta Google para cargar reclamos.'),
+      err && h('div', { className: 'lg-err' }, err),
+      h('button', { className: 'btn-google', onClick: loginGoogle, disabled: loading },
+        loading
+          ? h('span', { className: 'spinner', style: { borderColor: 'rgba(0,0,0,.12)', borderTopColor: '#374151' } })
+          : h('svg', { width: 17, height: 17, viewBox: '0 0 48 48' },
+              h('path', { fill: '#4285F4', d: 'M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-19.9 0-1.3-.1-2.7-.5-5.1z' })
+            ),
+        'Continuar con Google'
+      )
+    )
+  );
+}
+
+// ------- Home — elegir tipo de ticket -------
+function Home({ session, onSelect, onLogout }) {
+  const email = session.user?.email || '';
+  const tipos = [
+    { id: 'reclamo', icon: '📋', title: 'Reclamo', desc: 'Desconocimiento de consumo, no recepción de tarjeta, etc.', available: true },
+    { id: 'trackeo', icon: '📦', title: 'Trackear tarjeta', desc: 'Consultá el estado de tu tarjeta en camino.', available: false },
+    { id: 'siniestro', icon: '🛡️', title: 'Siniestro', desc: 'Reportá un siniestro relacionado con tu tarjeta.', available: false },
+  ];
+
+  return h('div', { className: 'page' },
+    h('div', { className: 'topbar-client' },
+      h('div', { className: 'brand' },
+        h('div', { className: 'brand-icon' }, '📋'),
+        h('div', null, h('h1', null, 'ReclamiOps'), h('p', null, 'Portal Cliente'))
+      ),
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+        h('span', { style: { fontSize: 12, color: 'var(--g500)' } }, email.split('@')[0]),
+        h('button', { className: 'btn-out', onClick: onLogout }, 'Salir')
+      )
+    ),
+    h('div', { className: 'home-card' },
+      h('div', { className: 'home-title' }, 'Bienvenido/a 👋'),
+      h('div', { className: 'home-sub' }, '¿Qué necesitás hacer hoy? Seleccioná una opción para comenzar.'),
+      h('div', { className: 'ticket-grid' },
+        tipos.map(function(t) {
+          return h('div', {
+            key: t.id,
+            className: 'ticket-type' + (t.available ? '' : ' disabled'),
+            onClick: t.available ? function() { onSelect(t.id); } : null
+          },
+            !t.available && h('span', { className: 'coming-badge' }, 'Próximamente'),
+            h('div', { className: 'tt-icon' }, t.icon),
+            h('div', { className: 'tt-title' }, t.title),
+            h('div', { className: 'tt-desc' }, t.desc)
+          );
+        })
+      )
+    )
+  );
+}
+
+// ------- Formulario Reclamo -------
+function FormReclamo({ session, onBack, onSuccess }) {
+  const email = session.user?.email || '';
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [ticketId, setTicketId] = useState('');
+  const [editField, setEditField] = useState(null); // campo que se está editando en paso 2
+
+  // Campos del formulario
+  const [form, setForm] = useState({
+    titular: '',
+    tipo_reclamo: '',
+    detalle: '',
+    tipo_tarjeta: '',
+    num_secuencia: '',
+    num_tarjeta: '',
+    num_pst: '',
+  });
+  const [excelFile, setExcelFile] = useState(null);
+  const [carrierFile, setCarrierFile] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  function set(k, v) { setForm(function(f) { return Object.assign({}, f, { [k]: v }); }); }
+
+  // Validación paso 1
+  function validate() {
+    var e = {};
+    if (!form.titular.trim()) e.titular = 'Campo obligatorio';
+    if (!form.tipo_reclamo) e.tipo_reclamo = 'Seleccioná un tipo';
+    if (!form.tipo_tarjeta) e.tipo_tarjeta = 'Seleccioná el tipo de tarjeta';
+    if (form.tipo_tarjeta === 'VISA' && !form.num_secuencia.trim()) e.num_secuencia = 'Campo obligatorio';
+    if ((form.tipo_tarjeta === 'Mastercard' || form.tipo_tarjeta === 'Débito') && !form.num_tarjeta.trim()) e.num_tarjeta = 'Campo obligatorio';
+    if (form.tipo_reclamo === 'Desconocimiento de consumo' && !excelFile) e.excel = 'Debés adjuntar el excel completo';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
+
+  function goStep2() {
+    if (validate()) setStep(2);
+  }
+
+  // Resumen para paso 2
+  var resumen = [
+    { key: 'titular', label: 'Titular', value: form.titular },
+    { key: 'tipo_reclamo', label: 'Tipo de reclamo', value: form.tipo_reclamo },
+    form.detalle ? { key: 'detalle', label: 'Detalle', value: form.detalle } : null,
+    { key: 'tipo_tarjeta', label: 'Tipo de tarjeta', value: form.tipo_tarjeta },
+    form.tipo_tarjeta === 'VISA' ? { key: 'num_secuencia', label: 'N° de Secuencia', value: form.num_secuencia } : null,
+    (form.tipo_tarjeta === 'Mastercard' || form.tipo_tarjeta === 'Débito') ? { key: 'num_tarjeta', label: 'N° de Tarjeta', value: form.num_tarjeta } : null,
+    form.num_pst ? { key: 'num_pst', label: 'N° PST', value: form.num_pst } : null,
+    excelFile ? { key: 'excel', label: 'Excel adjunto', value: excelFile.name, noEdit: true } : null,
+    carrierFile ? { key: 'carrier', label: 'Carrier/Acuse', value: carrierFile.name, noEdit: true } : null,
+  ].filter(Boolean);
+
+  async function submit() {
+    setSaving(true);
+    try {
+      var id = genId();
+      var excelUrl = null;
+      var carrierUrl = null;
+
+      if (excelFile) {
+        excelUrl = await uploadFile(excelFile, 'reclamos', id + '/excel_' + excelFile.name);
+      }
+      if (carrierFile) {
+        carrierUrl = await uploadFile(carrierFile, 'reclamos', id + '/carrier_' + carrierFile.name);
+      }
+
+      var payload = {
+        id: id,
+        titular: form.titular,
+        tipo_reclamo: form.tipo_reclamo,
+        detalle: form.detalle || null,
+        tipo_tarjeta: form.tipo_tarjeta,
+        num_secuencia: form.tipo_tarjeta === 'VISA' ? form.num_secuencia : null,
+        num_tarjeta: (form.tipo_tarjeta === 'Mastercard' || form.tipo_tarjeta === 'Débito') ? form.num_tarjeta : null,
+        num_pst: form.num_pst || null,
+        excel_url: excelUrl,
+        excel_nombre: excelFile ? excelFile.name : null,
+        carrier_url: carrierUrl,
+        carrier_nombre: carrierFile ? carrierFile.name : null,
+        email_cliente: email,
+        estado: 'Recibido',
+        creado: today(),
+        historial: [{ ts: new Date().toISOString().slice(0,16).replace('T',' '), accion: 'Ticket creado', usuario: email }],
+        comments: [],
+        dias_en_analisis: 0,
+        fecha_inicio_analisis: null,
+        leido: false,
+      };
+
+      var { error } = await sb.from('reclamos').insert([payload]);
+      if (error) throw error;
+
+      // Disparar mail al comercial (via webhook / edge function)
+      try {
+        await fetch(MAIL_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: 'nuevo_reclamo',
+            id: id,
+            titular: form.titular,
+            tipo_reclamo: form.tipo_reclamo,
+            detalle: form.detalle,
+            tipo_tarjeta: form.tipo_tarjeta,
+            email_cliente: email,
+          })
+        });
+      } catch(mailErr) { console.warn('Mail no enviado:', mailErr); }
+
+      setTicketId(id);
+      setStep(3);
+    } catch(err) {
+      alert('Error al enviar: ' + (err.message || err));
+    }
+    setSaving(false);
+  }
+
+  if (step === 3) {
+    return h('div', { className: 'page' },
+      h('div', { className: 'card' },
+        h('div', { className: 'success' },
+          h('div', { className: 'success-icon' }, '✅'),
+          h('h2', null, '¡Reclamo enviado!'),
+          h('p', null, 'Tu reclamo fue registrado exitosamente. El equipo comercial recibirá una notificación.'),
+          h('div', { className: 'id-badge' }, ticketId),
+          h('p', { className: 'success-note' }, 'Guardá este ID para futuras consultas.'),
+          h('div', { style: { marginTop: 24 } },
+            h('button', { className: 'btn btn-primary', onClick: onBack }, '← Volver al inicio')
+          )
+        )
+      )
+    );
+  }
+
+  return h('div', { className: 'page' },
+    h('div', { className: 'topbar-client', style: { maxWidth: 660 } },
+      h('div', { className: 'brand' },
+        h('div', { className: 'brand-icon' }, '📋'),
+        h('div', null, h('h1', null, 'ReclamiOps'))
+      )
+    ),
+    h('div', { className: 'card' },
+      h('div', { className: 'card-title' }, 'Nuevo Reclamo'),
+      h('div', { className: 'card-sub' }, step === 1 ? 'Completá los datos del reclamo.' : 'Revisá el resumen antes de enviar.'),
+      // Steps
+      h('div', { className: 'steps' },
+        [['1','Datos'],['2','Resumen']].map(function(s, i) {
+          var st = i + 1;
+          var cls = 'step' + (step > st ? ' done' : step === st ? ' active' : '');
+          return h('div', { key: s[0], className: cls },
+            h('div', { className: 'snum' }, step > st ? '✓' : s[0]),
+            h('div', { className: 'slbl' }, s[1])
+          );
+        })
+      ),
+
+      // ---- PASO 1 ----
+      step === 1 && h('div', null,
+        // Titular
+        h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Nombre y Apellido del titular', h('span', { className: 'req' }, '*')),
+            h('input', { type: 'text', value: form.titular, placeholder: 'Ej: María González', onChange: function(e) { set('titular', e.target.value); } }),
+            errors.titular && h('p', { className: 'err-msg' }, errors.titular)
+          )
+        ),
+        // Tipo de reclamo
+        h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Tipo de reclamo', h('span', { className: 'req' }, '*')),
+            h('select', { value: form.tipo_reclamo, onChange: function(e) { set('tipo_reclamo', e.target.value); } },
+              h('option', { value: '' }, '— Seleccionar —'),
+              ['Desconocimiento de consumo', 'No recepción de tarjeta'].map(function(op) {
+                return h('option', { key: op, value: op }, op);
+              })
+            ),
+            errors.tipo_reclamo && h('p', { className: 'err-msg' }, errors.tipo_reclamo)
+          )
+        ),
+        // Detalle
+        h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Detalle del reclamo ', h('span', { style: { fontSize: 11, color: 'var(--g400)', fontWeight: 400 } }, '(Opcional)')),
+            h('textarea', { value: form.detalle, placeholder: 'Describí brevemente el reclamo...', onChange: function(e) { set('detalle', e.target.value); } })
+          )
+        ),
+        // Tipo de tarjeta
+        h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Tipo de tarjeta', h('span', { className: 'req' }, '*')),
+            h('div', { className: 'pills' },
+              ['VISA', 'Mastercard', 'Débito'].map(function(op) {
+                return h('button', {
+                  key: op,
+                  className: 'pill' + (form.tipo_tarjeta === op ? ' on' : ''),
+                  onClick: function() { set('tipo_tarjeta', op); set('num_secuencia', ''); set('num_tarjeta', ''); }
+                }, op);
+              })
+            ),
+            errors.tipo_tarjeta && h('p', { className: 'err-msg' }, errors.tipo_tarjeta)
+          )
+        ),
+        // N° según tarjeta
+        form.tipo_tarjeta === 'VISA' && h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Número de Secuencia', h('span', { className: 'req' }, '*')),
+            h('input', { type: 'text', value: form.num_secuencia, placeholder: 'Ej: 000123', onChange: function(e) { set('num_secuencia', e.target.value); } }),
+            errors.num_secuencia && h('p', { className: 'err-msg' }, errors.num_secuencia)
+          )
+        ),
+        (form.tipo_tarjeta === 'Mastercard' || form.tipo_tarjeta === 'Débito') && h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Número de tarjeta', h('span', { className: 'req' }, '*')),
+            h('input', { type: 'text', value: form.num_tarjeta, placeholder: 'Últimos 4 o número completo', onChange: function(e) { set('num_tarjeta', e.target.value); } }),
+            errors.num_tarjeta && h('p', { className: 'err-msg' }, errors.num_tarjeta)
+          )
+        ),
+        // N° PST
+        h('div', { className: 'frow full' },
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Número de PST ', h('span', { style: { fontSize: 11, color: 'var(--g400)', fontWeight: 400 } }, '(Opcional)')),
+            h('input', { type: 'text', value: form.num_pst, placeholder: 'Si aplica', onChange: function(e) { set('num_pst', e.target.value); } })
+          )
+        ),
+        // Campos adicionales si es Desconocimiento de consumo
+        form.tipo_reclamo === 'Desconocimiento de consumo' && h('div', null,
+          h('div', { className: 'alert al-amber' }, '⚠ Para este tipo de reclamo debés descargar la planilla, completarla y adjuntarla.'),
+          h('div', { className: 'fgroup', style: { marginBottom: 12 } },
+            h('label', null, 'Planilla de consumos'),
+            h('a', {
+              href: 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBBQAAAAIAA==',
+              download: 'Planilla_Desconocimiento_Consumo.xlsx',
+              style: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--b600)', fontWeight: 500, textDecoration: 'none', border: '1px solid var(--b100)', padding: '6px 12px', borderRadius: 'var(--rad)', background: 'var(--b50)' }
+            }, '⬇ Descargar planilla Excel')
+          ),
+          h('div', { className: 'fgroup', style: { marginBottom: 12 } },
+            h('label', null, 'Adjuntar excel completo (respetar formato)', h('span', { className: 'req' }, '*')),
+            h('div', {
+              className: 'upload' + (excelFile ? ' ok' : ''),
+              onClick: function() { document.getElementById('excel-inp').click(); }
+            },
+              h('input', {
+                id: 'excel-inp', type: 'file', accept: '.xlsx,.xls,.csv', style: { display: 'none' },
+                onChange: function(e) { if (e.target.files[0]) setExcelFile(e.target.files[0]); }
+              }),
+              h('div', { className: 'upload-icon' }, excelFile ? '✅' : '📊'),
+              excelFile
+                ? h('p', { className: 'ok-text' }, excelFile.name)
+                : h('div', null, h('p', null, 'Clic para adjuntar el Excel'), h('p', { className: 'hint' }, '.xlsx / .xls / .csv'))
+            ),
+            errors.excel && h('p', { className: 'err-msg' }, errors.excel)
+          ),
+          h('div', { className: 'fgroup' },
+            h('label', null, 'Carrier / Acuse de recibo ', h('span', { style: { fontSize: 11, color: 'var(--g400)', fontWeight: 400 } }, '(Opcional)')),
+            h('div', {
+              className: 'upload' + (carrierFile ? ' ok' : ''),
+              onClick: function() { document.getElementById('carrier-inp').click(); }
+            },
+              h('input', {
+                id: 'carrier-inp', type: 'file', style: { display: 'none' },
+                onChange: function(e) { if (e.target.files[0]) setCarrierFile(e.target.files[0]); }
+              }),
+              h('div', { className: 'upload-icon' }, carrierFile ? '✅' : '📄'),
+              carrierFile
+                ? h('p', { className: 'ok-text' }, carrierFile.name)
+                : h('div', null, h('p', null, 'Clic para adjuntar carrier/acuse'), h('p', { className: 'hint' }, 'PDF, imagen o cualquier formato'))
+            )
+          )
+        ),
+        h('div', { className: 'btn-row' },
+          h('button', { className: 'btn btn-ghost', onClick: onBack }, '← Atrás'),
+          h('button', { className: 'btn btn-primary', onClick: goStep2 }, 'Continuar →')
+        )
+      ),
+
+      // ---- PASO 2: Resumen editable ----
+      step === 2 && h('div', null,
+        h('div', { className: 'alert al-blue' }, 'ℹ Revisá todos los datos. Podés editar con el ✏ si detectás algún error.'),
+        h('div', { className: 'confirm-box' },
+          resumen.map(function(row) {
+            if (!row) return null;
+            var isEditing = editField === row.key;
+            return h('div', { key: row.key, className: 'confirm-row' },
+              h('span', { className: 'ck' }, row.label),
+              isEditing
+                ? h('input', {
+                    type: 'text',
+                    style: { flex: 1, fontSize: 12, padding: '4px 8px', border: '1px solid var(--b500)', borderRadius: 5, outline: 'none', fontFamily: 'inherit', color: 'var(--g900)', background: 'var(--w)' },
+                    value: form[row.key] || '',
+                    autoFocus: true,
+                    onChange: function(e) { set(row.key, e.target.value); },
+                    onBlur: function() { setEditField(null); },
+                    onKeyDown: function(e) { if (e.key === 'Enter') setEditField(null); }
+                  })
+                : h('span', { className: 'cv' }, row.value || '—'),
+              !row.noEdit && !isEditing && h('button', {
+                className: 'edit-btn',
+                title: 'Editar',
+                onClick: function() { setEditField(row.key); }
+              }, '✏')
+            );
+          })
+        ),
+        h('div', { className: 'btn-row' },
+          h('button', { className: 'btn btn-ghost', onClick: function() { setStep(1); } }, '← Atrás'),
+          h('button', { className: 'btn btn-primary', onClick: submit, disabled: saving },
+            saving ? h('span', { className: 'spinner' }) : null,
+            'Enviar reclamo'
+          )
+        )
+      )
+    )
+  );
+}
+
+// ------- App root -------
+function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState('home'); // 'home' | 'reclamo'
+
+  useEffect(function() {
+    sb.auth.getSession().then(function(r) { setSession(r.data.session); setLoading(false); });
+    var sub = sb.auth.onAuthStateChange(function(_, s) { setSession(s); });
+    return function() { sub.data.subscription.unsubscribe(); };
+  }, []);
+
+  if (loading) return h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: '#9ca3af', fontSize: 12 } }, 'Cargando...');
+  if (!session) return h(Login, { onLogin: function(s) { setSession(s); } });
+
+  function logout() { sb.auth.signOut(); setSession(null); }
+
+  if (view === 'reclamo') {
+    return h(FormReclamo, {
+      session: session,
+      onBack: function() { setView('home'); },
+      onSuccess: function() { setView('home'); }
+    });
+  }
+
+  return h(Home, {
+    session: session,
+    onSelect: function(tipo) { if (tipo === 'reclamo') setView('reclamo'); },
+    onLogout: logout
+  });
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

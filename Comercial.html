@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comercial — ReclamiOps</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g800:#1f2937;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b400:#60a5fa;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;--gr700:#15803d;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--a500:#f59e0b;--a600:#d97706;
+  --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
+  --rad:7px;--rad-lg:11px;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:208px;min-width:208px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb-logo{padding:15px 15px 12px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:9px}
+.sb-logo-icon{width:29px;height:29px;border-radius:var(--rad);background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo h1{font-size:13px;font-weight:600;color:var(--g900)}
+.sb-logo p{font-size:10px;color:var(--g400);margin-top:1px}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.sb-section{font-size:9px;font-weight:600;color:var(--g400);letter-spacing:.07em;text-transform:uppercase;padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .11s;margin-bottom:1px;user-select:none}
+.nav-item:hover{background:var(--g50);color:var(--g900)}
+.nav-item.active{background:var(--gr50);color:var(--gr700);font-weight:500}
+.nav-icon{width:15px;text-align:center;font-size:13px;flex-shrink:0}
+.sb-footer{padding:9px 12px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit;transition:all .11s}
+.btn-out:hover{color:var(--g600);border-color:var(--g300)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:48px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 18px;gap:10px;flex-shrink:0}
+.topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.sb-pill{display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:5px}
+.sb-pill.ok{background:var(--gr50);border:1px solid var(--gr100);color:var(--gr700)}
+.sb-pill.err{background:var(--r50);border:1px solid var(--r100);color:var(--r600)}
+.sb-pill.load{background:var(--b50);border:1px solid var(--b100);color:var(--b600)}
+.sdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.sdot.pulse{animation:pulse 1.3s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.content{flex:1;overflow-y:auto;padding:18px 20px}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.shdr h2{font-size:13px;font-weight:600;color:var(--g900)}
+.search{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:6px 10px;font-size:12px;color:var(--g700);font-family:inherit;outline:none;width:170px;transition:all .11s}
+.search:focus{border-color:var(--b400);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+.tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:9px 11px;border-bottom:1px solid var(--g200);background:var(--g50);white-space:nowrap}
+tbody td{padding:10px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--b50);cursor:pointer}
+.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--b600)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap}
+.bn{background:var(--b50);color:var(--b700)}
+.ba{background:var(--p50);color:var(--p600)}
+.bfin{background:var(--gr100);color:var(--gr700);border:1px solid var(--gr500)}
+.breo{background:var(--r50);color:var(--r600)}
+.empty{text-align:center;padding:40px 20px;color:var(--g400)}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.45}
+.empty p{font-size:12px}
+/* Panel */
+.overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
+.panel{background:var(--w);width:540px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ph{padding:15px 18px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5}
+.ph-top{display:flex;align-items:flex-start;gap:9px;margin-bottom:5px}
+.ph-info{flex:1;min-width:0}
+.ph-info h2{font-size:14px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.ph-info p{font-size:11px;color:var(--g500);line-height:1.4}
+.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:15px;flex-shrink:0}
+.close:hover{color:var(--g700)}
+.pbody{padding:18px}
+.dsec{margin-bottom:18px}
+.dsec-title{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dfield{background:var(--g50);border-radius:var(--rad);padding:8px 10px;border:1px solid var(--g100)}
+.dlbl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.dval{font-size:12px;color:var(--g900);font-weight:500}
+.al{display:flex;gap:7px;padding:9px 12px;border-radius:var(--rad);font-size:12px;margin-bottom:12px;line-height:1.5}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.al-green{background:var(--gr50);border:1px solid var(--gr100);color:var(--gr700)}
+.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .11s}
+.btn-primary{background:var(--b600);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--b700)}
+.btn-danger{background:var(--r50);color:var(--r600);border:1px solid var(--r100)}
+.btn-danger:hover{background:var(--r100)}
+.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-ghost:hover{background:var(--g50);border-color:var(--g300)}
+.btn-sm{padding:5px 9px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:default}
+.spinner{width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.reopen-modal{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:16px;margin-top:14px}
+.reopen-modal h4{font-size:12px;font-weight:600;color:var(--g900);margin-bottom:10px}
+.cinp{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;min-height:80px;transition:all .11s}
+.cinp:focus{border-color:var(--b400);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g50);padding:24px}
+.login-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 14px rgba(0,0,0,.07);padding:34px;width:100%;max-width:320px;text-align:center}
+.login-card h2{font-size:16px;font-weight:600;color:var(--g900);margin-bottom:3px}
+.login-card p{font-size:12px;color:var(--g500);margin-bottom:24px}
+.btn-google{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:10px;border:1px solid var(--g200);border-radius:var(--rad);background:var(--w);font-size:13px;font-weight:500;color:var(--g700);cursor:pointer;transition:all .11s;font-family:inherit}
+.btn-google:hover{background:var(--g50)}
+.lg-err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:8px 11px;font-size:11px;margin-bottom:12px;text-align:left}
+.toast-wrap{position:fixed;bottom:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:9px 13px;font-size:12px;color:var(--g700);max-width:280px;box-shadow:0 4px 12px rgba(0,0,0,.08);animation:tin .18s ease}
+.toast.ok{border-left:3px solid var(--gr500)}
+.toast.err{border-left:3px solid var(--r500)}
+.toast.info{border-left:3px solid var(--b500)}
+@keyframes tin{from{transform:translateX(14px);opacity:0}to{transform:none;opacity:1}}
+input,select,textarea{-webkit-appearance:none;appearance:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toast-wrap" id="toasts"></div>
+<script>
+// =====================================================
+//  CONFIGURACION
+// =====================================================
+const SUPABASE_URL  = 'https://azlkmzmlcuwwujjuykzl.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_mQ5qoAj7VXSvKPVR7MtFEQ_NpIh75lX';
+// Dominio corporativo del comercial
+const ALLOWED_DOMAIN = 'ocasa.com';
+// =====================================================
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+function toast(msg, type) {
+  if (!type) type = 'info';
+  var w = document.getElementById('toasts');
+  var d = document.createElement('div');
+  d.className = 'toast ' + type;
+  d.textContent = msg;
+  w.appendChild(d);
+  setTimeout(function() { d.remove(); }, 3500);
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  var d = str.slice(0,10).split('-');
+  if (d.length < 3) return str;
+  return d[2]+'/'+d[1]+'/'+d[0];
+}
+function today() { return new Date().toISOString().slice(0,10); }
+function getNow() { return new Date().toISOString().slice(0,16).replace('T',' '); }
+
+// Carga tickets del comercial logueado
+// En la tabla 'comerciales' hay columna emails_clientes (array de emails)
+// o bien en 'reclamos' hay email_cliente que matchea.
+// Para simplificar: cargamos todos y filtramos por clientes_asignados del perfil.
+async function fetchTickets(clientesAsignados) {
+  var query = sb.from('reclamos').select('*').order('creado', { ascending: false });
+  // Si hay lista de clientes, filtrar
+  if (clientesAsignados && clientesAsignados.length > 0) {
+    query = query.in('email_cliente', clientesAsignados);
+  }
+  var { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(function(r) {
+    return Object.assign({}, r, { comments: r.comments || [], historial: r.historial || [] });
+  });
+}
+
+async function fetchPerfil(email) {
+  // Tabla 'comerciales': id, email, nombre, clientes_asignados (array de emails)
+  var { data } = await sb.from('comerciales').select('*').eq('email', email).single();
+  return data || null;
+}
+
+async function updateTicket(id, fields) {
+  var { error } = await sb.from('reclamos').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+const DEMO = [
+  { id:'REC-100001', tipo_reclamo:'Desconocimiento de consumo', titular:'María González', tipo_tarjeta:'VISA', email_cliente:'maria@ejemplo.com', estado:'Recibido', creado:'2025-04-01', comments:[], historial:[], excel_url:null, carrier_url:null },
+  { id:'REC-100002', tipo_reclamo:'No recepción de tarjeta', titular:'Jorge Fernández', tipo_tarjeta:'Mastercard', email_cliente:'jorge@ejemplo.com', estado:'En análisis', creado:'2025-03-28', comments:[], historial:[], excel_url:null, carrier_url:null },
+  { id:'REC-100003', tipo_reclamo:'Desconocimiento de consumo', titular:'Laura Perez', tipo_tarjeta:'Débito', email_cliente:'laura@ejemplo.com', estado:'Finalizado', creado:'2025-03-10', comments:[], historial:[], excel_url:null, carrier_url:null },
+];
+
+const { useState, useEffect, useMemo } = React;
+const h = React.createElement;
+
+function Av(props) {
+  var name = props.name || '?'; var color = props.color || '#059669'; var size = props.size || 26;
+  var ini = name.split(' ').map(function(w) { return w[0]; }).slice(0,2).join('');
+  return h('div', { style:{ width:size, height:size, borderRadius:'50%', background:color+'18', border:'1px solid '+color+'33', display:'flex', alignItems:'center', justifyContent:'center', fontSize:size*.36, fontWeight:600, color:color, flexShrink:0 } }, ini);
+}
+
+function getBC(estado) {
+  var m = { 'Recibido':'bn', 'En análisis':'ba', 'Finalizado':'bfin', 'Re abierto':'breo' };
+  return m[estado] || 'bn';
+}
+
+function Login({ onLogin }) {
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(function() {
+    sb.auth.getSession().then(function(r) {
+      if (r.data.session) {
+        var email = r.data.session.user.email || '';
+        if (ALLOWED_DOMAIN !== 'tuempresa.com' && !email.endsWith('@' + ALLOWED_DOMAIN)) {
+          sb.auth.signOut(); setErr('Acceso restringido a cuentas @' + ALLOWED_DOMAIN);
+        } else { onLogin(r.data.session); }
+      }
+    });
+  }, []);
+
+  function loginGoogle() {
+    setLoading(true); setErr('');
+    sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:window.location.href, queryParams:{ hd:ALLOWED_DOMAIN } } });
+  }
+
+  return h('div', { className:'login-wrap' },
+    h('div', { className:'login-card' },
+      h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'center', gap:9, marginBottom:18 } },
+        h('div', { style:{ width:29,height:29,borderRadius:'var(--rad)',background:'#059669',color:'#fff',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center' } }, '💼'),
+        h('div', { style:{textAlign:'left'} },
+          h('h2',{style:{margin:0,fontSize:16,fontWeight:600,color:'var(--g900)'}},'ReclamiOps'),
+          h('p',{style:{margin:0,fontSize:10,color:'#9ca3af'}},'Portal Comercial')
+        )
+      ),
+      h('p', null, 'Ingresá con tu cuenta Google corporativa.'),
+      err && h('div', { className:'lg-err' }, err),
+      h('button', { className:'btn-google', onClick:loginGoogle, disabled:loading },
+        loading
+          ? h('span', { className:'spinner', style:{ borderColor:'rgba(0,0,0,.12)', borderTopColor:'#374151' } })
+          : h('svg', { width:17,height:17,viewBox:'0 0 48 48' }, h('path', { fill:'#4285F4', d:'M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-19.9 0-1.3-.1-2.7-.5-5.1z' })),
+        'Continuar con Google'
+      ),
+      h('p', { style:{fontSize:10,color:'#9ca3af',marginTop:13} }, 'Solo cuentas @' + ALLOWED_DOMAIN)
+    )
+  );
+}
+
+// -------- Panel de detalle --------
+function TicketPanel({ ticket, setTickets, onClose, userEmail }) {
+  const [lt, setLt] = useState(ticket);
+  const [saving, setSaving] = useState(false);
+  const [showReopen, setShowReopen] = useState(false);
+  const [reopenMsg, setReopenMsg] = useState('');
+
+  function sync(updated) {
+    setLt(updated);
+    setTickets(function(ts) { return ts.map(function(t) { return t.id === ticket.id ? updated : t; }); });
+  }
+
+  async function reopen() {
+    if (!reopenMsg.trim()) { toast('Escribí un mensaje para el operario', 'err'); return; }
+    setSaving(true);
+    var newH = {
+      ts: getNow(),
+      accion: 'Re abierto por comercial — Mensaje: ' + reopenMsg,
+      usuario: userEmail
+    };
+    var updated = Object.assign({}, lt, {
+      estado: 'Re abierto',
+      historial: (lt.historial||[]).concat([newH]),
+      fecha_inicio_analisis: today(),
+    });
+    try { await updateTicket(lt.id, { estado:'Re abierto', historial:updated.historial, fecha_inicio_analisis:today() }); } catch(e) { console.warn(e); }
+    sync(updated);
+    setShowReopen(false); setReopenMsg('');
+    toast('Ticket re abierto', 'ok'); setSaving(false);
+  }
+
+  return h('div', { className:'overlay', onClick:function(e){ if(e.target.className==='overlay')onClose(); } },
+    h('div', { className:'panel' },
+      h('div',{className:'ph'},
+        h('div',{className:'ph-top'},
+          h('div',{className:'ph-info'},
+            h('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:5,flexWrap:'wrap'}},
+              h('span',{className:'tid',style:{fontSize:11}},lt.id),
+              h('span',{className:'badge '+getBC(lt.estado)},lt.estado)
+            ),
+            h('h2',null,lt.titular||'—'),
+            h('p',null,lt.tipo_reclamo+(lt.tipo_tarjeta?' · '+lt.tipo_tarjeta:''))
+          ),
+          h('button',{className:'close',onClick:onClose},'✕')
+        )
+      ),
+      h('div',{className:'pbody'},
+        lt.estado==='Finalizado' && h('div',{className:'al al-green'},'✅ Este ticket fue finalizado por el equipo de operaciones.'),
+        lt.estado==='Re abierto' && h('div',{className:'al al-amber'},'🔄 Has re abierto este ticket. Operaciones fue notificado.'),
+
+        h('div',{className:'dsec'},h('div',{className:'dsec-title'},'General'),
+          h('div',{className:'dgrid'},
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'ID'),h('div',{className:'dval',style:{fontFamily:'monospace',color:'var(--b600)'}},lt.id)),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Estado'),h('div',{className:'dval'},lt.estado)),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Fecha ingreso'),h('div',{className:'dval'},fmtDate(lt.creado))),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Responsable ops.'),h('div',{className:'dval'},lt.responsable||'Sin asignar'))
+          )
+        ),
+        h('div',{className:'dsec'},h('div',{className:'dsec-title'},'Datos del reclamo'),
+          h('div',{className:'dgrid'},
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Titular'),h('div',{className:'dval'},lt.titular||'—')),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Tipo reclamo'),h('div',{className:'dval'},lt.tipo_reclamo||'—')),
+            h('div',{className:'dfield'},h('div',{className:'dlbl'},'Tipo tarjeta'),h('div',{className:'dval'},lt.tipo_tarjeta||'—')),
+            lt.num_secuencia && h('div',{className:'dfield'},h('div',{className:'dlbl'},'N° Secuencia'),h('div',{className:'dval'},lt.num_secuencia)),
+            lt.num_tarjeta && h('div',{className:'dfield'},h('div',{className:'dlbl'},'N° Tarjeta'),h('div',{className:'dval'},lt.num_tarjeta)),
+            lt.num_pst && h('div',{className:'dfield'},h('div',{className:'dlbl'},'N° PST'),h('div',{className:'dval'},lt.num_pst))
+          )
+        ),
+        lt.detalle && h('div',{className:'dsec'},h('div',{className:'dsec-title'},'Detalle del cliente'),
+          h('div',{style:{background:'var(--g50)',border:'1px solid var(--g100)',borderRadius:'var(--rad)',padding:'10px 12px',fontSize:12,color:'var(--g700)',lineHeight:1.6}},lt.detalle)
+        ),
+        (lt.excel_url||lt.carrier_url) && h('div',{className:'dsec'},h('div',{className:'dsec-title'},'Adjuntos'),
+          h('div',{style:{display:'flex',flexDirection:'column',gap:6}},
+            lt.excel_url && h('a',{href:lt.excel_url,target:'_blank',rel:'noopener',style:{display:'flex',alignItems:'center',gap:8,background:'var(--b50)',border:'1px solid var(--b100)',borderRadius:'var(--rad)',padding:'8px 12px',textDecoration:'none',color:'var(--b700)',fontSize:12,fontWeight:500}},'📊 ',lt.excel_nombre||'Excel adjunto',' ⬇'),
+            lt.carrier_url && h('a',{href:lt.carrier_url,target:'_blank',rel:'noopener',style:{display:'flex',alignItems:'center',gap:8,background:'var(--g50)',border:'1px solid var(--g200)',borderRadius:'var(--rad)',padding:'8px 12px',textDecoration:'none',color:'var(--g700)',fontSize:12,fontWeight:500}},'📄 ',lt.carrier_nombre||'Carrier/Acuse',' ⬇')
+          )
+        ),
+
+        // Re abrir ticket (solo si está Finalizado)
+        lt.estado === 'Finalizado' && h('div',{className:'dsec'},
+          h('div',{className:'dsec-title'},'Acciones'),
+          !showReopen
+            ? h('button',{className:'btn btn-danger btn-sm',onClick:function(){setShowReopen(true);}}, '🔄 Re abrir ticket')
+            : h('div',{className:'reopen-modal'},
+                h('h4',null,'Motivo para re abrir'),
+                h('textarea',{className:'cinp',placeholder:'Explicá por qué se re abre el ticket (llegará al operario)...',value:reopenMsg,onChange:function(e){setReopenMsg(e.target.value);}}),
+                h('div',{style:{display:'flex',gap:7,marginTop:10}},
+                  h('button',{className:'btn btn-primary btn-sm',onClick:reopen,disabled:saving||!reopenMsg.trim()},saving?h('span',{className:'spinner'}):null,'Confirmar re apertura'),
+                  h('button',{className:'btn btn-ghost btn-sm',onClick:function(){setShowReopen(false);setReopenMsg('');}}, 'Cancelar')
+                )
+              )
+        )
+      )
+    )
+  );
+}
+
+// -------- Ticketera comercial --------
+function Ticketera({ tickets, setTickets, onOpen }) {
+  const [q, setQ] = useState('');
+
+  var filtered = useMemo(function() {
+    if (!q) return tickets;
+    return tickets.filter(function(t) {
+      return t.id.toLowerCase().includes(q.toLowerCase()) ||
+             (t.titular||'').toLowerCase().includes(q.toLowerCase()) ||
+             (t.email_cliente||'').toLowerCase().includes(q.toLowerCase());
+    });
+  }, [tickets, q]);
+
+  return h('div', null,
+    h('div',{className:'shdr'},
+      h('h2',null,'Mis tickets'),
+      h('input',{className:'search',placeholder:'Buscar ID o titular...',value:q,onChange:function(e){setQ(e.target.value);}})
+    ),
+    h('div',{className:'tw'},
+      h('table',null,
+        h('thead',null,h('tr',null,
+          h('th',null,'ID'),
+          h('th',null,'Fecha ingreso'),
+          h('th',null,'Tipo reclamo'),
+          h('th',null,'Titular/Cliente'),
+          h('th',null,'Monto'),
+          h('th',null,'Estado')
+        )),
+        h('tbody',null,
+          filtered.length === 0
+            ? h('tr',null,h('td',{colSpan:6},h('div',{className:'empty'},h('div',{className:'empty-icon'},'📭'),h('p',null,'Sin tickets asignados'))))
+            : filtered.map(function(t) {
+                return h('tr',{key:t.id,onClick:function(){onOpen(t);}},
+                  h('td',null,h('span',{className:'tid'},t.id)),
+                  h('td',{style:{fontSize:11}},fmtDate(t.creado)),
+                  h('td',{style:{fontSize:11}},t.tipo_reclamo||'—'),
+                  h('td',{style:{fontWeight:500,color:'var(--g900)',fontSize:11}},t.titular||'—'),
+                  h('td',{style:{fontSize:11}},
+                    t.tipo_reclamo==='Desconocimiento de consumo' && t.monto
+                      ? '$'+t.monto
+                      : h('span',{style:{color:'var(--g300)'}},'—')
+                  ),
+                  h('td',null,h('span',{className:'badge '+getBC(t.estado)},t.estado))
+                );
+              })
+        )
+      )
+    )
+  );
+}
+
+// -------- App --------
+function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState(DEMO);
+  const [sel, setSel] = useState(null);
+  const [gsStatus, setGsStatus] = useState('load');
+
+  useEffect(function() {
+    sb.auth.getSession().then(function(r) { setSession(r.data.session); setLoading(false); });
+    var sub = sb.auth.onAuthStateChange(function(_, s) { setSession(s); });
+    return function() { sub.data.subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(function() {
+    if (!session) return;
+    var email = session.user?.email || '';
+    // Cargar perfil comercial para obtener sus clientes asignados
+    fetchPerfil(email)
+      .then(function(perfil) {
+        var clientes = perfil && perfil.clientes_asignados ? perfil.clientes_asignados : [];
+        return fetchTickets(clientes);
+      })
+      .then(function(data) {
+        if (data.length) { setTickets(data); toast(data.length + ' tickets cargados', 'ok'); }
+        else toast('Sin tickets asignados — modo demo', 'info');
+        setGsStatus('ok');
+      })
+      .catch(function() { setGsStatus('err'); toast('No se pudo conectar — modo demo', 'err'); });
+  }, [session]);
+
+  if (loading) return h('div', { style:{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',color:'#9ca3af',fontSize:12} }, 'Cargando...');
+  if (!session) return h(Login, { onLogin:function(s){setSession(s);} });
+
+  var email = session.user?.email || '';
+  var reabiertos = tickets.filter(function(t) { return t.estado === 'Re abierto'; }).length;
+
+  return h('div', { className:'app' },
+    h('div',{className:'sidebar'},
+      h('div',{className:'sb-logo'},
+        h('div',{className:'sb-logo-icon'},'💼'),
+        h('div',null,h('h1',null,'ReclamiOps'),h('p',null,'Comercial'))
+      ),
+      h('div',{className:'sb-nav'},
+        h('div',{className:'sb-section'},'Menú'),
+        h('div',{className:'nav-item active'},h('span',{className:'nav-icon'},'☰'),h('span',null,'Ticketera'),reabiertos>0&&h('span',{style:{marginLeft:'auto',fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:9,background:'var(--r100)',color:'var(--r600)'}},reabiertos))
+      ),
+      h('div',{className:'sb-footer'},
+        h(Av,{name:email,size:24}),
+        h('span',{className:'sf-name'},email.split('@')[0]),
+        h('button',{className:'btn-out',onClick:function(){sb.auth.signOut();}},'Salir')
+      )
+    ),
+    h('div',{className:'main'},
+      h('div',{className:'topbar'},
+        h('h2',null,'Ticketera — Mis clientes'),
+        h('div',{className:'topbar-right'},
+          h('div',{className:'sb-pill '+(gsStatus==='ok'?'ok':gsStatus==='err'?'err':'load')},
+            h('div',{className:'sdot'+(gsStatus==='load'?' pulse':'')}),
+            'Supabase '+(gsStatus==='load'?'...':gsStatus==='ok'?'OK':'Error')
+          )
+        )
+      ),
+      h('div',{className:'content'},
+        h(Ticketera,{tickets:tickets,setTickets:setTickets,onOpen:setSel})
+      )
+    ),
+    sel&&h(TicketPanel,{ticket:sel,setTickets:setTickets,onClose:function(){setSel(null);},userEmail:email})
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
