@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclamiOps — Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--a500:#f59e0b;
+  --rad:8px;--rad-lg:12px;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh}
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:44px 16px 80px}
+.topbar-client{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:34px;height:34px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center}
+.brand h1{font-size:15px;font-weight:600;color:var(--g900)}
+.brand p{font-size:12px;color:var(--g400);margin-top:1px}
+.btn-out{padding:5px 11px;border:1px solid var(--g200);border-radius:var(--rad);background:transparent;color:var(--g500);font-size:11px;cursor:pointer;font-family:inherit;transition:all .11s}
+.btn-out:hover{color:var(--g700);border-color:var(--g300)}
+.home-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 3px rgba(0,0,0,.07);width:100%;max-width:700px;padding:28px 32px}
+.home-title{font-size:20px;font-weight:600;color:var(--g900);margin-bottom:6px}
+.home-sub{font-size:13px;color:var(--g500);margin-bottom:28px}
+.ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.ticket-grid{grid-template-columns:1fr}}
+.ticket-type{border:1.5px solid var(--g200);border-radius:var(--rad-lg);padding:22px 18px;cursor:pointer;transition:all .13s;text-align:left;background:var(--w);position:relative}
+.ticket-type:hover{border-color:var(--b500);background:var(--b50)}
+.ticket-type.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.tt-icon{font-size:26px;margin-bottom:10px}
+.tt-title{font-size:14px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.tt-desc{font-size:12px;color:var(--g500);line-height:1.5}
+.coming-badge{position:absolute;top:10px;right:10px;background:var(--g100);color:var(--g500);font-size:9px;font-weight:600;padding:2px 7px;border-radius:9px}
+.card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 3px rgba(0,0,0,.07);width:100%;max-width:660px;padding:28px 32px}
+.card-title{font-size:18px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.card-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.steps{display:flex;margin-bottom:28px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.step::before{content:'';position:absolute;top:12px;left:calc(-50% + 12px);right:calc(50% + 12px);height:1px;background:var(--g200)}
+.step:first-child::before{display:none}
+.step.done::before{background:var(--b500)}
+.snum{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1.5px solid var(--g300);background:var(--w);color:var(--g400);z-index:1;position:relative}
+.step.done .snum{border-color:var(--b500);background:var(--b500);color:#fff}
+.step.active .snum{border-color:var(--b600);color:var(--b600)}
+.slbl{font-size:10px;color:var(--g400);margin-top:5px}
+.step.active .slbl{color:var(--b600);font-weight:500}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.frow.full{grid-template-columns:1fr}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+label{font-size:12px;font-weight:500;color:var(--g700)}
+.req{color:var(--r500);margin-left:2px}
+input[type=text],select,textarea{width:100%;padding:8px 11px;border:1px solid var(--g300);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g900);background:var(--w);outline:none;transition:border-color .13s;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+textarea{resize:vertical;min-height:78px;line-height:1.5}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{padding:6px 13px;border:1px solid var(--g200);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;color:var(--g600);background:var(--w);transition:all .12s;font-family:inherit}
+.pill:hover{border-color:var(--b500);color:var(--b600)}
+.pill.on{border-color:var(--b500);background:var(--b50);color:var(--b700)}
+.upload{border:1.5px dashed var(--g300);border-radius:var(--rad);padding:18px;text-align:center;cursor:pointer;background:var(--g50);transition:all .13s}
+.upload:hover{border-color:var(--b500);background:var(--b50)}
+.upload.ok{border-color:var(--gr500);background:var(--gr50)}
+.upload p{font-size:12px;color:var(--g500)}
+.upload .hint{font-size:11px;color:var(--g400);margin-top:2px}
+.upload .ok-text{font-size:12px;color:var(--gr600);font-weight:500}
+.alert{display:flex;gap:8px;padding:10px 13px;border-radius:var(--rad);font-size:12px;margin-bottom:13px;line-height:1.5}
+.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.err-msg{font-size:11px;color:var(--r500);margin-top:4px}
+.btn-row{display:flex;gap:9px;margin-top:24px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .12s}
+.btn-primary{background:var(--b600);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--b700)}
+.btn-primary:disabled{opacity:.42;cursor:default}
+.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-ghost:hover{background:var(--g50);border-color:var(--g300)}
+.spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.confirm-box{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);overflow:hidden;margin-bottom:16px}
+.confirm-row{display:flex;align-items:flex-start;gap:8px;padding:9px 13px;border-bottom:1px solid var(--g100)}
+.confirm-row:last-child{border-bottom:none}
+.ck{font-size:11px;font-weight:600;color:var(--g400);width:140px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
+.cv{font-size:12px;color:var(--g900);flex:1;line-height:1.5}
+.edit-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--g400);padding:0 4px;flex-shrink:0}
+.edit-btn:hover{color:var(--b500)}
+.success{text-align:center;padding:12px 0 4px}
+.success-icon{font-size:46px;margin-bottom:13px}
+.success h2{font-size:19px;font-weight:600;color:var(--g900);margin-bottom:6px}
+.success p{font-size:13px;color:var(--g500);margin-bottom:18px}
+.id-badge{display:inline-block;background:var(--b50);border:1px solid var(--b100);color:var(--b700);font-size:17px;font-weight:700;padding:9px 22px;border-radius:var(--rad);font-family:'Courier New',monospace}
+.success-note{font-size:12px;color:var(--g400);margin-top:13px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ─────────────────────────────────────────────────────
+var APPS_SCRIPT_URL = 'PEGA_ACA_LA_URL_DE_TU_APPS_SCRIPT';
+// ─────────────────────────────────────────────────────
+
+// Leer sesión guardada por index.html
+var currentUser = (function(){
+  var token = sessionStorage.getItem('ro_token');
+  var email = sessionStorage.getItem('ro_email');
+  var name  = sessionStorage.getItem('ro_name');
+  if (!token || !email) { window.location.href = 'index.html'; return null; }
+  return { token: token, email: email, name: name };
+})();
+
+if (currentUser) init();
+
+function init() {
+  var view = 'home';
+  var step = 1;
+  var saving = false;
+  var ticketId = '';
+  var editField = null;
+  var form = { titular:'', tipo_reclamo:'', detalle:'', tipo_tarjeta:'', num_secuencia:'', num_tarjeta:'', num_pst:'' };
+  var excelFile = null;
+  var carrierFile = null;
+  var errors = {};
+
+  function fileToBase64(file) {
+    return new Promise(function(res, rej) {
+      var r = new FileReader();
+      r.onload = function(){ res(r.result.split(',')[1]); };
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function apiCall(body) {
+    body.token = currentUser.token;
+    var res = await fetch(APPS_SCRIPT_URL, { method:'POST', body: JSON.stringify(body) });
+    return await res.json();
+  }
+
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function render() {
+    var root = document.getElementById('root');
+    if (view === 'reclamo') { renderForm(root); return; }
+    renderHome(root);
+  }
+
+  function renderHome(root) {
+    root.innerHTML = `
+      <div class="page">
+        <div class="topbar-client">
+          <div class="brand">
+            <div class="brand-icon">📋</div>
+            <div><h1>ReclamiOps</h1><p>Portal Cliente</p></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:var(--g500)">${currentUser.name}</span>
+            <button class="btn-out" onclick="logout()">Salir</button>
+          </div>
+        </div>
+        <div class="home-card">
+          <div class="home-title">Bienvenido/a 👋</div>
+          <div class="home-sub">¿Qué necesitás hacer hoy? Seleccioná una opción para comenzar.</div>
+          <div class="ticket-grid">
+            <div class="ticket-type" onclick="view='reclamo';step=1;form={titular:'',tipo_reclamo:'',detalle:'',tipo_tarjeta:'',num_secuencia:'',num_tarjeta:'',num_pst:''};excelFile=null;carrierFile=null;render()">
+              <div class="tt-icon">📋</div>
+              <div class="tt-title">Reclamo</div>
+              <div class="tt-desc">Desconocimiento de consumo, no recepción de tarjeta, etc.</div>
+            </div>
+            <div class="ticket-type disabled">
+              <span class="coming-badge">Próximamente</span>
+              <div class="tt-icon">📦</div>
+              <div class="tt-title">Trackear tarjeta</div>
+              <div class="tt-desc">Consultá el estado de tu tarjeta en camino.</div>
+            </div>
+            <div class="ticket-type disabled">
+              <span class="coming-badge">Próximamente</span>
+              <div class="tt-icon">🛡️</div>
+              <div class="tt-title">Siniestro</div>
+              <div class="tt-desc">Reportá un siniestro relacionado con tu tarjeta.</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderForm(root) {
+    if (step === 3) { renderSuccess(root); return; }
+    var resumen = [
+      { key:'titular', label:'Titular', value:form.titular },
+      { key:'tipo_reclamo', label:'Tipo de reclamo', value:form.tipo_reclamo },
+      form.detalle ? { key:'detalle', label:'Detalle', value:form.detalle } : null,
+      { key:'tipo_tarjeta', label:'Tipo de tarjeta', value:form.tipo_tarjeta },
+      form.tipo_tarjeta==='VISA' ? { key:'num_secuencia', label:'N° Secuencia', value:form.num_secuencia } : null,
+      (form.tipo_tarjeta==='Mastercard'||form.tipo_tarjeta==='Débito') ? { key:'num_tarjeta', label:'N° Tarjeta', value:form.num_tarjeta } : null,
+      form.num_pst ? { key:'num_pst', label:'N° PST', value:form.num_pst } : null,
+      excelFile ? { key:'excel', label:'Excel adjunto', value:excelFile.name, noEdit:true } : null,
+      carrierFile ? { key:'carrier', label:'Carrier/Acuse', value:carrierFile.name, noEdit:true } : null,
+    ].filter(Boolean);
+
+    root.innerHTML = `
+      <div class="page">
+        <div class="topbar-client" style="max-width:660px">
+          <div class="brand"><div class="brand-icon">📋</div><div><h1>ReclamiOps</h1></div></div>
+          <button class="btn-out" onclick="view='home';render()">← Volver</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Nuevo Reclamo</div>
+          <div class="card-sub">${step===1?'Completá los datos del reclamo.':'Revisá el resumen antes de enviar.'}</div>
+          <div class="steps">
+            <div class="step ${step>1?'done':'active'}">
+              <div class="snum">${step>1?'✓':'1'}</div><div class="slbl">Datos</div>
+            </div>
+            <div class="step ${step===2?'active':''}">
+              <div class="snum">2</div><div class="slbl">Resumen</div>
+            </div>
+          </div>
+          ${step===1 ? renderPaso1() : renderPaso2(resumen)}
+        </div>
+      </div>`;
+    bindEvents();
+  }
+
+  function renderPaso1() {
+    return `<div>
+      <div class="frow full"><div class="fgroup">
+        <label>Nombre y Apellido del titular<span class="req">*</span></label>
+        <input type="text" id="f-titular" value="${esc(form.titular)}" placeholder="Ej: María González">
+        ${errors.titular?`<p class="err-msg">${errors.titular}</p>`:''}
+      </div></div>
+      <div class="frow full"><div class="fgroup">
+        <label>Tipo de reclamo<span class="req">*</span></label>
+        <select id="f-tipo_reclamo">
+          <option value="">— Seleccionar —</option>
+          <option value="Desconocimiento de consumo" ${form.tipo_reclamo==='Desconocimiento de consumo'?'selected':''}>Desconocimiento de consumo</option>
+          <option value="No recepción de tarjeta" ${form.tipo_reclamo==='No recepción de tarjeta'?'selected':''}>No recepción de tarjeta</option>
+        </select>
+        ${errors.tipo_reclamo?`<p class="err-msg">${errors.tipo_reclamo}</p>`:''}
+      </div></div>
+      <div class="frow full"><div class="fgroup">
+        <label>Detalle del reclamo <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
+        <textarea id="f-detalle" placeholder="Describí brevemente...">${esc(form.detalle)}</textarea>
+      </div></div>
+      <div class="frow full"><div class="fgroup">
+        <label>Tipo de tarjeta<span class="req">*</span></label>
+        <div class="pills">
+          ${['VISA','Mastercard','Débito'].map(op=>`<button class="pill${form.tipo_tarjeta===op?' on':''}" onclick="setPill('${op}')">${op}</button>`).join('')}
+        </div>
+        ${errors.tipo_tarjeta?`<p class="err-msg">${errors.tipo_tarjeta}</p>`:''}
+      </div></div>
+      ${form.tipo_tarjeta==='VISA'?`<div class="frow full"><div class="fgroup">
+        <label>Número de Secuencia<span class="req">*</span></label>
+        <input type="text" id="f-num_secuencia" value="${esc(form.num_secuencia)}" placeholder="Ej: 000123">
+        ${errors.num_secuencia?`<p class="err-msg">${errors.num_secuencia}</p>`:''}
+      </div></div>`:''}
+      ${(form.tipo_tarjeta==='Mastercard'||form.tipo_tarjeta==='Débito')?`<div class="frow full"><div class="fgroup">
+        <label>Número de tarjeta<span class="req">*</span></label>
+        <input type="text" id="f-num_tarjeta" value="${esc(form.num_tarjeta)}" placeholder="Últimos 4 o número completo">
+        ${errors.num_tarjeta?`<p class="err-msg">${errors.num_tarjeta}</p>`:''}
+      </div></div>`:''}
+      <div class="frow full"><div class="fgroup">
+        <label>Número de PST <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
+        <input type="text" id="f-num_pst" value="${esc(form.num_pst)}" placeholder="Si aplica">
+      </div></div>
+      ${form.tipo_reclamo==='Desconocimiento de consumo'?`
+        <div class="alert al-amber">⚠ Para este tipo de reclamo debés descargar la planilla, completarla y adjuntarla.</div>
+        <div class="fgroup" style="margin-bottom:12px">
+          <label>Planilla de consumos</label>
+          <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla Excel</a>
+        </div>
+        <div class="fgroup" style="margin-bottom:12px">
+          <label>Adjuntar excel completo<span class="req">*</span></label>
+          <div class="upload${excelFile?' ok':''}" onclick="document.getElementById('excel-inp').click()">
+            <input id="excel-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="setFile('excel',this)">
+            <div style="font-size:20px;margin-bottom:5px">${excelFile?'✅':'📊'}</div>
+            ${excelFile?`<p class="ok-text">${excelFile.name}</p>`:'<p>Clic para adjuntar el Excel</p><p class="hint">.xlsx / .xls / .csv</p>'}
+          </div>
+          ${errors.excel?`<p class="err-msg">${errors.excel}</p>`:''}
+        </div>
+        <div class="fgroup">
+          <label>Carrier / Acuse de recibo <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
+          <div class="upload${carrierFile?' ok':''}" onclick="document.getElementById('carrier-inp').click()">
+            <input id="carrier-inp" type="file" style="display:none" onchange="setFile('carrier',this)">
+            <div style="font-size:20px;margin-bottom:5px">${carrierFile?'✅':'📄'}</div>
+            ${carrierFile?`<p class="ok-text">${carrierFile.name}</p>`:'<p>Clic para adjuntar carrier/acuse</p><p class="hint">PDF, imagen o cualquier formato</p>'}
+          </div>
+        </div>`:''}
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="view='home';render()">← Atrás</button>
+        <button class="btn btn-primary" onclick="goStep2()">Continuar →</button>
+      </div>
+    </div>`;
+  }
+
+  function renderPaso2(resumen) {
+    return `<div>
+      <div class="alert al-blue">ℹ Revisá todos los datos. Podés editar con el ✏ si detectás algún error.</div>
+      <div class="confirm-box">
+        ${resumen.map(function(row){
+          var isEditing = editField===row.key;
+          return `<div class="confirm-row">
+            <span class="ck">${row.label}</span>
+            ${isEditing
+              ? `<input type="text" style="flex:1;font-size:12px;padding:4px 8px;border:1px solid var(--b500);border-radius:5px;outline:none;font-family:inherit" value="${esc(row.value)}" autofocus onblur="saveEdit('${row.key}',this.value)" onkeydown="if(event.key==='Enter')saveEdit('${row.key}',this.value)">`
+              : `<span class="cv">${esc(row.value)||'—'}</span>`}
+            ${!row.noEdit&&!isEditing?`<button class="edit-btn" onclick="editField='${row.key}';render()">✏</button>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="step=1;render()">← Atrás</button>
+        <button class="btn btn-primary" onclick="submitForm()" ${saving?'disabled':''}>
+          ${saving?'<span class="spinner"></span>':''}Enviar reclamo
+        </button>
+      </div>
+    </div>`;
+  }
+
+  function renderSuccess(root) {
+    root.innerHTML = `
+      <div class="page">
+        <div class="card">
+          <div class="success">
+            <div class="success-icon">✅</div>
+            <h2>¡Reclamo enviado!</h2>
+            <p>Tu reclamo fue registrado exitosamente. El equipo comercial recibirá una notificación.</p>
+            <div class="id-badge">${ticketId}</div>
+            <p class="success-note">Guardá este ID para futuras consultas.</p>
+            <div style="margin-top:24px">
+              <button class="btn btn-primary" onclick="view='home';step=1;render()">← Volver al inicio</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function bindEvents() {
+    ['titular','tipo_reclamo','detalle','num_secuencia','num_tarjeta','num_pst'].forEach(function(k){
+      var el = document.getElementById('f-'+k);
+      if (el) el.addEventListener('input', function(){ form[k]=this.value; });
+    });
+  }
+
+  window.setPill = function(val){ form.tipo_tarjeta=val; form.num_secuencia=''; form.num_tarjeta=''; render(); };
+  window.setFile = function(tipo, input){ if(input.files[0]){ if(tipo==='excel') excelFile=input.files[0]; else carrierFile=input.files[0]; render(); } };
+  window.saveEdit = function(key, val){ form[key]=val; editField=null; render(); };
+  window.logout = logout;
+
+  function saveFormState() {
+    ['titular','tipo_reclamo','detalle','num_secuencia','num_tarjeta','num_pst'].forEach(function(k){
+      var el = document.getElementById('f-'+k); if(el) form[k]=el.value;
+    });
+  }
+
+  window.goStep2 = function() {
+    saveFormState();
+    errors={};
+    if (!form.titular.trim()) errors.titular='Campo obligatorio';
+    if (!form.tipo_reclamo) errors.tipo_reclamo='Seleccioná un tipo';
+    if (!form.tipo_tarjeta) errors.tipo_tarjeta='Seleccioná el tipo de tarjeta';
+    if (form.tipo_tarjeta==='VISA'&&!form.num_secuencia.trim()) errors.num_secuencia='Campo obligatorio';
+    if ((form.tipo_tarjeta==='Mastercard'||form.tipo_tarjeta==='Débito')&&!form.num_tarjeta.trim()) errors.num_tarjeta='Campo obligatorio';
+    if (form.tipo_reclamo==='Desconocimiento de consumo'&&!excelFile) errors.excel='Debés adjuntar el excel';
+    if (Object.keys(errors).length>0){ render(); return; }
+    step=2; render();
+  };
+
+  window.submitForm = async function() {
+    saving=true; render();
+    try {
+      var id='REC-'+(Math.floor(Math.random()*900000)+100000);
+      var payload={
+        action:'crearTicket', titular:form.titular, tipo_reclamo:form.tipo_reclamo,
+        detalle:form.detalle||'', tipo_tarjeta:form.tipo_tarjeta,
+        num_secuencia:form.tipo_tarjeta==='VISA'?form.num_secuencia:'',
+        num_tarjeta:(form.tipo_tarjeta==='Mastercard'||form.tipo_tarjeta==='Débito')?form.num_tarjeta:'',
+        num_pst:form.num_pst||'', excel_nombre:excelFile?excelFile.name:'',
+        carrier_nombre:carrierFile?carrierFile.name:''
+      };
+      if (excelFile) {
+        var b64=await fileToBase64(excelFile);
+        var ur=await apiCall({action:'uploadArchivo',base64:b64,nombre:excelFile.name,mimeType:excelFile.type,ticketId:id});
+        if(ur.ok) payload.excel_fileId=ur.fileId;
+      }
+      if (carrierFile) {
+        var b64c=await fileToBase64(carrierFile);
+        var urc=await apiCall({action:'uploadArchivo',base64:b64c,nombre:carrierFile.name,mimeType:carrierFile.type,ticketId:id});
+        if(urc.ok) payload.carrier_fileId=urc.fileId;
+      }
+      var data=await apiCall(payload);
+      if(!data.ok) throw new Error(data.error||'Error desconocido');
+      ticketId=data.id||id; step=3;
+    } catch(err){ alert('Error al enviar: '+err.message); }
+    saving=false; render();
+  };
+
+  render();
+}
+</script>
+</body>
+</html>
