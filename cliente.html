@@ -13,8 +13,7 @@
   --b50:#eff6ff;--b100:#dbeafe;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
   --gr50:#f0fdf4;--gr500:#22c55e;--gr600:#16a34a;
   --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;
-  --a50:#fffbeb;
-  --rad:8px;--rad-lg:12px;
+  --a50:#fffbeb;--rad:8px;--rad-lg:12px;
   font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
 }
 body{background:var(--g50);min-height:100vh}
@@ -27,9 +26,7 @@ body{background:var(--g50);min-height:100vh}
 .btn-sm{padding:5px 11px;border:1px solid var(--g200);border-radius:var(--rad);background:transparent;color:var(--g500);font-size:11px;cursor:pointer;font-family:inherit}
 .btn-sm:hover{color:var(--g700);border-color:var(--g300)}
 .card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 4px rgba(0,0,0,.07);width:100%;max-width:680px;padding:28px 30px}
-.home-title{font-size:19px;font-weight:600;color:var(--g900);margin-bottom:5px}
-.home-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
-.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
 @media(max-width:500px){.tgrid{grid-template-columns:1fr}}
 .tcard{border:1.5px solid var(--g200);border-radius:var(--rad-lg);padding:20px 16px;cursor:pointer;text-align:left;background:var(--w);width:100%;font-family:inherit;transition:all .13s;position:relative}
 .tcard:hover{border-color:var(--b500);background:var(--b50)}
@@ -38,7 +35,6 @@ body{background:var(--g50);min-height:100vh}
 .tc-name{font-size:13px;font-weight:600;color:var(--g900);margin-bottom:3px}
 .tc-desc{font-size:12px;color:var(--g500);line-height:1.4}
 .pronto{position:absolute;top:9px;right:9px;background:var(--g100);color:var(--g500);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px}
-/* form */
 .form-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 4px rgba(0,0,0,.07);width:100%;max-width:640px;padding:28px 30px}
 .steps{display:flex;margin-bottom:24px}
 .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
@@ -79,6 +75,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .btn-g{background:transparent;color:var(--g600);border:1px solid var(--g200)}
 .btn-g:hover{background:var(--g50)}
 .spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:inline-block}
+.spin-dark{width:18px;height:18px;border:2px solid var(--g200);border-top-color:var(--b500);border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
 @keyframes sp{to{transform:rotate(360deg)}}
 .cbox{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);overflow:hidden;margin-bottom:14px}
 .crow{display:flex;align-items:flex-start;gap:7px;padding:8px 12px;border-bottom:1px solid var(--g100)}
@@ -87,67 +84,69 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .cv{font-size:12px;color:var(--g900);flex:1}
 .ebtn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--g400);padding:0 3px;flex-shrink:0}
 .ebtn:hover{color:var(--b500)}
-.ok-screen{text-align:center;padding:10px 0}
-.ok-icon{font-size:44px;margin-bottom:12px}
 .ok-id{display:inline-block;background:var(--b50);border:1px solid var(--b100);color:var(--b700);font-size:16px;font-weight:700;padding:8px 20px;border-radius:var(--rad);font-family:'Courier New',monospace}
+/* Registro */
+.reg-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 4px rgba(0,0,0,.07);width:100%;max-width:440px;padding:32px}
+.reg-icon{font-size:36px;margin-bottom:14px;text-align:center}
+.pending-banner{background:var(--a50);border:1px solid #fcd34d;border-radius:var(--rad-lg);padding:20px;text-align:center;width:100%;max-width:440px}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────
+// ─── CONFIG ──────────────────────────────────────
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8VKGlOmnrajk6TN2H7l8s0ezNx4C4ofeDg-6UUgTcGqbh310pNKETz8mCWkBeaD5Giw/exec';
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────
 
-// Leer sesión de index.html
-var _u = (function(){
+var _u=(function(){
   var t=sessionStorage.getItem('ro_token'),e=sessionStorage.getItem('ro_email'),n=sessionStorage.getItem('ro_name');
   if(!t||!e){window.location.href='index.html';return null;}
-  return {token:t,email:e,name:n};
+  return{token:t,email:e,name:n};
 })();
 
-// Estado global (en window para acceso desde HTML inline)
-window._S = {
-  view:'home', step:1, saving:false, ticketId:'',
-  editField:null, excelFile:null, carrierFile:null,
-  errors:{},
-  form:{titular:'',tipo_reclamo:'',detalle:'',tipo_tarjeta:'',num_secuencia:'',num_tarjeta:'',num_pst:''}
+// Estado global
+window._S={
+  screen:'loading', // loading | registro | pendiente | home | reclamo
+  step:1, saving:false, ticketId:'',
+  editField:null, excelFile:null, carrierFile:null, errors:{},
+  form:{titular:'',tipo_reclamo:'',detalle:'',tipo_tarjeta:'',num_secuencia:'',num_tarjeta:'',num_pst:''},
+  perfil:null, empresas:[], regNombre:'', regEmpresa:''
 };
 
-function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function api(body){body.token=_u.token;var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(body)});return r.json();}
+function _b64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});}
 
-async function _api(body){
-  body.token=_u.token;
-  var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(body)});
-  return await r.json();
-}
-function _b64(file){
-  return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
-}
-
-// ── Funciones globales llamadas desde HTML inline ─────────────
+// Funciones globales
 window.logout=function(){sessionStorage.clear();window.location.href='index.html';};
-window.goHome=function(){_S.view='home';render();};
+window.goHome=function(){_S.screen='home';render();};
 window.goReclamo=function(){
-  _S.view='reclamo';_S.step=1;_S.editField=null;_S.excelFile=null;_S.carrierFile=null;
-  _S.errors={};_S.form={titular:'',tipo_reclamo:'',detalle:'',tipo_tarjeta:'',num_secuencia:'',num_tarjeta:'',num_pst:''};
+  _S.screen='reclamo';_S.step=1;_S.editField=null;_S.excelFile=null;_S.carrierFile=null;_S.errors={};
+  _S.form={titular:'',tipo_reclamo:'',detalle:'',tipo_tarjeta:'',num_secuencia:'',num_tarjeta:'',num_pst:''};
   render();
 };
-window.setPill=function(v){
-  _saveInputs();
-  _S.form.tipo_tarjeta=v;_S.form.num_secuencia='';_S.form.num_tarjeta='';
-  render();
-};
-window.setFile=function(tipo,inp){
-  if(inp.files[0]){
-    if(tipo==='excel')_S.excelFile=inp.files[0];
-    else _S.carrierFile=inp.files[0];
-    render();
-  }
-};
+window.setPill=function(v){_saveInputs();_S.form.tipo_tarjeta=v;_S.form.num_secuencia='';_S.form.num_tarjeta='';render();};
+window.setFile=function(t,i){if(i.files[0]){if(t==='excel')_S.excelFile=i.files[0];else _S.carrierFile=i.files[0];render();}};
 window.saveEdit=function(k,v){_S.form[k]=v;_S.editField=null;render();};
 window.startEdit=function(k){_S.editField=k;render();};
 window.goBack=function(){_S.step=1;render();};
+
+window.submitRegistro=async function(){
+  var nombre=document.getElementById('reg-nombre').value.trim();
+  var empresa=document.getElementById('reg-empresa').value;
+  if(!nombre){alert('Ingresá tu nombre completo');return;}
+  if(!empresa){alert('Seleccioná tu empresa');return;}
+  _S.saving=true;render();
+  try{
+    var r=await api({action:'registrarCliente',nombre:nombre,empresa:empresa});
+    if(!r.ok)throw new Error(r.error);
+    _S.perfil={email:_u.email,nombre:nombre,empresa:empresa,comercial_asignado:''};
+    // Si ya existía, usar los datos del servidor
+    if(r.perfil)_S.perfil=r.perfil;
+    _S.screen=_S.perfil.comercial_asignado?'home':'pendiente';
+  }catch(e){alert('Error: '+e.message);}
+  _S.saving=false;render();
+};
 
 function _saveInputs(){
   ['titular','tipo_reclamo','detalle','num_secuencia','num_tarjeta','num_pst'].forEach(function(k){
@@ -157,7 +156,7 @@ function _saveInputs(){
 
 window.goStep2=function(){
   _saveInputs();
-  var f=_S.form, e={};
+  var f=_S.form,e={};
   if(!f.titular.trim())e.titular='Obligatorio';
   if(!f.tipo_reclamo)e.tipo_reclamo='Seleccioná un tipo';
   if(!f.tipo_tarjeta)e.tipo_tarjeta='Seleccioná el tipo de tarjeta';
@@ -175,66 +174,109 @@ window.submitForm=async function(){
     var id='REC-'+(Math.floor(Math.random()*900000)+100000);
     var f=_S.form;
     var payload={action:'crearTicket',titular:f.titular,tipo_reclamo:f.tipo_reclamo,
-      detalle:f.detalle||'',tipo_tarjeta:f.tipo_tarjeta,
+      detalle:f.detalle||'',tipo_tarjeta:f.tipo_tarjeta,empresa:_S.perfil?_S.perfil.empresa:'',
       num_secuencia:f.tipo_tarjeta==='VISA'?f.num_secuencia:'',
       num_tarjeta:(f.tipo_tarjeta==='Mastercard'||f.tipo_tarjeta==='Débito')?f.num_tarjeta:'',
       num_pst:f.num_pst||'',excel_nombre:_S.excelFile?_S.excelFile.name:'',
       carrier_nombre:_S.carrierFile?_S.carrierFile.name:''};
-    if(_S.excelFile){
-      var b=await _b64(_S.excelFile);
-      var ur=await _api({action:'uploadArchivo',base64:b,nombre:_S.excelFile.name,mimeType:_S.excelFile.type,ticketId:id});
-      if(ur.ok)payload.excel_fileId=ur.fileId;
-    }
-    if(_S.carrierFile){
-      var bc=await _b64(_S.carrierFile);
-      var urc=await _api({action:'uploadArchivo',base64:bc,nombre:_S.carrierFile.name,mimeType:_S.carrierFile.type,ticketId:id});
-      if(urc.ok)payload.carrier_fileId=urc.fileId;
-    }
-    var data=await _api(payload);
+    if(_S.excelFile){var b=await _b64(_S.excelFile);var ur=await api({action:'uploadArchivo',base64:b,nombre:_S.excelFile.name,mimeType:_S.excelFile.type,ticketId:id});if(ur.ok)payload.excel_fileId=ur.fileId;}
+    if(_S.carrierFile){var bc=await _b64(_S.carrierFile);var urc=await api({action:'uploadArchivo',base64:bc,nombre:_S.carrierFile.name,mimeType:_S.carrierFile.type,ticketId:id});if(urc.ok)payload.carrier_fileId=urc.fileId;}
+    var data=await api(payload);
     if(!data.ok)throw new Error(data.error||'Error desconocido');
     _S.ticketId=data.id||id;_S.step=3;
   }catch(err){alert('Error al enviar: '+err.message);}
   _S.saving=false;render();
 };
 
-// ── RENDER ────────────────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────
 function render(){
   var app=document.getElementById('app');
-  if(_S.view==='reclamo'){renderForm(app);return;}
+  if(_S.screen==='loading'){app.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;color:var(--g400)"><div class="spin-dark"></div><span style="font-size:13px">Cargando...</span></div>';return;}
+  if(_S.screen==='registro'){renderRegistro(app);return;}
+  if(_S.screen==='pendiente'){renderPendiente(app);return;}
+  if(_S.screen==='reclamo'){renderForm(app);return;}
   renderHome(app);
 }
 
-function renderHome(app){
-  app.innerHTML=`
-  <div class="page">
-    <div class="topbar">
-      <div class="brand"><div class="brand-icon">📋</div><div><h1>ReclamiOps</h1><p>Portal Cliente</p></div></div>
-      <div style="display:flex;align-items:center;gap:9px">
-        <span style="font-size:12px;color:var(--g500)">${esc(_u.name)}</span>
-        <button class="btn-sm" onclick="logout()">Salir</button>
+function topbar(){
+  var p=_S.perfil;
+  return`<div class="topbar">
+    <div class="brand"><div class="brand-icon">📋</div><div><h1>ReclamiOps</h1><p>Portal Cliente</p></div></div>
+    <div style="display:flex;align-items:center;gap:9px">
+      ${p?`<span style="font-size:11px;color:var(--g500)">${esc(p.empresa)}</span>`:''}
+      <span style="font-size:12px;color:var(--g500)">${esc(_u.name)}</span>
+      <button class="btn-sm" onclick="logout()">Salir</button>
+    </div>
+  </div>`;
+}
+
+function renderRegistro(app){
+  var opts=_S.empresas.map(function(e){return`<option value="${esc(e)}">${esc(e)}</option>`;}).join('');
+  app.innerHTML=`<div class="page">
+    ${topbar()}
+    <div class="reg-card">
+      <div class="reg-icon">👋</div>
+      <div style="font-size:17px;font-weight:600;color:var(--g900);margin-bottom:6px;text-align:center">Completá tu perfil</div>
+      <div style="font-size:13px;color:var(--g500);margin-bottom:22px;text-align:center">Es la primera vez que ingresás. Necesitamos estos datos para asignarte un comercial.</div>
+      <div class="fg">
+        <label>Tu nombre completo <span class="req">*</span></label>
+        <input id="reg-nombre" type="text" placeholder="Nombre y Apellido" value="${esc(_u.name)}">
+      </div>
+      <div class="fg">
+        <label>Tu empresa / banco <span class="req">*</span></label>
+        <select id="reg-empresa">
+          <option value="">— Seleccioná tu empresa —</option>
+          ${opts}
+        </select>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:8px" onclick="submitRegistro()" ${_S.saving?'disabled':''}>
+        ${_S.saving?'<span class="spin"></span> Guardando...':'Continuar →'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderPendiente(app){
+  app.innerHTML=`<div class="page">
+    ${topbar()}
+    <div class="pending-banner">
+      <div style="font-size:32px;margin-bottom:12px">⏳</div>
+      <div style="font-size:16px;font-weight:600;color:var(--g900);margin-bottom:8px">Registro pendiente de asignación</div>
+      <div style="font-size:13px;color:var(--g600);line-height:1.6">Tu cuenta fue registrada correctamente para <strong>${esc(_S.perfil?_S.perfil.empresa:'')}</strong>.<br>
+      El equipo de Ocasa te asignará un comercial pronto.<br>Una vez asignado, podrás cargar reclamos.</div>
+      <div style="margin-top:16px">
+        <button class="btn btn-g" onclick="checkAsignacion()">🔄 Verificar asignación</button>
+        <button class="btn btn-sm" style="margin-left:8px" onclick="logout()">Salir</button>
       </div>
     </div>
+  </div>`;
+}
+
+window.checkAsignacion=async function(){
+  try{
+    var r=await api({action:'getPerfilCliente'});
+    if(r.ok&&r.perfil&&r.perfil.comercial_asignado){
+      _S.perfil=r.perfil;_S.screen='home';render();
+    }else{
+      alert('Todavía no te asignaron un comercial. Intentá más tarde.');
+    }
+  }catch(e){alert('Error al verificar: '+e.message);}
+};
+
+function renderHome(app){
+  app.innerHTML=`<div class="page">
+    ${topbar()}
     <div class="card">
-      <div class="home-title">Bienvenido/a 👋</div>
-      <div class="home-sub">¿Qué necesitás hacer hoy?</div>
+      <div style="font-size:19px;font-weight:600;color:var(--g900);margin-bottom:5px">Bienvenido/a 👋</div>
+      <div style="font-size:13px;color:var(--g500)">¿Qué necesitás hacer hoy?</div>
       <div class="tgrid">
         <button class="tcard" onclick="goReclamo()">
           <span class="tc-icon">📋</span>
           <div class="tc-name">Reclamo</div>
           <div class="tc-desc">Desconocimiento de consumo, no recepción de tarjeta, etc.</div>
         </button>
-        <div class="tcard off">
-          <span class="pronto">Próximamente</span>
-          <span class="tc-icon">📦</span>
-          <div class="tc-name">Trackear tarjeta</div>
-          <div class="tc-desc">Consultá el estado de tu tarjeta en camino.</div>
-        </div>
-        <div class="tcard off">
-          <span class="pronto">Próximamente</span>
-          <span class="tc-icon">🛡️</span>
-          <div class="tc-name">Siniestro</div>
-          <div class="tc-desc">Reportá un siniestro relacionado con tu tarjeta.</div>
-        </div>
+        <div class="tcard off"><span class="pronto">Próximamente</span><span class="tc-icon">📦</span><div class="tc-name">Trackear tarjeta</div><div class="tc-desc">Estado de tu tarjeta en camino.</div></div>
+        <div class="tcard off"><span class="pronto">Próximamente</span><span class="tc-icon">🛡️</span><div class="tc-name">Siniestro</div><div class="tc-desc">Reportá un siniestro relacionado con tu tarjeta.</div></div>
       </div>
     </div>
   </div>`;
@@ -245,25 +287,24 @@ function renderForm(app){
   var f=_S.form,e=_S.errors;
   var resumen=[
     {key:'titular',label:'Titular',value:f.titular},
-    {key:'tipo_reclamo',label:'Tipo de reclamo',value:f.tipo_reclamo},
+    {key:'tipo_reclamo',label:'Tipo reclamo',value:f.tipo_reclamo},
     f.detalle?{key:'detalle',label:'Detalle',value:f.detalle}:null,
     {key:'tipo_tarjeta',label:'Tarjeta',value:f.tipo_tarjeta},
     f.tipo_tarjeta==='VISA'?{key:'num_secuencia',label:'N° Secuencia',value:f.num_secuencia}:null,
     (f.tipo_tarjeta==='Mastercard'||f.tipo_tarjeta==='Débito')?{key:'num_tarjeta',label:'N° Tarjeta',value:f.num_tarjeta}:null,
     f.num_pst?{key:'num_pst',label:'N° PST',value:f.num_pst}:null,
-    _S.excelFile?{key:'_excel',label:'Excel',value:_S.excelFile.name,noEdit:true}:null,
-    _S.carrierFile?{key:'_carrier',label:'Carrier',value:_S.carrierFile.name,noEdit:true}:null,
+    _S.excelFile?{key:'_ex',label:'Excel',value:_S.excelFile.name,noEdit:true}:null,
+    _S.carrierFile?{key:'_ca',label:'Carrier',value:_S.carrierFile.name,noEdit:true}:null,
   ].filter(Boolean);
 
-  app.innerHTML=`
-  <div class="page">
+  app.innerHTML=`<div class="page">
     <div class="topbar" style="max-width:640px">
       <div class="brand"><div class="brand-icon">📋</div><div><h1>ReclamiOps</h1></div></div>
       <button class="btn-sm" onclick="goHome()">← Inicio</button>
     </div>
     <div class="form-card">
       <div style="font-size:17px;font-weight:600;color:var(--g900);margin-bottom:4px">Nuevo Reclamo</div>
-      <div style="font-size:12px;color:var(--g500);margin-bottom:20px">${_S.step===1?'Completá los datos.':'Revisá el resumen antes de enviar.'}</div>
+      <div style="font-size:12px;color:var(--g500);margin-bottom:20px">${_S.step===1?'Completá los datos.':'Revisá antes de enviar.'}</div>
       <div class="steps">
         <div class="step ${_S.step>1?'done':'active'}"><div class="sn">${_S.step>1?'✓':'1'}</div><div class="sl">Datos</div></div>
         <div class="step ${_S.step===2?'active':''}"><div class="sn">2</div><div class="sl">Resumen</div></div>
@@ -274,8 +315,8 @@ function renderForm(app){
 }
 
 function paso1(f,e){
-  return `
-  <div class="fg"><label>Titular de la tarjeta <span class="req">*</span></label>
+  return`
+  <div class="fg"><label>Titular <span class="req">*</span></label>
     <input id="f-titular" type="text" value="${esc(f.titular)}" placeholder="Nombre y Apellido">
     ${e.titular?`<p class="err">${e.titular}</p>`:''}
   </div>
@@ -298,25 +339,23 @@ function paso1(f,e){
     </div>
     ${e.tipo_tarjeta?`<p class="err">${e.tipo_tarjeta}</p>`:''}
   </div>
-  ${f.tipo_tarjeta==='VISA'?`<div class="fg"><label>Número de Secuencia <span class="req">*</span></label>
+  ${f.tipo_tarjeta==='VISA'?`<div class="fg"><label>N° Secuencia <span class="req">*</span></label>
     <input id="f-num_secuencia" type="text" value="${esc(f.num_secuencia)}" placeholder="Ej: 000123">
     ${e.num_secuencia?`<p class="err">${e.num_secuencia}</p>`:''}
   </div>`:''}
-  ${(f.tipo_tarjeta==='Mastercard'||f.tipo_tarjeta==='Débito')?`<div class="fg"><label>Número de tarjeta <span class="req">*</span></label>
-    <input id="f-num_tarjeta" type="text" value="${esc(f.num_tarjeta)}" placeholder="Últimos 4 dígitos o número completo">
+  ${(f.tipo_tarjeta==='Mastercard'||f.tipo_tarjeta==='Débito')?`<div class="fg"><label>N° de tarjeta <span class="req">*</span></label>
+    <input id="f-num_tarjeta" type="text" value="${esc(f.num_tarjeta)}" placeholder="Últimos 4 o número completo">
     ${e.num_tarjeta?`<p class="err">${e.num_tarjeta}</p>`:''}
   </div>`:''}
-  <div class="fg"><label>Número de PST <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
+  <div class="fg"><label>N° PST <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
     <input id="f-num_pst" type="text" value="${esc(f.num_pst)}" placeholder="Si aplica">
   </div>
   ${f.tipo_reclamo==='Desconocimiento de consumo'?`
     <div class="al al-amber">⚠ Descargá la planilla, completala y adjuntala.</div>
-    <div class="fg">
-      <label>Planilla de consumos</label>
+    <div class="fg"><label>Planilla de consumos</label>
       <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 11px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla Excel</a>
     </div>
-    <div class="fg">
-      <label>Adjuntar excel completo <span class="req">*</span></label>
+    <div class="fg"><label>Adjuntar excel completo <span class="req">*</span></label>
       <div class="upbox${_S.excelFile?' ok':''}" onclick="document.getElementById('ex-inp').click()">
         <input id="ex-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="setFile('excel',this)">
         <div style="font-size:18px;margin-bottom:4px">${_S.excelFile?'✅':'📊'}</div>
@@ -324,8 +363,7 @@ function paso1(f,e){
       </div>
       ${e.excel?`<p class="err">${e.excel}</p>`:''}
     </div>
-    <div class="fg">
-      <label>Carrier / Acuse <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
+    <div class="fg"><label>Carrier / Acuse <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
       <div class="upbox${_S.carrierFile?' ok':''}" onclick="document.getElementById('ca-inp').click()">
         <input id="ca-inp" type="file" style="display:none" onchange="setFile('carrier',this)">
         <div style="font-size:18px;margin-bottom:4px">${_S.carrierFile?'✅':'📄'}</div>
@@ -339,12 +377,11 @@ function paso1(f,e){
 }
 
 function paso2(resumen){
-  return `
-  <div class="al al-blue">ℹ Revisá los datos. Tocá ✏ para editar.</div>
+  return`<div class="al al-blue">ℹ Revisá los datos. Tocá ✏ para editar.</div>
   <div class="cbox">
     ${resumen.map(function(r){
       var isEd=_S.editField===r.key;
-      return `<div class="crow">
+      return`<div class="crow">
         <span class="ck">${r.label}</span>
         ${isEd?`<input style="flex:1;font-size:12px;padding:3px 7px;border:1px solid var(--b500);border-radius:5px;font-family:inherit;outline:none" value="${esc(r.value)}" autofocus onblur="saveEdit('${r.key}',this.value)" onkeydown="if(event.key==='Enter')saveEdit('${r.key}',this.value)">`
               :`<span class="cv">${esc(r.value)||'—'}</span>`}
@@ -361,20 +398,41 @@ function paso2(resumen){
 }
 
 function renderOk(app){
-  app.innerHTML=`
-  <div class="page">
+  app.innerHTML=`<div class="page">
     <div class="form-card" style="text-align:center;padding:40px 30px">
-      <div class="ok-icon">✅</div>
+      <div style="font-size:44px;margin-bottom:12px">✅</div>
       <h2 style="font-size:18px;font-weight:600;color:var(--g900);margin-bottom:6px">¡Reclamo enviado!</h2>
       <p style="font-size:13px;color:var(--g500);margin-bottom:18px">El equipo comercial fue notificado.</p>
       <div class="ok-id">${_S.ticketId}</div>
-      <p style="font-size:11px;color:var(--g400);margin-top:12px">Guardá este ID para futuras consultas.</p>
+      <p style="font-size:11px;color:var(--g400);margin-top:12px">Guardá este ID.</p>
       <button class="btn btn-p" style="margin-top:22px" onclick="goHome()">← Volver al inicio</button>
     </div>
   </div>`;
 }
 
-if(_u) render();
+// ── INICIO ────────────────────────────────────────
+async function init(){
+  if(!_u)return;
+  try{
+    // Cargar empresas y perfil en paralelo
+    var[empR,perR]=await Promise.all([
+      api({action:'getEmpresas'}),
+      api({action:'getPerfilCliente'})
+    ]);
+    _S.empresas=empR.ok?empR.empresas:[];
+    if(perR.ok&&perR.perfil){
+      _S.perfil=perR.perfil;
+      _S.screen=perR.perfil.comercial_asignado?'home':'pendiente';
+    }else{
+      _S.screen='registro';
+    }
+  }catch(e){
+    _S.screen='registro';
+  }
+  render();
+}
+
+if(_u)init();
 </script>
 </body>
 </html>
