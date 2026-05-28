@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comercial — ReclamiOps</title>
-
+<title>ReclamiOps — Comercial</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -14,349 +13,248 @@
   --b50:#eff6ff;--b100:#dbeafe;--b400:#60a5fa;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
   --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;--gr700:#15803d;
   --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
-  --a50:#fffbeb;--a500:#f59e0b;--a600:#d97706;
+  --a50:#fffbeb;--a500:#f59e0b;
   --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
   --rad:7px;--rad-lg:11px;
   font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
 }
 body{background:var(--g50);min-height:100vh}
 .app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:208px;min-width:208px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
-.sb-logo{padding:15px 15px 12px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:9px}
-.sb-logo-icon{width:29px;height:29px;border-radius:var(--rad);background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
+.sb{width:200px;min-width:200px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb-logo{padding:14px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sb-icon{width:28px;height:28px;border-radius:var(--rad);background:#059669;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
 .sb-logo h1{font-size:13px;font-weight:600;color:var(--g900)}
-.sb-logo p{font-size:10px;color:var(--g400);margin-top:1px}
-.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
-.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .11s;margin-bottom:1px}
-.nav-item:hover{background:var(--g50);color:var(--g900)}
-.nav-item.active{background:var(--gr50);color:var(--gr700);font-weight:500}
-.sb-footer{padding:9px 12px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sb-logo p{font-size:10px;color:var(--g400)}
+.sb-nav{flex:1;padding:9px 7px}
+.ni{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .1s;margin-bottom:1px}
+.ni:hover{background:var(--g50);color:var(--g900)}
+.ni.on{background:var(--gr50);color:var(--gr700);font-weight:500}
+.sb-foot{padding:9px 11px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:7px}
 .sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:48px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 18px;gap:10px}
+.topbar{height:46px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px;gap:9px}
 .topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
-.content{flex:1;overflow-y:auto;padding:18px 20px}
-.search{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:6px 10px;font-size:12px;color:var(--g700);font-family:inherit;outline:none;width:200px}
+.content{flex:1;overflow-y:auto;padding:16px 18px}
+.search{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:6px 9px;font-size:12px;color:var(--g700);font-family:inherit;outline:none;width:180px}
 .search:focus{border-color:var(--b400)}
-.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.shdr h2{font-size:13px;font-weight:600;color:var(--g900)}
 .tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:9px 11px;border-bottom:1px solid var(--g200);background:var(--g50)}
-tbody td{padding:10px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
+thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--g200);background:var(--g50)}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--b50);cursor:pointer}
 .tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--b600)}
 .badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
 .bn{background:var(--b50);color:var(--b700)}
 .ba{background:var(--p50);color:var(--p600)}
-.bfin{background:var(--gr100);color:var(--gr700);border:1px solid var(--gr500)}
+.bfin{background:var(--gr100);color:var(--gr700)}
 .breo{background:var(--r50);color:var(--r600)}
-.empty{text-align:center;padding:40px;color:var(--g400)}
+.empty{text-align:center;padding:36px;color:var(--g400);font-size:12px}
 .overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
-.panel{background:var(--w);width:540px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200)}
-.ph{padding:15px 18px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5}
-.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:15px}
-.pbody{padding:18px}
-.dsec{margin-bottom:18px}
-.dsec-title{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
-.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.dfield{background:var(--g50);border-radius:var(--rad);padding:8px 10px;border:1px solid var(--g100)}
-.dlbl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
-.dval{font-size:12px;color:var(--g900);font-weight:500}
-.al{display:flex;gap:7px;padding:9px 12px;border-radius:var(--rad);font-size:12px;margin-bottom:12px;line-height:1.5}
-.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.panel{background:var(--w);width:520px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200)}
+.ph{padding:14px 16px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5;display:flex;align-items:flex-start;gap:8px}
+.ph-info{flex:1}
+.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:14px}
+.pb{padding:16px}
+.sec{margin-bottom:16px}
+.sec-t{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.df{background:var(--g50);border-radius:var(--rad);padding:7px 9px;border:1px solid var(--g100)}
+.dl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+.dv{font-size:12px;color:var(--g900);font-weight:500}
+.al{display:flex;gap:7px;padding:8px 11px;border-radius:var(--rad);font-size:12px;margin-bottom:11px;line-height:1.5}
 .al-green{background:var(--gr50);border:1px solid var(--gr100);color:var(--gr700)}
-.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .11s}
-.btn-primary{background:var(--b600);color:#fff}
-.btn-primary:hover:not(:disabled){background:var(--b700)}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .1s}
 .btn-danger{background:var(--r50);color:var(--r600);border:1px solid var(--r100)}
-.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
-.btn-ghost:hover{background:var(--g50)}
-.btn:disabled{opacity:.4;cursor:default}
-.spinner{width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-.cinp{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;min-height:80px}
+.cinp{width:100%;padding:7px 9px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;min-height:74px}
 .cinp:focus{border-color:var(--b400)}
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.login-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 14px rgba(0,0,0,.07);padding:34px;width:100%;max-width:320px;text-align:center}
-.login-card p{font-size:12px;color:var(--g500);margin-bottom:24px}
-.lg-err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:8px 11px;font-size:11px;margin-bottom:12px;text-align:left}
-.toast-wrap{position:fixed;bottom:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:9px 13px;font-size:12px;color:var(--g700);max-width:280px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.toast-wrap{position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:8px 12px;font-size:12px;color:var(--g700);max-width:260px;box-shadow:0 3px 10px rgba(0,0,0,.08)}
 .toast.ok{border-left:3px solid var(--gr500)}
 .toast.err{border-left:3px solid var(--r500)}
+.loading{display:flex;align-items:center;justify-content:center;height:100%;color:var(--g400);font-size:13px;flex-direction:column;gap:10px}
+.spin{width:20px;height:20px;border:2px solid var(--g200);border-top-color:var(--b500);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="app"></div>
 <div class="toast-wrap" id="toasts"></div>
-
 <script>
-// =====================================================================
+// ─── CONFIG ──────────────────────────────────────────────────
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8VKGlOmnrajk6TN2H7l8s0ezNx4C4ofeDg-6UUgTcGqbh310pNKETz8mCWkBeaD5Giw/exec';
-var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
-var ALLOWED_DOMAIN = 'ocasa.com';
-// =====================================================================
+// ─────────────────────────────────────────────────────────────
 
-var currentUser = (function(){
-  var token = sessionStorage.getItem("ro_token");
-  var email = sessionStorage.getItem("ro_email");
-  var name  = sessionStorage.getItem("ro_name");
-  if (!token || !email) { window.location.href = "index.html"; return null; }
-  return { token: token, email: email, name: name };
+var _u=(function(){
+  var t=sessionStorage.getItem('ro_token'),e=sessionStorage.getItem('ro_email'),n=sessionStorage.getItem('ro_name');
+  if(!t||!e){window.location.href='index.html';return null;}
+  return{token:t,email:e,name:n};
 })();
-var tickets = [];
-var perfil = null;
-var selectedTicket = null;
-var searchQ = '';
-var saving = false;
-var showReopen = false;
-var reopenMsg = '';
-var loading = true;
 
-function toast(msg, type) {
-  var w = document.getElementById('toasts');
-  var d = document.createElement('div');
-  d.className = 'toast ' + (type||'info');
-  d.textContent = msg;
-  w.appendChild(d);
-  setTimeout(function(){ d.remove(); }, 3500);
+var tickets=[], loading=true, searchQ='', selTicket=null;
+
+function toast(msg,tipo){
+  var w=document.getElementById('toasts'),d=document.createElement('div');
+  d.className='toast '+(tipo||'');d.textContent=msg;w.appendChild(d);
+  setTimeout(function(){d.remove();},3200);
+}
+function fmtDate(s){
+  if(!s)return'—';if(s.includes('/'))return s;
+  var d=s.slice(0,10).split('-');return d.length<3?s:d[2]+'/'+d[1]+'/'+d[0];
+}
+function bc(e){return{'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e]||'bn';}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+async function api(body){
+  body.token=_u.token;
+  var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(body)});
+  return await r.json();
 }
 
-function fmtDate(str) {
-  if (!str) return '—';
-  if (str.includes('/')) return str;
-  var d = str.slice(0,10).split('-');
-  return d.length<3 ? str : d[2]+'/'+d[1]+'/'+d[0];
+async function loadData(){
+  try{
+    var r=await api({action:'getTickets',esOperario:false});
+    tickets=r.tickets||[];
+  }catch(e){console.error('Error cargando tickets:',e);}
+  loading=false;render();
+  // Polling cada 60s
+  setTimeout(async function(){
+    if(_u){try{var r=await api({action:'getTickets',esOperario:false});tickets=r.tickets||[];render();}catch(e){}}
+  },60000);
 }
 
-function getBC(e) {
-  return {Recibido:'bn','En análisis':'ba',Finalizado:'bfin','Re abierto':'breo'}[e]||'bn';
-}
-
-async function api(body) {
-  body.token = currentUser ? currentUser.token : '';
-  var res = await fetch(APPS_SCRIPT_URL, { method:'POST', body: JSON.stringify(body) });
-  return await res.json();
-}
-
-// ── LOGIN ─────────────────────────────────────────────────────
-function renderLogin() {
-  document.getElementById('root').innerHTML = `
-    <div class="login-wrap">
-      <div class="login-card">
-        <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:18px">
-          <div style="width:29px;height:29px;border-radius:7px;background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center">💼</div>
-          <div style="text-align:left">
-            <div style="font-size:16px;font-weight:600;color:var(--g900)">ReclamiOps</div>
-            <div style="font-size:10px;color:#9ca3af">Portal Comercial</div>
-          </div>
-        </div>
-        <p>Ingresá con tu cuenta Google corporativa.</p>
-        <div id="lg-err" class="lg-err" style="display:none"></div>
-        <div id="google-btn" style="display:flex;justify-content:center"></div>
-        <p style="font-size:10px;color:#9ca3af;margin-top:13px">Solo cuentas @${ALLOWED_DOMAIN}</p>
-      </div>
-    </div>`;
-  if (window.google) initGoogleLogin();
-}
-
-function initGoogleLogin() {
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: async function(response) {
-      var payload = JSON.parse(atob(response.credential.split('.')[1]));
-      if (!payload.email.endsWith('@' + ALLOWED_DOMAIN)) {
-        var err = document.getElementById('lg-err');
-        if (err) { err.style.display='block'; err.textContent='Acceso restringido a cuentas @' + ALLOWED_DOMAIN; }
-        return;
-      }
-      currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential };
-      loading = true;
-      render();
-      await loadData();
-      loading = false;
-      render();
-    }
-  });
-  google.accounts.id.renderButton(document.getElementById('google-btn'), { theme:'outline', size:'large', locale:'es' });
-}
-
-async function loadData() {
-  try {
-    var pr = await api({ action:'getPerfilComercial' });
-    perfil = pr.perfil;
-    var tr = await api({ action:'getTickets', esOperario:false });
-    tickets = tr.tickets || [];
-    // Actualizar polling cada 60s
-    setTimeout(async function(){ if(currentUser){ var r=await api({action:'getTickets',esOperario:false}); tickets=r.tickets||[]; render(); } }, 60000);
-  } catch(e) { console.error(e); }
-}
-
-// ── RENDER PRINCIPAL ──────────────────────────────────────────
-function render() {
-  if (!currentUser) { renderLogin(); return; }
-  if (loading) {
-    document.getElementById('root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--g400);font-size:12px">Cargando...</div>';
+function render(){
+  var app=document.getElementById('app');
+  if(loading){
+    app.innerHTML='<div class="app"><div style="flex:1" class="loading"><div class="spin"></div><span>Cargando tickets...</span></div></div>';
     return;
   }
-  renderApp();
-}
-
-function renderApp() {
-  var filtered = tickets.filter(function(t) {
-    if (!searchQ) return true;
-    var q = searchQ.toLowerCase();
-    return (t.ID||'').toLowerCase().includes(q) || (t.titular||'').toLowerCase().includes(q) || (t.tipo_reclamo||'').toLowerCase().includes(q);
+  var fil=tickets.filter(function(t){
+    if(!searchQ)return true;
+    var q=searchQ.toLowerCase();
+    return(t.ID||'').toLowerCase().includes(q)||(t.titular||'').toLowerCase().includes(q)||(t.tipo_reclamo||'').toLowerCase().includes(q);
   });
-
-  document.getElementById('root').innerHTML = `
-    <div class="app">
-      <div class="sidebar">
-        <div class="sb-logo">
-          <div class="sb-logo-icon">💼</div>
-          <div><h1>ReclamiOps</h1><p>Portal Comercial</p></div>
-        </div>
-        <div class="sb-nav">
-          <div class="nav-item active">🎫 Mis tickets</div>
-        </div>
-        <div class="sb-footer">
-          <div style="font-size:22px">👤</div>
-          <div class="sf-name">${currentUser.name}</div>
-          <button class="btn-out" onclick="sessionStorage.clear();window.location.href='index.html'">Salir</button>
+  app.innerHTML=`
+  <div class="app">
+    <div class="sb">
+      <div class="sb-logo"><div class="sb-icon">💼</div><div><h1>ReclamiOps</h1><p>Comercial</p></div></div>
+      <div class="sb-nav"><div class="ni on">🎫 Mis tickets</div></div>
+      <div class="sb-foot">
+        <div style="font-size:20px">👤</div>
+        <div class="sf-name">${esc(_u.name)}</div>
+        <button class="btn-out" onclick="sessionStorage.clear();window.location.href='index.html'">Salir</button>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <h2>Mis tickets (${fil.length})</h2>
+        <div style="margin-left:auto">
+          <input class="search" placeholder="Buscar..." value="${esc(searchQ)}" oninput="searchQ=this.value;render()">
         </div>
       </div>
-      <div class="main">
-        <div class="topbar">
-          <h2>Mis tickets</h2>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-            <input class="search" placeholder="Buscar ticket..." value="${searchQ}" oninput="searchQ=this.value;render()">
-          </div>
-        </div>
-        <div class="content">
-          <div class="shdr">
-            <h2>Tickets de mis clientes (${filtered.length})</h2>
-          </div>
-          <div class="tw">
-            <table>
-              <thead><tr>
-                <th>ID</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Estado</th>
-              </tr></thead>
-              <tbody>
-                ${filtered.length === 0
-                  ? '<tr><td colspan="6" class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px">🎫</div><p>No hay tickets</p></td></tr>'
-                  : filtered.map(function(t) {
-                    return `<tr onclick="selectedTicket=${JSON.stringify(t).replace(/"/g,'&quot;')};renderPanel()">
-                      <td><span class="tid">${t.ID||'—'}</span></td>
-                      <td>${fmtDate(t.creado)}</td>
-                      <td>${t.tipo_reclamo||'—'}</td>
-                      <td style="font-size:11px">${(t.email_cliente||'').split('@')[0]}</td>
-                      <td>${t.monto||'—'}</td>
-                      <td><span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span></td>
-                    </tr>`;
-                  }).join('')}
-              </tbody>
-            </table>
-          </div>
+      <div class="content">
+        <div class="tw">
+          <table>
+            <thead><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody>
+              ${fil.length===0
+                ?'<tr><td colspan="6" class="empty">No hay tickets</td></tr>'
+                :fil.map(function(t){return`<tr onclick="openPanel('${esc(t.ID)}')">
+                  <td><span class="tid">${t.ID||'—'}</span></td>
+                  <td>${fmtDate(t.creado)}</td>
+                  <td>${esc(t.tipo_reclamo||'—')}</td>
+                  <td style="font-size:11px">${(t.email_cliente||'—').split('@')[0]}</td>
+                  <td>${t.monto||'—'}</td>
+                  <td><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></td>
+                </tr>`;}).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>`;
+    </div>
+  </div>`;
 }
 
-function renderPanel() {
-  var t = typeof selectedTicket === 'string' ? JSON.parse(selectedTicket.replace(/&quot;/g,'"')) : selectedTicket;
-  if (!t) return;
+window.openPanel=function(id){
+  selTicket=tickets.find(function(x){return x.ID===id;});
+  if(!selTicket)return;
+  renderPanel();
+};
 
-  var hist = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
-
-  var panelHtml = `
-    <div class="overlay" onclick="if(event.target.className==='overlay'){selectedTicket=null;render()}">
-      <div class="panel">
-        <div class="ph">
-          <div style="display:flex;align-items:flex-start;gap:9px">
-            <div style="flex:1">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
-                <span class="tid" style="font-size:11px">${t.ID||'—'}</span>
-                <span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span>
-              </div>
-              <div style="font-size:14px;font-weight:600;color:var(--g900)">${t.titular||'—'}</div>
-              <div style="font-size:11px;color:var(--g500);margin-top:3px">${t.tipo_reclamo||'—'}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
-            </div>
-            <button class="close" onclick="selectedTicket=null;render()">✕</button>
+function renderPanel(){
+  var t=selTicket;
+  var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
+  var existing=document.querySelector('.overlay');if(existing)existing.remove();
+  var html=`<div class="overlay" onclick="if(event.target.className==='overlay')closePanel()">
+    <div class="panel">
+      <div class="ph">
+        <div class="ph-info">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+            <span class="tid">${t.ID}</span>
+            <span class="badge ${bc(t.estado)}">${t.estado||'—'}</span>
           </div>
+          <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.titular||'—')}</div>
+          <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo||'—')}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
         </div>
-        <div class="pbody">
-          ${t.estado==='Finalizado' ? '<div class="al al-green">✅ Este ticket fue finalizado por el equipo de operaciones.</div>' : ''}
-          ${t.estado==='Re abierto' ? '<div class="al al-amber">🔄 Has re abierto este ticket. Operaciones fue notificado.</div>' : ''}
-
-          <div class="dsec">
-            <div class="dsec-title">General</div>
-            <div class="dgrid">
-              <div class="dfield"><div class="dlbl">Tipo</div><div class="dval">${t.tipo_reclamo||'—'}</div></div>
-              <div class="dfield"><div class="dlbl">Fecha</div><div class="dval">${fmtDate(t.creado)}</div></div>
-              <div class="dfield"><div class="dlbl">Tarjeta</div><div class="dval">${t.tipo_tarjeta||'—'}</div></div>
-              <div class="dfield"><div class="dlbl">Estado</div><div class="dval">${t.estado||'—'}</div></div>
-              ${t.num_secuencia ? `<div class="dfield"><div class="dlbl">N° Secuencia</div><div class="dval">${t.num_secuencia}</div></div>` : ''}
-              ${t.num_tarjeta ? `<div class="dfield"><div class="dlbl">N° Tarjeta</div><div class="dval">${t.num_tarjeta}</div></div>` : ''}
-              ${t.detalle ? `<div class="dfield" style="grid-column:span 2"><div class="dlbl">Detalle</div><div class="dval">${t.detalle}</div></div>` : ''}
-            </div>
-          </div>
-
-          <div class="dsec">
-            <div class="dsec-title">Historial</div>
-            ${hist.length === 0 ? '<p style="font-size:12px;color:var(--g400)">Sin historial</p>' :
-              hist.map(function(h){ return `<div style="border-left:2px solid var(--g200);padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${h.accion}</div>`; }).join('')}
-          </div>
-
-          ${t.estado==='Finalizado' ? `
-          <div class="dsec">
-            <div class="dsec-title">Reabrir ticket</div>
-            <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:14px">
-              <p style="font-size:12px;color:var(--g600);margin-bottom:10px">Podés reabrir este ticket con un mensaje para el equipo de operaciones.</p>
-              <textarea class="cinp" id="reopen-msg" placeholder="Describí el motivo del reclamo..." rows="3"></textarea>
-              <div style="margin-top:10px">
-                <button class="btn btn-danger" onclick="reabrirTicket('${t.ID}')">🔄 Reabrir ticket</button>
-              </div>
-            </div>
-          </div>` : ''}
-        </div>
+        <button class="close" onclick="closePanel()">✕</button>
       </div>
-    </div>`;
-
-  var existing = document.querySelector('.overlay');
-  if (existing) existing.remove();
-  document.body.insertAdjacentHTML('beforeend', panelHtml);
+      <div class="pb">
+        ${t.estado==='Finalizado'?'<div class="al al-green">✅ Ticket finalizado por operaciones.</div>':''}
+        ${t.estado==='Re abierto'?'<div class="al al-amber">🔄 Ticket re abierto. Operaciones fue notificado.</div>':''}
+        <div class="sec">
+          <div class="sec-t">Detalle</div>
+          <div class="dgrid">
+            <div class="df"><div class="dl">Tipo</div><div class="dv">${esc(t.tipo_reclamo||'—')}</div></div>
+            <div class="df"><div class="dl">Fecha</div><div class="dv">${fmtDate(t.creado)}</div></div>
+            <div class="df"><div class="dl">Tarjeta</div><div class="dv">${esc(t.tipo_tarjeta||'—')}</div></div>
+            <div class="df"><div class="dl">Estado</div><div class="dv">${t.estado||'—'}</div></div>
+            ${t.num_secuencia?`<div class="df"><div class="dl">N° Secuencia</div><div class="dv">${t.num_secuencia}</div></div>`:''}
+            ${t.num_tarjeta?`<div class="df"><div class="dl">N° Tarjeta</div><div class="dv">${t.num_tarjeta}</div></div>`:''}
+            ${t.detalle?`<div class="df" style="grid-column:span 2"><div class="dl">Detalle</div><div class="dv">${esc(t.detalle)}</div></div>`:''}
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-t">Historial</div>
+          ${hist.length===0?'<p style="font-size:12px;color:var(--g400)">Sin historial</p>':
+            hist.map(function(h){return`<div style="border-left:2px solid var(--g200);padding:4px 9px;margin-bottom:5px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${esc(h.accion)}</div>`;}).join('')}
+        </div>
+        ${t.estado==='Finalizado'?`
+        <div class="sec">
+          <div class="sec-t">Reabrir ticket</div>
+          <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:13px">
+            <p style="font-size:12px;color:var(--g600);margin-bottom:9px">Indicá el motivo para reabrir este ticket.</p>
+            <textarea class="cinp" id="reopen-msg" placeholder="Motivo del reclamo..."></textarea>
+            <div style="margin-top:9px"><button class="btn btn-danger" onclick="reabrirTicket('${t.ID}')">🔄 Reabrir ticket</button></div>
+          </div>
+        </div>`:''}
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
 }
 
-async function reabrirTicket(id) {
-  var msg = document.getElementById('reopen-msg').value.trim();
-  if (!msg) { toast('Escribí un mensaje para el operario', 'err'); return; }
+window.closePanel=function(){var o=document.querySelector('.overlay');if(o)o.remove();selTicket=null;};
 
-  var ahora = new Date();
-  var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+window.reabrirTicket=async function(id){
+  var msg=(document.getElementById('reopen-msg')||{}).value||'';
+  if(!msg.trim()){toast('Escribí un motivo','err');return;}
+  var t=tickets.find(function(x){return x.ID===id;});
+  var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
+  var ahora=new Date();
+  var ts=ahora.getDate().toString().padStart(2,'0')+'/'+(ahora.getMonth()+1).toString().padStart(2,'0')+'/'+ahora.getFullYear()+' '+ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
+  hist.push({ts:ts,accion:'Re abierto por comercial — '+msg,usuario:_u.email});
+  try{
+    var res=await api({action:'updateTicket',id:id,campos:{estado:'Re abierto',historial:hist}});
+    if(!res.ok)throw new Error(res.error);
+    t.estado='Re abierto';t.historial=hist;
+    toast('Ticket re abierto','ok');
+    window.closePanel();render();
+  }catch(e){toast('Error: '+e.message,'err');}
+};
 
-  var t = tickets.find(function(x){ return x.ID===id; });
-  var hist = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
-  hist.push({ ts: tsStr, accion: 'Re abierto por comercial — ' + msg, usuario: currentUser.email });
-
-  try {
-    var res = await api({ action:'updateTicket', id:id, campos:{ estado:'Re abierto', historial:hist } });
-    if (!res.ok) throw new Error(res.error);
-    t.estado = 'Re abierto';
-    t.historial = hist;
-    toast('Ticket re abierto', 'ok');
-    selectedTicket = null;
-    render();
-  } catch(e) { toast('Error: ' + e.message, 'err'); }
-}
-
-document.querySelector('script[src*="gsi"]').addEventListener('load', function() {
-  if (!currentUser) renderLogin();
-});
-render();
+if(_u){loadData();}
 </script>
 </body>
 </html>
