@@ -105,7 +105,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwg8R528aUbWLJRjov05sdKUFFvCw2Q2WYkb5yia2u5GlsZr5nKs4JFKz5SsmseWJP7Kw/exec';
+var APPS_SCRIPT_URL = 'PEGA_ACA_LA_URL_DE_TU_APPS_SCRIPT';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
@@ -199,40 +199,6 @@ function render(){
       <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Clientes':'Ticketera'}</h2></div>
       <div class="content">
         ${activeNav==='clientes'?renderClientesSection():renderTicketsSection(rec,ana,fin,reo,tab,promDias)}
-        <div class="kpis">
-          <div class="kpi info"><div class="kl">Total</div><div class="kv">${tickets.length}</div></div>
-          <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
-          <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
-          <div class="kpi purple"><div class="kl">Prom. días</div><div class="kv">${promDias}</div></div>
-          <div class="kpi danger"><div class="kl">Re abiertos</div><div class="kv">${reo.length}</div></div>
-        </div>
-        <div class="tabs">
-          <button class="tab${activeTab==='recibidos'?' on':''}" onclick="activeTab='recibidos';render()">Recibidos<span class="tc">${rec.length}</span></button>
-          <button class="tab${activeTab==='analisis'?' on':''}" onclick="activeTab='analisis';render()">En análisis<span class="tc">${ana.length}</span></button>
-          <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
-          <button class="tab${activeTab==='reabiertos'?' on':''}" onclick="activeTab='reabiertos';render()">Re abiertos<span class="tc">${reo.length}</span></button>
-        </div>
-        <div class="tw">
-          <table>
-            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Cliente</th><th>Estado</th><th>Días análisis</th></tr></thead>
-            <tbody>
-              ${tab.length===0
-                ?'<tr><td colspan="6" class="empty">No hay tickets en esta sección</td></tr>'
-                :tab.map(function(t){
-                  var leido=t.leido==='SI'||t.leido===true;
-                  var d=calcDias(t);
-                  return`<tr class="${leido?'row-read':'row-unread'}" onclick="openPanel('${esc(t.ID)}')">
-                    <td><span class="tid">${t.ID||'—'}</span></td>
-                    <td>${fmtDate(t.creado)}</td>
-                    <td>${esc(t.tipo_reclamo||'—')}</td>
-                    <td style="font-size:11px">${(t.email_cliente||'—').split('@')[0]}</td>
-                    <td><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></td>
-                    <td><span class="db ${diasClass(d)}">${d} días</span></td>
-                  </tr>`;
-                }).join('')}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   </div>`;
@@ -333,7 +299,9 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
             </tbody>
           </table>
         </div>`;
+}
 
+window.openPanel=function(id){
   selTicket=tickets.find(function(x){return x.ID===id;});
   if(!selTicket)return;
   if(selTicket.leido!=='SI'){
