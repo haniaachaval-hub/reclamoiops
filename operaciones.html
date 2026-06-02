@@ -115,7 +115,7 @@ var _u=(function(){
 })();
 
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
-var mailPara='', mailAsunto='', mailCuerpo='';
+var mailPara='', mailAsunto='', mailCuerpo='', adjuntoFile=null;
 var activeNav='tickets'; // tickets | clientes
 var clientes=[], comerciales=[];
 
@@ -133,9 +133,24 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function diasClass(d){return d<=3?'dok':d<=7?'dwarn':'ddanger';}
 
 async function api(body){
-  body.token=_u.token;
-  var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(body)});
-  return await r.json();
+  // Siempre usar el token más fresco de sessionStorage
+  var token = sessionStorage.getItem('ro_token') || '';
+  body.token = token;
+  _u.token = token; // sincronizar
+  var r=await fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(body)
+  });
+  var data = await r.json();
+  // Si token expiró, avisar al usuario
+  if(data && data.error && data.error.includes('Token')){
+    toast('Tu sesión expiró. Por favor volvé a ingresar.','err');
+    setTimeout(function(){sessionStorage.clear();window.location.href='index.html';},2500);
+    throw new Error('Token expirado');
+  }
+  return data;
 }
 
 async function loadData(){
@@ -379,7 +394,14 @@ function renderPanel(){
             <input type="text" class="cinp" style="min-height:unset;resize:none" id="mp" placeholder="Para: email@dominio.com" value="${esc(mailPara)}" oninput="mailPara=this.value">
             <input type="text" class="cinp" style="min-height:unset;resize:none" id="ma" placeholder="Asunto" value="${esc(mailAsunto)}" oninput="mailAsunto=this.value">
             <textarea class="cinp" id="mc" rows="4" placeholder="Cuerpo del mail..." oninput="mailCuerpo=this.value">${esc(mailCuerpo)}</textarea>
-            <button class="btn btn-p" style="align-self:flex-start" onclick="enviarMail('${t.ID}')">📤 Enviar</button>
+            <div>
+              <label style="font-size:11px;font-weight:500;color:var(--g600);display:block;margin-bottom:4px">Adjuntar archivo (Excel, PDF, etc.) — Opcional</label>
+              <div id="adj-box" style="border:1.5px dashed var(--g300);border-radius:var(--rad);padding:12px;text-align:center;cursor:pointer;background:var(--g50);font-size:12px;color:var(--g500)" onclick="document.getElementById('adj-inp').click()">
+                <input id="adj-inp" type="file" style="display:none" onchange="setAdjunto(this)">
+                <span id="adj-label">📎 Clic para adjuntar archivo</span>
+              </div>
+            </div>
+            <button class="btn btn-p" style="align-self:flex-start" onclick="enviarMail()">📤 Enviar</button>
           </div>
         </div>
       </div>
@@ -414,18 +436,49 @@ window.guardarEstado=async function(id){
   }catch(e){toast('Error: '+e.message,'err');}
 };
 
+window.setAdjunto=function(input){
+  if(!input.files[0])return;
+  adjuntoFile=input.files[0];
+  var lbl=document.getElementById('adj-label');
+  var box=document.getElementById('adj-box');
+  if(lbl){lbl.textContent='✅ '+adjuntoFile.name;}
+  if(box){box.style.borderColor='var(--gr500)';box.style.background='var(--gr50)';}
+};
+
 window.enviarMail=async function(){
   var para=(document.getElementById('mp')||{}).value||'';
   var asunto=(document.getElementById('ma')||{}).value||'';
   var cuerpo=(document.getElementById('mc')||{}).value||'';
-  if(!para||!asunto||!cuerpo){toast('Completá todos los campos','err');return;}
+  if(!para||!asunto||!cuerpo){toast('Completá Para, Asunto y Cuerpo','err');return;}
+
+  var btn=document.querySelector('.btn-p[onclick="enviarMail()"]');
+  if(btn){btn.disabled=true;btn.innerHTML='<span style="width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:inline-block"></span> Enviando...';}
+
   try{
-    var res=await api({action:'enviarMail',para:para,asunto:asunto,cuerpo:cuerpo});
-    if(!res.ok)throw new Error(res.error);
-    toast('Mail enviado','ok');
-    mailPara='';mailAsunto='';mailCuerpo='';
+    var payload={action:'enviarMail',para:para,asunto:asunto,cuerpo:cuerpo};
+
+    // Si hay adjunto, convertirlo a base64
+    if(adjuntoFile){
+      var b64=await new Promise(function(res,rej){
+        var r=new FileReader();
+        r.onload=function(){res(r.result.split(',')[1]);};
+        r.onerror=rej;
+        r.readAsDataURL(adjuntoFile);
+      });
+      payload.adjuntoBase64=b64;
+      payload.adjuntoNombre=adjuntoFile.name;
+      payload.adjuntoMime=adjuntoFile.type||'application/octet-stream';
+    }
+
+    var res=await api(payload);
+    if(!res.ok)throw new Error(res.error||'Error desconocido');
+    toast('Mail enviado correctamente ✓','ok');
+    mailPara='';mailAsunto='';mailCuerpo='';adjuntoFile=null;
     window.closePanel();
-  }catch(e){toast('Error: '+e.message,'err');}
+  }catch(e){
+    if(!e.message.includes('Token')){toast('Error: '+e.message,'err');}
+    if(btn){btn.disabled=false;btn.innerHTML='📤 Enviar';}
+  }
 };
 
 window.asignar=async function(emailCliente){
