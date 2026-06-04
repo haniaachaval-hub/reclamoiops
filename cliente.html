@@ -109,7 +109,7 @@ var B64_COMBINADO = 'UEsDBBQABgAIAAAAIQASGN7dZAEAABgFAAATAAgCW0NvbnRlbnRfVHlwZXN
 
 // Estado global
 window._S = {
-  screen:'home', // home | reclamo
+  screen:'reclamo', // va directo al formulario
   step:1, saving:false, ticketId:'',
   editField:null, excelFile:null, xlErrors:[],
   errors:{},
@@ -158,6 +158,24 @@ function validateSheetCols(rows, colIdxs, colNames){
   return errs;
 }
 
+// Valida que todos los valores de una columna sean iguales (para validación de misma planta)
+function validateColUniform(rows, colIdx, colName){
+  var vals=[];
+  for(var r=1;r<rows.length;r++){
+    var row=rows[r];
+    if(!row||row.every(function(c){return c===null||c===undefined||c===''}))continue;
+    var v=(row[colIdx]||'').toString().trim();
+    if(v)vals.push(v);
+  }
+  if(vals.length===0)return null;
+  var first=vals[0];
+  var diff=vals.filter(function(v){return v!==first;});
+  if(diff.length>0){
+    return 'La columna "'+colName+'" debe tener el mismo valor en todas las filas (misma planta). Encontraste valores distintos: "'+first+'" y "'+diff[0]+'"';
+  }
+  return null;
+}
+
 async function validateExcel(){
   var f=_S.form;
   var esDesc=f.tipo_reclamo==='Desconocimiento de consumo';
@@ -182,11 +200,26 @@ async function validateExcel(){
       var dc=data['Detalle consumos'];
       if(dc)errs=errs.concat(validateSheetCols(dc,[1,2,4,5],['Nro tarjeta','Nro secuencia','Fecha Movimiento','Monto movimiento']).map(function(e){return'[Detalle consumos] '+e;}));
       var dt=data['Detalle tarjetas'];
-      if(dt)errs=errs.concat(validateSheetCols(dt,[0,1,2,4],['Titular','Tipo','Nro tarjeta','Sucursal Radicación']).map(function(e){return'[Detalle tarjetas] '+e;}));
+      if(dt){
+        errs=errs.concat(validateSheetCols(dt,[0,1,2,4],['Titular','Tipo','Nro tarjeta','Sucursal Radicación']).map(function(e){return'[Detalle tarjetas] '+e;}));
+        // Validar columna E uniforme (misma planta)
+        var uErr=validateColUniform(dt,4,'Sucursal Radicación');
+        if(uErr)errs.push('[Detalle tarjetas] '+uErr+'. Como no tienen el mismo origen no se pueden cargar masivamente.');
+      }
     }
     if(esNoRec&&esMas){
       var dt2=data['Detalle tarjetas'];
-      if(dt2)errs=errs.concat(validateSheetCols(dt2,[0,1,2,4],['Titular','Tipo','Nro tarjeta','Sucursal Radicación']).map(function(e){return'[Detalle tarjetas] '+e;}));
+      if(dt2){
+        errs=errs.concat(validateSheetCols(dt2,[0,1,2,4],['Titular','Tipo','Nro tarjeta','Sucursal Radicación']).map(function(e){return'[Detalle tarjetas] '+e;}));
+        // Validar columna E uniforme (misma planta)
+        var uErr2=validateColUniform(dt2,4,'Sucursal Radicación');
+        if(uErr2)errs.push('[Detalle tarjetas] '+uErr2+'. Como no tienen el mismo origen no se pueden cargar masivamente.');
+      }
+    }
+    // Desconocimiento individual: validar columnas obligatorias de consumos
+    if(esDesc&&!esMas&&_S.excelFile){
+      var dc2=data['Detalle consumos']||data[Object.keys(data)[0]];
+      if(dc2)errs=errs.concat(validateSheetCols(dc2,[1,2,4,5],['Nro tarjeta','Nro secuencia','Fecha Movimiento','Monto movimiento']));
     }
     _S.xlErrors=errs;
     return errs.length===0;
@@ -200,7 +233,7 @@ async function validateExcel(){
 window.logout=function(){sessionStorage.clear();window.location.href='index.html';};
 
 window.goHome=function(){
-  _S.screen='home';_S.step=1;_S.editField=null;_S.excelFile=null;_S.xlErrors=[];_S.errors={};
+  _S.screen='reclamo';_S.step=1;_S.editField=null;_S.excelFile=null;_S.xlErrors=[];_S.errors={};
   _S.form={banco:'',tipo_reclamo:'',modalidad:'',titular:'',tipo_tarjeta:'',num_secuencia:'',num_tarjeta:'',num_pst:'',detalle:'',sucursal:'',fecha_entrega:'',entregado_en:'',nombre_receptor:''};
   render();
 };
@@ -216,7 +249,7 @@ window.setPill=function(campo,v){
   render();
 };
 
-window.setFile=function(inp){if(inp.files[0]){_S.excelFile=inp.files[0];_S.xlErrors=[];render();}};
+window.setFile=function(inp){if(inp.files[0]){_saveInputs();_S.excelFile=inp.files[0];_S.xlErrors=[];render();}};
 
 window.saveEdit=function(k,v){_S.form[k]=v;_S.editField=null;render();};
 window.startEdit=function(k){_S.editField=k;render();};
@@ -311,8 +344,7 @@ window.submitForm=async function(){
 function render(){
   var app=document.getElementById('app');
   if(!_u)return;
-  if(_S.screen==='reclamo'){renderForm(app);return;}
-  renderHome(app);
+  renderForm(app);
 }
 
 function topbar(){
@@ -456,8 +488,19 @@ function paso1(f,e,esDesc,esNoRec,esInd,esMas){
     <textarea id="f-detalle" placeholder="Describí brevemente lo sucedido...">${esc(f.detalle)}</textarea>
   </div>
   <div class="sec-t">Planilla de consumos</div>
-  <div class="al al-blue">ℹ Descargá la planilla, completala con los datos del reclamo y tenela lista para enviar junto al ticket.</div>
-  <div class="fg"><button class="dl-btn" onclick="dlB64(B64_CONSUMOS,'Planilla_Detalle_Consumos.xlsx')">⬇ Descargar planilla de consumos</button></div>`:''}
+  <div class="al al-amber">⚠ Descargá la planilla, completala con los datos del reclamo y adjuntala antes de continuar.</div>
+  <div class="fg">
+    <button class="dl-btn" style="font-size:13px;padding:9px 16px;background:var(--b600);color:#fff;border:none;border-radius:var(--rad);font-weight:600" onclick="dlB64(B64_CONSUMOS,'Planilla_Detalle_Consumos.xlsx')">⬇ Descargar planilla de consumos</button>
+  </div>
+  <div class="fg"><label>Adjuntar planilla completada <span class="req">*</span></label>
+    <div class="upbox${_S.excelFile?' ok':''}" onclick="document.getElementById('xl-ind').click()">
+      <input id="xl-ind" type="file" accept=".xlsx,.xls" style="display:none" onchange="setFile(this)">
+      <div style="font-size:18px;margin-bottom:4px">${_S.excelFile?'✅':'📊'}</div>
+      ${_S.excelFile?'<p class="ok-t">'+esc(_S.excelFile.name)+'</p>':'<p>Clic para adjuntar</p><p class="hint">.xlsx</p>'}
+    </div>
+    ${e.excel?'<p class="err">'+e.excel+'</p>':''}
+    ${xlErrHtml}
+  </div>`:''}
 
   <!-- ── DESCONOCIMIENTO MASIVO ── -->
   ${esDesc&&esMas?`
@@ -466,8 +509,8 @@ function paso1(f,e,esDesc,esNoRec,esInd,esMas){
     <textarea id="f-detalle" placeholder="Describí brevemente lo sucedido...">${esc(f.detalle)}</textarea>
   </div>
   <div class="sec-t">Planilla requerida</div>
-  <div class="al al-blue">ℹ Descargá la planilla combinada (contiene "Detalle tarjetas" y "Detalle consumos"), completala y adjuntala. Las columnas marcadas son obligatorias.</div>
-  <div class="fg"><button class="dl-btn" onclick="dlB64(B64_COMBINADO,'Planilla_Detalle_Consumos_y_Tarjetas.xlsx')">⬇ Descargar planilla combinada</button></div>
+  <div class="al al-amber">⚠ Descargá la planilla combinada (contiene "Detalle tarjetas" y "Detalle consumos"), completala y adjuntala. Las columnas marcadas son obligatorias.</div>
+  <div class="fg"><button class="dl-btn" style="font-size:13px;padding:9px 16px;background:var(--b600);color:#fff;border:none;border-radius:var(--rad);font-weight:600" onclick="dlB64(B64_COMBINADO,'Planilla_Detalle_Consumos_y_Tarjetas.xlsx')">⬇ Descargar planilla combinada</button></div>
   <div class="fg"><label>Subir planilla completada <span class="req">*</span></label>
     <div class="upbox${_S.excelFile?' ok':''}" onclick="document.getElementById('xl-inp').click()">
       <input id="xl-inp" type="file" accept=".xlsx,.xls" style="display:none" onchange="setFile(this)">
@@ -530,8 +573,8 @@ function paso1(f,e,esDesc,esNoRec,esInd,esMas){
   <!-- ── NO RECEPCIÓN MASIVO ── -->
   ${esNoRec&&esMas?`
   <div class="sec-t" style="margin-top:4px">Planilla requerida</div>
-  <div class="al al-blue">ℹ Descargá la planilla "Detalle tarjetas", completala y adjuntala. Las columnas A, B, C y E son obligatorias.</div>
-  <div class="fg"><button class="dl-btn" onclick="dlB64(B64_TARJETAS,'Planilla_Detalle_Tarjetas.xlsx')">⬇ Descargar planilla de tarjetas</button></div>
+  <div class="al al-amber">⚠ Descargá la planilla "Detalle tarjetas", completala y adjuntala. Las columnas A, B, C y E son obligatorias.</div>
+  <div class="fg"><button class="dl-btn" style="font-size:13px;padding:9px 16px;background:var(--b600);color:#fff;border:none;border-radius:var(--rad);font-weight:600" onclick="dlB64(B64_TARJETAS,'Planilla_Detalle_Tarjetas.xlsx')">⬇ Descargar planilla de tarjetas</button></div>
   <div class="fg"><label>Subir planilla completada <span class="req">*</span></label>
     <div class="upbox${_S.excelFile?' ok':''}" onclick="document.getElementById('xl-inp2').click()">
       <input id="xl-inp2" type="file" accept=".xlsx,.xls" style="display:none" onchange="setFile(this)">
