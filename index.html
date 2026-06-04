@@ -91,10 +91,10 @@ var screen = 'select';      // 'select' | 'login'
 var profiles = [
   {
     id: 'cliente',
-    icon: '👤',
+    icon: '📋',
     iconClass: 'cliente',
-    name: 'Cliente',
-    desc: 'Cargar y hacer seguimiento de tus reclamos',
+    name: 'Customer',
+    desc: 'Cargar reclamos de clientes',
     domain: 'Requiere @' + ALLOWED_DOMAIN,
     chip: 'chip-cliente',
     url: URL_CLIENTE
@@ -157,7 +157,7 @@ function renderLogin(card) {
       <div class="login-title">Ingresá con Google</div>
       <div class="login-sub">${
         p.id === 'cliente'
-          ? 'Usá cualquier cuenta Google para acceder.'
+          ? 'Usá tu cuenta corporativa <strong>@' + ALLOWED_DOMAIN + '</strong> para acceder.'
           : 'Usá tu cuenta corporativa <strong>@' + ALLOWED_DOMAIN + '</strong> para acceder.'
       }</div>
       <div class="google-btn-wrap" id="google-btn"></div>
@@ -188,7 +188,7 @@ function initGoogleBtn(profile) {
       handleLogin(response, profile);
     },
     // Para perfiles corporativos, sugerir solo cuentas del dominio
-    hosted_domain: (profile.id !== 'cliente') ? ALLOWED_DOMAIN : undefined
+    hosted_domain: (profile.id !== 'cliente') ? ALLOWED_DOMAIN : ALLOWED_DOMAIN
   });
   google.accounts.id.renderButton(
     document.getElementById('google-btn'),
