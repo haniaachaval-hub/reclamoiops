@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ocasa 360 — Customer</title>
+<title>Plataforma de gestión — Customer</title>
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -349,7 +349,7 @@ function render(){
 
 function topbar(){
   return`<div class="topbar">
-    <div class="brand"><div class="brand-icon">📋</div><div><h1>Ocasa 360</h1><p>Portal Customer</p></div></div>
+    <div class="brand"><div class="brand-icon">📋</div><div><h1>Plataforma de gestión</h1><p>Portal Customer</p></div></div>
     <div style="display:flex;align-items:center;gap:9px">
       <span style="font-size:12px;color:var(--g500)">${esc(_u.name)}</span>
       <button class="btn-sm" onclick="logout()">Salir</button>
@@ -408,7 +408,7 @@ function renderForm(app){
 
   app.innerHTML=`<div class="page">
     <div class="topbar" style="max-width:640px">
-      <div class="brand"><div class="brand-icon">📋</div><div><h1>Ocasa 360</h1></div></div>
+      <div class="brand"><div class="brand-icon">📋</div><div><h1>Plataforma de gestión</h1></div></div>
       <button class="btn-sm" onclick="goHome()">← Inicio</button>
     </div>
     <div class="form-card">
