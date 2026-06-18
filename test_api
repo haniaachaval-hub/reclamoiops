@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Test API</title></head>
+<body style="font-family:sans-serif;padding:20px;max-width:600px;margin:0 auto">
+
+<h2>Test del Apps Script</h2>
+
+<p><b>1.</b> Pegá tu APPS_SCRIPT_URL acá:</p>
+<input id="url" type="text" style="width:100%;padding:8px;font-size:13px" placeholder="https://script.google.com/macros/s/.../exec">
+
+<p><b>2.</b> Pegá tu token (lo conseguís abriendo la consola, Application → Session Storage → ro_token, o usá el botón de abajo para auto-detectarlo si estás en la misma pestaña del sitio):</p>
+<input id="token" type="text" style="width:100%;padding:8px;font-size:13px" placeholder="token JWT">
+
+<br><br>
+<button onclick="testGetPerfil()" style="padding:10px 16px;font-size:14px;cursor:pointer">Probar getPerfilComercial</button>
+<button onclick="testGetTickets()" style="padding:10px 16px;font-size:14px;cursor:pointer">Probar getTickets</button>
+
+<pre id="resultado" style="background:#f3f4f6;padding:14px;margin-top:16px;border-radius:8px;font-size:12px;white-space:pre-wrap;min-height:100px"></pre>
+
+<script>
+async function callApi(action, extra) {
+  var url = document.getElementById('url').value.trim();
+  var token = document.getElementById('token').value.trim();
+  var out = document.getElementById('resultado');
+  out.textContent = 'Llamando a ' + action + '...';
+
+  if (!url) { out.textContent = 'ERROR: falta la URL'; return; }
+
+  var body = Object.assign({ action: action, token: token, esOperario: false }, extra || {});
+
+  try {
+    var res = await fetch(url, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+    var text = await res.text();
+    out.textContent = 'Status: ' + res.status + '\n\nRespuesta:\n' + text;
+  } catch (e) {
+    out.textContent = 'ERROR DE RED: ' + e.message;
+  }
+}
+
+function testGetPerfil(){ callApi('getPerfilComercial'); }
+function testGetTickets(){ callApi('getTickets'); }
+</script>
+
+</body>
+</html>
