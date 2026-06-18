@@ -292,6 +292,14 @@ function render() {
     return;
   }
   renderApp();
+  // El panel de detalle (.overlay) se inserta fuera de #root con
+  // insertAdjacentHTML, así que render() no lo toca automáticamente.
+  // Si no hay ticket seleccionado, hay que removerlo explícitamente
+  // para que el botón ✕ / clic-afuera realmente cierren el panel.
+  if (!selectedTicket) {
+    var existingOverlay = document.querySelector('.overlay');
+    if (existingOverlay) existingOverlay.remove();
+  }
 }
 
 function renderApp() {
