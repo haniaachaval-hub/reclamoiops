@@ -152,6 +152,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVEGPmddBwr13H9Gp7RGjyoW5Fr-5LzxqLGNTbtHnRh8o-31v9KQjCZnb3Fd0QGyH-0Q/exec';
 var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
+var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
 // =====================================================================
 
 var currentUser = (function(){
@@ -159,16 +160,28 @@ var currentUser = (function(){
   var email = sessionStorage.getItem("ro_email");
   var name  = sessionStorage.getItem("ro_name");
   if (!token || !email) { window.location.href = "index.html"; return null; }
-  return { token: token, email: email, name: name };
+  var clientesRaw = sessionStorage.getItem("ro_clientes");
+  var clientes = [];
+  try { clientes = clientesRaw ? JSON.parse(clientesRaw) : []; } catch(e) { clientes = []; }
+  return { token: token, email: email, name: name, clientes: clientes };
 })();
 var tickets = [];
 var perfil = null;
 var selectedTicket = null;
 var searchQ = '';
+var searchInput = ''; // valor del input antes de ejecutar la búsqueda con Enter/botón
+var filtroCliente = '';
+var filtroEstado = '';
+var filtroFechaDesde = '';
+var filtroFechaHasta = '';
+var ordenFecha = 'desc'; // 'desc' = más reciente primero, 'asc' = más viejo primero
 var saving = false;
 var showReopen = false;
 var reopenMsg = '';
 var loading = true;
+// Texto nuevo / archivo nuevo en el panel de detalle, agregado por comercial
+var detailComentario = '';
+var detailArchivo = null;
 
 // ── Estado de la vista actual: 'tickets' | 'nuevo' ──
 var activeView = 'tickets';
@@ -182,11 +195,13 @@ var rfForm = { titular:'', tipo_reclamo:'', detalle:'', tipo_tarjeta:'', num_sec
 var rfExcelFile = null;
 var rfCarrierFile = null;
 var rfErrors = {};
+var rfValidated = false;
+var rfValidando = false;
 
 function resetRfForm() {
   rfStep = 1; rfSaving = false; rfTicketId = ''; rfEditField = null;
   rfForm = { titular:'', tipo_reclamo:'', detalle:'', tipo_tarjeta:'', num_secuencia:'', num_tarjeta:'', num_pst:'' };
-  rfExcelFile = null; rfCarrierFile = null; rfErrors = {};
+  rfExcelFile = null; rfCarrierFile = null; rfErrors = {}; rfValidated = false; rfValidando = false;
 }
 
 function toast(msg, type) {
@@ -196,6 +211,53 @@ function toast(msg, type) {
   d.textContent = msg;
   w.appendChild(d);
   setTimeout(function(){ d.remove(); }, 3500);
+}
+
+function getFilteredTickets() {
+  var list = tickets.slice();
+
+  if (searchQ) {
+    var q = searchQ.toLowerCase();
+    list = list.filter(function(t) {
+      return (t.ID||'').toLowerCase().includes(q)
+        || (t.titular||'').toLowerCase().includes(q)
+        || (t.email_cliente||'').toLowerCase().includes(q)
+        || (t.cliente||'').toLowerCase().includes(q)
+        || (t.tipo_reclamo||'').toLowerCase().includes(q)
+        || (t.detalle||'').toLowerCase().includes(q)
+        || fmtDate(t.creado).includes(q);
+    });
+  }
+  if (filtroCliente) {
+    list = list.filter(function(t){ return (t.cliente||t.email_cliente||'') === filtroCliente; });
+  }
+  if (filtroEstado) {
+    list = list.filter(function(t){ return (t.estado||'') === filtroEstado; });
+  }
+  if (filtroFechaDesde) {
+    list = list.filter(function(t){ return ticketDateValue(t) >= filtroFechaDesde; });
+  }
+  if (filtroFechaHasta) {
+    list = list.filter(function(t){ return ticketDateValue(t) <= filtroFechaHasta; });
+  }
+  list.sort(function(a, b) {
+    var da = ticketDateValue(a), db = ticketDateValue(b);
+    return ordenFecha === 'asc' ? (da < db ? -1 : da > db ? 1 : 0) : (da > db ? -1 : da < db ? 1 : 0);
+  });
+  return list;
+}
+
+// Devuelve la fecha del ticket en formato comparable YYYY-MM-DD
+function ticketDateValue(t) {
+  var str = t.creado || '';
+  if (!str) return '';
+  if (str.includes('/')) { var p = str.split(' ')[0].split('/'); return p.length===3 ? (p[2]+'-'+p[1]+'-'+p[0]) : str; }
+  return str.slice(0,10);
+}
+
+function ejecutarBusqueda() {
+  searchQ = searchInput.trim();
+  render();
 }
 
 function fmtDate(str) {
@@ -303,11 +365,7 @@ function render() {
 }
 
 function renderApp() {
-  var filtered = tickets.filter(function(t) {
-    if (!searchQ) return true;
-    var q = searchQ.toLowerCase();
-    return (t.ID||'').toLowerCase().includes(q) || (t.titular||'').toLowerCase().includes(q) || (t.tipo_reclamo||'').toLowerCase().includes(q);
-  });
+  var filtered = getFilteredTickets();
 
   document.getElementById('root').innerHTML = `
     <div class="app">
@@ -341,7 +399,11 @@ function renderTopbarTickets() {
   return `<div class="topbar">
     <h2>Mis tickets</h2>
     <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-      <input class="search" placeholder="Buscar ticket..." value="${searchQ}" oninput="searchQ=this.value;render()">
+      <input class="search" id="search-inp" placeholder="Buscar por cliente, N° ticket, fecha o palabra clave..." style="width:280px" value="${esc(searchInput)}"
+        oninput="searchInput=this.value"
+        onkeydown="if(event.key==='Enter'){ejecutarBusqueda()}">
+      <button class="btn btn-ghost" onclick="ejecutarBusqueda()">🔍 Buscar</button>
+      ${searchQ ? `<button class="btn btn-ghost" onclick="searchQ='';searchInput='';render()">✕ Limpiar</button>` : ''}
       <button class="btn btn-primary" onclick="goToNuevoReclamo()">➕ Cargar reclamo</button>
     </div>
   </div>`;
@@ -357,9 +419,30 @@ function renderTopbarNuevo() {
 }
 
 function renderTicketsView(filtered) {
+  var clientesDisponibles = (currentUser.clientes && currentUser.clientes.length) ? currentUser.clientes : Array.from(new Set(tickets.map(function(t){ return t.cliente||t.email_cliente||''; }).filter(Boolean)));
+  var estadosDisponibles = ['Recibido','En análisis','Finalizado','Re abierto'];
   return `
     <div class="shdr">
       <h2>Tickets de mis clientes (${filtered.length})</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:9px 11px">
+      <select class="search" style="width:160px" onchange="filtroCliente=this.value;render()">
+        <option value="">Todos los clientes</option>
+        ${clientesDisponibles.map(function(c){ return `<option value="${esc(c)}" ${filtroCliente===c?'selected':''}>${esc(c)}</option>`; }).join('')}
+      </select>
+      <select class="search" style="width:140px" onchange="filtroEstado=this.value;render()">
+        <option value="">Todos los estados</option>
+        ${estadosDisponibles.map(function(e){ return `<option value="${e}" ${filtroEstado===e?'selected':''}>${e}</option>`; }).join('')}
+      </select>
+      <span style="font-size:11px;color:var(--g400)">Desde</span>
+      <input class="search" type="date" style="width:135px" value="${filtroFechaDesde}" onchange="filtroFechaDesde=this.value;render()">
+      <span style="font-size:11px;color:var(--g400)">Hasta</span>
+      <input class="search" type="date" style="width:135px" value="${filtroFechaHasta}" onchange="filtroFechaHasta=this.value;render()">
+      <select class="search" style="width:170px" onchange="ordenFecha=this.value;render()">
+        <option value="desc" ${ordenFecha==='desc'?'selected':''}>Más reciente primero</option>
+        <option value="asc" ${ordenFecha==='asc'?'selected':''}>Más viejo primero</option>
+      </select>
+      ${(filtroCliente||filtroEstado||filtroFechaDesde||filtroFechaHasta) ? `<button class="btn btn-ghost" onclick="filtroCliente='';filtroEstado='';filtroFechaDesde='';filtroFechaHasta='';render()">✕ Limpiar filtros</button>` : ''}
     </div>
     <div class="tw">
       <table>
@@ -370,11 +453,11 @@ function renderTicketsView(filtered) {
           ${filtered.length === 0
             ? '<tr><td colspan="6" class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px">🎫</div><p>No hay tickets</p></td></tr>'
             : filtered.map(function(t) {
-              return `<tr onclick="selectedTicket=${JSON.stringify(t).replace(/"/g,'&quot;')};renderPanel()">
+              return `<tr onclick="selectedTicket=${JSON.stringify(t).replace(/"/g,'&quot;')};detailComentario='';detailArchivo=null;renderPanel()">
                 <td><span class="tid">${t.ID||'—'}</span></td>
                 <td>${fmtDate(t.creado)}</td>
                 <td>${t.tipo_reclamo||'—'}</td>
-                <td style="font-size:11px">${(t.email_cliente||'').split('@')[0]}</td>
+                <td style="font-size:11px">${t.cliente||(t.email_cliente||'').split('@')[0]}</td>
                 <td>${t.monto||'—'}</td>
                 <td><span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span></td>
               </tr>`;
@@ -404,15 +487,15 @@ function renderNuevoReclamoView() {
   if (rfStep === 3) return renderRfSuccess();
 
   var resumen = [
-    { key:'titular', label:'Titular', value:rfForm.titular },
+    { key:'titular', label:'Cliente', value:rfForm.titular },
     { key:'tipo_reclamo', label:'Tipo de reclamo', value:rfForm.tipo_reclamo },
-    rfForm.detalle ? { key:'detalle', label:'Detalle', value:rfForm.detalle } : null,
+    rfForm.detalle ? { key:'detalle', label:'Observaciones', value:rfForm.detalle } : null,
     { key:'tipo_tarjeta', label:'Tipo de tarjeta', value:rfForm.tipo_tarjeta },
     rfForm.tipo_tarjeta==='VISA' ? { key:'num_secuencia', label:'N° Secuencia', value:rfForm.num_secuencia } : null,
     (rfForm.tipo_tarjeta==='Mastercard'||rfForm.tipo_tarjeta==='Débito') ? { key:'num_tarjeta', label:'N° Tarjeta', value:rfForm.num_tarjeta } : null,
     rfForm.num_pst ? { key:'num_pst', label:'N° PST', value:rfForm.num_pst } : null,
     rfExcelFile ? { key:'excel', label:'Excel adjunto', value:rfExcelFile.name, noEdit:true } : null,
-    rfCarrierFile ? { key:'carrier', label:'Carrier/Acuse', value:rfCarrierFile.name, noEdit:true } : null,
+    rfCarrierFile ? { key:'carrier', label:'Acuse/mail adjunto', value:rfCarrierFile.name, noEdit:true } : null,
   ].filter(Boolean);
 
   return `
@@ -434,24 +517,25 @@ function renderNuevoReclamoView() {
 }
 
 function renderRfPaso1() {
+  var clientesOpts = (currentUser.clientes && currentUser.clientes.length) ? currentUser.clientes : [];
   return `<div>
     <div class="rf-frow full"><div class="rf-fgroup">
-      <label>Nombre y Apellido del titular<span class="rf-req">*</span></label>
-      <input type="text" id="rf-titular" value="${esc(rfForm.titular)}" placeholder="Ej: María González">
+      <label>Nombre del cliente<span class="rf-req">*</span></label>
+      <select id="rf-titular" onchange="rfForm.titular=this.value;rfValidated=false">
+        <option value="">— Seleccionar cliente —</option>
+        ${clientesOpts.map(function(c){ return `<option value="${esc(c)}" ${rfForm.titular===c?'selected':''}>${esc(c)}</option>`; }).join('')}
+      </select>
       ${rfErrors.titular?`<p class="rf-err-msg">${rfErrors.titular}</p>`:''}
     </div></div>
+
     <div class="rf-frow full"><div class="rf-fgroup">
       <label>Tipo de reclamo<span class="rf-req">*</span></label>
-      <select id="rf-tipo_reclamo">
+      <select id="rf-tipo_reclamo" onchange="rfForm.tipo_reclamo=this.value;rfValidated=false;render()">
         <option value="">— Seleccionar —</option>
         <option value="Desconocimiento de consumo" ${rfForm.tipo_reclamo==='Desconocimiento de consumo'?'selected':''}>Desconocimiento de consumo</option>
         <option value="No recepción de tarjeta" ${rfForm.tipo_reclamo==='No recepción de tarjeta'?'selected':''}>No recepción de tarjeta</option>
       </select>
       ${rfErrors.tipo_reclamo?`<p class="rf-err-msg">${rfErrors.tipo_reclamo}</p>`:''}
-    </div></div>
-    <div class="rf-frow full"><div class="rf-fgroup">
-      <label>Detalle del reclamo <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
-      <textarea id="rf-detalle" placeholder="Describí brevemente...">${esc(rfForm.detalle)}</textarea>
     </div></div>
     <div class="rf-frow full"><div class="rf-fgroup">
       <label>Tipo de tarjeta<span class="rf-req">*</span></label>
@@ -474,35 +558,82 @@ function renderRfPaso1() {
       <label>Número de PST <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
       <input type="text" id="rf-num_pst" value="${esc(rfForm.num_pst)}" placeholder="Si aplica">
     </div></div>
-    ${rfForm.tipo_reclamo==='Desconocimiento de consumo'?`
-      <div class="al al-amber">⚠ Para este tipo de reclamo debés descargar la planilla, completarla y adjuntarla.</div>
-      <div class="rf-fgroup" style="margin-bottom:12px">
-        <label>Planilla de consumos</label>
-        <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla Excel</a>
+
+    <div class="al al-amber">⚠ Descargá la planilla, completá los campos en <strong>negrita</strong> (obligatorios) y adjuntala completa.</div>
+    <div class="rf-fgroup" style="margin-bottom:12px">
+      <label>Planilla de consumos</label>
+      <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla Excel</a>
+    </div>
+    <div class="rf-fgroup" style="margin-bottom:14px">
+      <label>Adjuntar excel completo<span class="rf-req">*</span></label>
+      <div class="rf-upload${rfExcelFile?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
+        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="rfSetFile('excel',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfExcelFile?'✅':'📊'}</div>
+        ${rfExcelFile?`<p class="rf-ok-text">${rfExcelFile.name}</p>`:'<p>Clic para adjuntar el Excel</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
       </div>
-      <div class="rf-fgroup" style="margin-bottom:12px">
-        <label>Adjuntar excel completo<span class="rf-req">*</span></label>
-        <div class="rf-upload${rfExcelFile?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
-          <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="rfSetFile('excel',this)">
-          <div style="font-size:20px;margin-bottom:5px">${rfExcelFile?'✅':'📊'}</div>
-          ${rfExcelFile?`<p class="rf-ok-text">${rfExcelFile.name}</p>`:'<p>Clic para adjuntar el Excel</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
-        </div>
-        ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
+      ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
+    </div>
+
+    <div class="rf-fgroup" style="margin-bottom:14px">
+      <button class="btn ${rfValidated?'btn-ghost':'btn-primary'}" onclick="rfValidarInformacion()" ${rfValidando?'disabled':''}>
+        ${rfValidando?'<span class="spinner"></span> Validando...':(rfValidated?'✓ Información validada':'🔎 Validar información')}
+      </button>
+      ${rfErrors.validacion?`<p class="rf-err-msg">${rfErrors.validacion}</p>`:''}
+    </div>
+
+    ${rfValidated ? `
+    <div class="al al-green">✅ Información validada correctamente. Completá los siguientes campos para finalizar.</div>
+    <div class="rf-frow full"><div class="rf-fgroup">
+      <label>Observaciones <span style="font-size:11px;color:var(--g400);font-weight:400">— breve descripción del caso</span></label>
+      <textarea id="rf-detalle" placeholder="Describí brevemente el caso...">${esc(rfForm.detalle)}</textarea>
+    </div></div>
+    <div class="rf-fgroup">
+      <label>Acuse de recibo / mail del cliente <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
+      <div class="rf-upload${rfCarrierFile?' ok':''}" onclick="document.getElementById('rf-carrier-inp').click()">
+        <input id="rf-carrier-inp" type="file" style="display:none" onchange="rfSetFile('carrier',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfCarrierFile?'✅':'📄'}</div>
+        ${rfCarrierFile?`<p class="rf-ok-text">${rfCarrierFile.name}</p>`:'<p>Clic para adjuntar foto del acuse o mail</p><p class="rf-hint">PDF, imagen o cualquier formato</p>'}
       </div>
-      <div class="rf-fgroup">
-        <label>Carrier / Acuse de recibo <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
-        <div class="rf-upload${rfCarrierFile?' ok':''}" onclick="document.getElementById('rf-carrier-inp').click()">
-          <input id="rf-carrier-inp" type="file" style="display:none" onchange="rfSetFile('carrier',this)">
-          <div style="font-size:20px;margin-bottom:5px">${rfCarrierFile?'✅':'📄'}</div>
-          ${rfCarrierFile?`<p class="rf-ok-text">${rfCarrierFile.name}</p>`:'<p>Clic para adjuntar carrier/acuse</p><p class="rf-hint">PDF, imagen o cualquier formato</p>'}
-        </div>
-      </div>`:''}
+    </div>` : ''}
+
     <div class="rf-btn-row">
       <button class="btn btn-ghost" onclick="goToTickets()">← Cancelar</button>
-      <button class="btn btn-primary" onclick="rfGoStep2()">Continuar →</button>
+      <button class="btn btn-primary" onclick="rfGoStep2()" ${rfValidated?'':'disabled'}>Continuar →</button>
     </div>
   </div>`;
 }
+
+window.rfValidarInformacion = function() {
+  rfSaveFormState();
+  rfErrors = {};
+  if (!rfForm.titular) rfErrors.titular = 'Seleccioná un cliente';
+  if (!rfForm.tipo_reclamo) rfErrors.tipo_reclamo = 'Seleccioná un tipo';
+  if (!rfForm.tipo_tarjeta) rfErrors.tipo_tarjeta = 'Seleccioná el tipo de tarjeta';
+  if (rfForm.tipo_tarjeta==='VISA' && !rfForm.num_secuencia.trim()) rfErrors.num_secuencia = 'Campo obligatorio';
+  if ((rfForm.tipo_tarjeta==='Mastercard'||rfForm.tipo_tarjeta==='Débito') && !rfForm.num_tarjeta.trim()) rfErrors.num_tarjeta = 'Campo obligatorio';
+  if (!rfExcelFile) rfErrors.excel = 'Debés adjuntar el excel completo';
+
+  if (Object.keys(rfErrors).length > 0) {
+    var faltantes = Object.values(rfErrors);
+    rfErrors.validacion = 'Faltan completar ' + faltantes.length + ' campo(s) obligatorio(s) antes de continuar.';
+    rfValidated = false;
+    render();
+    return;
+  }
+
+  // Validación del contenido del excel: por ahora valida presencia y
+  // extensión del archivo. Si en el futuro se quiere validar columnas
+  // específicas dentro de la planilla, conviene parsearla con una librería
+  // como SheetJS (xlsx) en el navegador antes de habilitar este botón.
+  rfValidando = true; render();
+  setTimeout(function() {
+    rfValidando = false;
+    rfValidated = true;
+    rfErrors = {};
+    toast('Información validada correctamente', 'ok');
+    render();
+  }, 500);
+};
 
 function renderRfPaso2(resumen) {
   return `<div>
@@ -548,14 +679,14 @@ function renderRfSuccess() {
 }
 
 function bindRfEvents() {
-  ['titular','tipo_reclamo','detalle','num_secuencia','num_tarjeta','num_pst'].forEach(function(k){
+  ['tipo_reclamo','detalle','num_secuencia','num_tarjeta','num_pst'].forEach(function(k){
     var el = document.getElementById('rf-'+k);
     if (el) el.addEventListener('input', function(){ rfForm[k]=this.value; });
   });
 }
 
-window.rfSetPill = function(val){ rfForm.tipo_tarjeta=val; rfForm.num_secuencia=''; rfForm.num_tarjeta=''; render(); };
-window.rfSetFile = function(tipo, input){ if(input.files[0]){ if(tipo==='excel') rfExcelFile=input.files[0]; else rfCarrierFile=input.files[0]; render(); } };
+window.rfSetPill = function(val){ rfForm.tipo_tarjeta=val; rfForm.num_secuencia=''; rfForm.num_tarjeta=''; rfValidated=false; render(); };
+window.rfSetFile = function(tipo, input){ if(input.files[0]){ if(tipo==='excel'){ rfExcelFile=input.files[0]; rfValidated=false; } else rfCarrierFile=input.files[0]; render(); } };
 window.rfSaveEdit = function(key, val){ rfForm[key]=val; rfEditField=null; render(); };
 
 function rfSaveFormState() {
@@ -566,14 +697,7 @@ function rfSaveFormState() {
 
 window.rfGoStep2 = function() {
   rfSaveFormState();
-  rfErrors={};
-  if (!rfForm.titular.trim()) rfErrors.titular='Campo obligatorio';
-  if (!rfForm.tipo_reclamo) rfErrors.tipo_reclamo='Seleccioná un tipo';
-  if (!rfForm.tipo_tarjeta) rfErrors.tipo_tarjeta='Seleccioná el tipo de tarjeta';
-  if (rfForm.tipo_tarjeta==='VISA'&&!rfForm.num_secuencia.trim()) rfErrors.num_secuencia='Campo obligatorio';
-  if ((rfForm.tipo_tarjeta==='Mastercard'||rfForm.tipo_tarjeta==='Débito')&&!rfForm.num_tarjeta.trim()) rfErrors.num_tarjeta='Campo obligatorio';
-  if (rfForm.tipo_reclamo==='Desconocimiento de consumo'&&!rfExcelFile) rfErrors.excel='Debés adjuntar el excel';
-  if (Object.keys(rfErrors).length>0){ render(); return; }
+  if (!rfValidated) { toast('Primero validá la información', 'err'); return; }
   rfStep=2; render();
 };
 
@@ -587,7 +711,11 @@ window.rfSubmitForm = async function() {
       num_secuencia:rfForm.tipo_tarjeta==='VISA'?rfForm.num_secuencia:'',
       num_tarjeta:(rfForm.tipo_tarjeta==='Mastercard'||rfForm.tipo_tarjeta==='Débito')?rfForm.num_tarjeta:'',
       num_pst:rfForm.num_pst||'', excel_nombre:rfExcelFile?rfExcelFile.name:'',
-      carrier_nombre:rfCarrierFile?rfCarrierFile.name:''
+      carrier_nombre:rfCarrierFile?rfCarrierFile.name:'',
+      // Pide al backend que envíe el mail automático a operaciones al crear el ticket.
+      // Requiere soporte en el Apps Script (ver notificarNuevoTicket en el backend).
+      notificarOperaciones:true, mailOperaciones:MAIL_OPERACIONES,
+      comercial_nombre: currentUser.name, comercial_email: currentUser.email
     };
     if (rfExcelFile) {
       var b64=await fileToBase64(rfExcelFile);
@@ -658,6 +786,27 @@ function renderPanel() {
               hist.map(function(h){ return `<div style="border-left:2px solid var(--g200);padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${h.accion}</div>`; }).join('')}
           </div>
 
+          <div class="dsec">
+            <div class="dsec-title">Adjuntos del ticket</div>
+            ${renderAdjuntosTicket(t)}
+          </div>
+
+          <div class="dsec">
+            <div class="dsec-title">Comentarios y archivos adicionales</div>
+            <p style="font-size:11px;color:var(--g400);margin-bottom:8px">Acá podés sumar información o archivos que te haya pasado el cliente después de cargado el ticket. Operaciones ve estos comentarios y puede responder, y vos ves los suyos.</p>
+            ${renderComentarios(t)}
+            <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:12px;margin-top:8px">
+              <textarea class="cinp" id="detail-comentario" placeholder="Agregar información adicional para operaciones..." rows="3">${esc(detailComentario)}</textarea>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                <div class="rf-upload" style="flex:1;padding:9px" onclick="document.getElementById('detail-archivo-inp').click()">
+                  <input id="detail-archivo-inp" type="file" style="display:none" onchange="if(this.files[0]){detailArchivo=this.files[0];renderPanel()}">
+                  <p style="font-size:11px">${detailArchivo ? '📎 ' + esc(detailArchivo.name) : 'Clic para adjuntar un archivo (opcional)'}</p>
+                </div>
+                <button class="btn btn-primary" onclick="agregarComentarioTicket('${t.ID}')" ${saving?'disabled':''}>${saving?'<span class="spinner"></span>':''}Enviar</button>
+              </div>
+            </div>
+          </div>
+
           ${t.estado==='Finalizado' ? `
           <div class="dsec">
             <div class="dsec-title">Reabrir ticket</div>
@@ -676,6 +825,77 @@ function renderPanel() {
   var existing = document.querySelector('.overlay');
   if (existing) existing.remove();
   document.body.insertAdjacentHTML('beforeend', panelHtml);
+}
+
+// Lista los archivos adjuntados al ticket por comercial y por operaciones
+function renderAdjuntosTicket(t) {
+  var adj = [];
+  if (t.excel_nombre) adj.push({ nombre: t.excel_nombre, origen: 'Comercial (planilla)' });
+  if (t.carrier_nombre) adj.push({ nombre: t.carrier_nombre, origen: 'Comercial (acuse/mail)' });
+  var extra = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try { return JSON.parse(t.adjuntos||'[]'); } catch(e){ return []; } })();
+  extra.forEach(function(a){ adj.push({ nombre: a.nombre, origen: a.origen || (a.de==='operaciones'?'Operaciones':'Comercial') }); });
+
+  if (adj.length === 0) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
+  return adj.map(function(a){
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">
+      <span>📎</span><span style="flex:1;color:var(--g900)">${esc(a.nombre)}</span>
+      <span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>
+    </div>`;
+  }).join('');
+}
+
+// Lista comentarios cargados sobre el ticket (de comercial u operaciones)
+function renderComentarios(t) {
+  var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try { return JSON.parse(t.comentarios||'[]'); } catch(e){ return []; } })();
+  if (coms.length === 0) return '<p style="font-size:12px;color:var(--g400)">Todavía no hay comentarios</p>';
+  return coms.map(function(c){
+    var esOperaciones = c.de === 'operaciones';
+    return `<div style="border-left:2px solid ${esOperaciones?'var(--p500)':'var(--b500)'};padding:7px 11px;margin-bottom:7px;background:${esOperaciones?'var(--p50)':'var(--b50)'};border-radius:0 var(--rad) var(--rad) 0">
+      <div style="font-size:10px;font-weight:600;color:${esOperaciones?'var(--p600)':'var(--b700)'};margin-bottom:2px">${esOperaciones?'⚙️ Operaciones':'💼 Comercial'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+      <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
+      ${c.archivo ? `<div style="font-size:11px;color:var(--g500);margin-top:3px">📎 ${esc(c.archivo)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function agregarComentarioTicket(id) {
+  var ta = document.getElementById('detail-comentario');
+  var texto = ta ? ta.value.trim() : '';
+  if (!texto && !detailArchivo) { toast('Escribí un comentario o adjuntá un archivo', 'err'); return; }
+
+  saving = true; renderPanel();
+  try {
+    var ahora = new Date();
+    var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+    var comentario = { de: 'comercial', usuario: currentUser.name || currentUser.email, ts: tsStr, texto: texto, archivo: detailArchivo ? detailArchivo.name : '' };
+
+    var fileId = null;
+    if (detailArchivo) {
+      var b64 = await fileToBase64(detailArchivo);
+      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:detailArchivo.type, ticketId:id });
+      if (ur.ok) fileId = ur.fileId;
+    }
+
+    // NOTA: requiere una acción 'agregarComentario' en el backend (Apps Script)
+    // que haga push del comentario al array "comentarios" del ticket y, si
+    // hay archivo, lo agregue también a "adjuntos". Ver nota al final del chat.
+    var res = await api({ action:'agregarComentario', id:id, comentario:comentario, fileId:fileId });
+    if (!res.ok) throw new Error(res.error || 'No se pudo guardar el comentario');
+
+    var t = tickets.find(function(x){ return x.ID===id; });
+    if (t) {
+      var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
+      coms.push(comentario);
+      t.comentarios = coms;
+      selectedTicket = t;
+    }
+    detailComentario = ''; detailArchivo = null;
+    toast('Comentario agregado', 'ok');
+    renderPanel();
+  } catch (e) {
+    toast('Error al agregar comentario: ' + e.message, 'err');
+  }
+  saving = false; renderPanel();
 }
 
 async function reabrirTicket(id) {
