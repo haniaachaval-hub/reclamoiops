@@ -191,7 +191,7 @@ var rfStep = 1;
 var rfSaving = false;
 var rfTicketId = '';
 var rfEditField = null;
-var rfForm = { titular:'', tipo_reclamo:'', detalle:'' };
+var rfForm = { titular:'', tipo_reclamo:'', detalle:'', monto:'' };
 var rfExcelFiles = [];
 var rfCarrierFiles = [];
 var rfErrors = {};
@@ -200,7 +200,7 @@ var rfValidando = false;
 
 function resetRfForm() {
   rfStep = 1; rfSaving = false; rfTicketId = ''; rfEditField = null;
-  rfForm = { titular:'', tipo_reclamo:'', detalle:'' };
+  rfForm = { titular:'', tipo_reclamo:'', detalle:'', monto:'' };
   rfExcelFiles = []; rfCarrierFiles = []; rfErrors = {}; rfValidated = false; rfValidando = false;
 }
 
@@ -222,14 +222,14 @@ function getFilteredTickets() {
       return (t.ID||'').toLowerCase().includes(q)
         || (t.titular||'').toLowerCase().includes(q)
         || (t.email_cliente||'').toLowerCase().includes(q)
-        || (t.cliente||'').toLowerCase().includes(q)
+        || (t.empresa||t.cliente||'').toLowerCase().includes(q)
         || (t.tipo_reclamo||'').toLowerCase().includes(q)
         || (t.detalle||'').toLowerCase().includes(q)
         || fmtDate(t.creado).includes(q);
     });
   }
   if (filtroCliente) {
-    list = list.filter(function(t){ return (t.cliente||t.email_cliente||'') === filtroCliente; });
+    list = list.filter(function(t){ return (t.empresa||t.cliente||t.email_cliente||'') === filtroCliente; });
   }
   if (filtroEstado) {
     list = list.filter(function(t){ return (t.estado||'') === filtroEstado; });
@@ -422,7 +422,7 @@ function renderTopbarNuevo() {
 }
 
 function renderTicketsView(filtered) {
-  var clientesDisponibles = (currentUser.clientes && currentUser.clientes.length) ? currentUser.clientes : Array.from(new Set(tickets.map(function(t){ return t.cliente||t.email_cliente||''; }).filter(Boolean)));
+  var clientesDisponibles = (currentUser.clientes && currentUser.clientes.length) ? currentUser.clientes : Array.from(new Set(tickets.map(function(t){ return t.empresa||t.cliente||t.email_cliente||''; }).filter(Boolean)));
   var estadosDisponibles = ['Recibido','En análisis','Finalizado','Re abierto'];
   return `
     <div class="shdr">
@@ -460,7 +460,7 @@ function renderTicketsView(filtered) {
                 <td><span class="tid">${t.ID||'—'}</span></td>
                 <td>${fmtDate(t.creado)}</td>
                 <td>${t.tipo_reclamo||'—'}</td>
-                <td style="font-size:11px">${t.cliente||(t.email_cliente||'').split('@')[0]}</td>
+                <td style="font-size:11px">${esc(t.empresa||t.cliente||(t.email_cliente||'').split('@')[0]||'—')}</td>
                 <td>${t.monto||'—'}</td>
                 <td><span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span></td>
               </tr>`;
@@ -492,6 +492,7 @@ function renderNuevoReclamoView() {
   var resumen = [
     { key:'titular', label:'Cliente', value:rfForm.titular },
     { key:'tipo_reclamo', label:'Tipo de reclamo', value:rfForm.tipo_reclamo },
+    rfForm.monto ? { key:'monto', label:'Monto total desconocido', value:rfForm.monto } : null,
     rfForm.detalle ? { key:'detalle', label:'Observaciones', value:rfForm.detalle } : null,
     rfExcelFiles.length ? { key:'excel', label:'Planilla(s) adjunta(s)', value:rfExcelFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
     rfCarrierFiles.length ? { key:'carrier', label:'Acuse/mail adjunto(s)', value:rfCarrierFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
@@ -555,7 +556,12 @@ function renderRfPaso1() {
       </div>
       ${renderRfFileList('excel')}
       ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
-    </div>` : ''}
+    </div>
+    <div class="rf-frow full"><div class="rf-fgroup">
+      <label>Monto total desconocido<span class="rf-req">*</span></label>
+      <input type="text" id="rf-monto" value="${esc(rfForm.monto)}" placeholder="Ej: $125.000" oninput="rfForm.monto=this.value">
+      ${rfErrors.monto?`<p class="rf-err-msg">${rfErrors.monto}</p>`:''}
+    </div></div>` : ''}
 
     ${esNoRecepcion ? `
     <div class="al al-amber">⚠ Descargá la planilla de no recepción, completá los campos en <strong>negrita</strong> (obligatorios) y adjuntala completa.</div>
@@ -585,8 +591,9 @@ function renderRfPaso1() {
     ${rfValidated ? `
     <div class="al al-green">✅ Información validada correctamente. Completá los siguientes campos para finalizar.</div>
     <div class="rf-frow full"><div class="rf-fgroup">
-      <label>Observaciones <span style="font-size:11px;color:var(--g400);font-weight:400">— breve descripción del caso</span></label>
-      <textarea id="rf-detalle" placeholder="Describí brevemente el caso...">${esc(rfForm.detalle)}</textarea>
+      <label>Observaciones<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">— breve descripción del caso</span></label>
+      <textarea id="rf-detalle" placeholder="Describí brevemente el caso..." oninput="rfForm.detalle=this.value">${esc(rfForm.detalle)}</textarea>
+      ${rfErrors.detalle?`<p class="rf-err-msg">${rfErrors.detalle}</p>`:''}
     </div></div>
     <div class="rf-fgroup">
       <label>Acuse de recibo / mail del cliente <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional — podés adjuntar más de un archivo)</span></label>
@@ -625,6 +632,7 @@ window.rfValidarInformacion = function() {
   if (!rfForm.titular) rfErrors.titular = 'Seleccioná un cliente';
   if (!rfForm.tipo_reclamo) rfErrors.tipo_reclamo = 'Seleccioná un tipo de reclamo';
   if (!rfExcelFiles.length) rfErrors.excel = 'Debés adjuntar al menos una planilla';
+  if (rfForm.tipo_reclamo === 'Desconocimiento de consumo' && !rfForm.monto.trim()) rfErrors.monto = 'Campo obligatorio';
 
   if (Object.keys(rfErrors).length > 0) {
     var faltantes = Object.values(rfErrors);
@@ -714,7 +722,7 @@ window.rfRemoveFile = function(tipo, idx){
 window.rfSaveEdit = function(key, val){ rfForm[key]=val; rfEditField=null; render(); };
 
 function rfSaveFormState() {
-  ['titular','tipo_reclamo','detalle'].forEach(function(k){
+  ['titular','tipo_reclamo','detalle','monto'].forEach(function(k){
     var el = document.getElementById('rf-'+k); if(el) rfForm[k]=el.value;
   });
 }
@@ -722,6 +730,13 @@ function rfSaveFormState() {
 window.rfGoStep2 = function() {
   rfSaveFormState();
   if (!rfValidated) { toast('Primero validá la información', 'err'); return; }
+  rfErrors = {};
+  if (!rfForm.detalle.trim()) {
+    rfErrors.detalle = 'Campo obligatorio';
+    toast('Completá las observaciones antes de continuar', 'err');
+    render();
+    return;
+  }
   rfStep=2; render();
 };
 
@@ -731,6 +746,7 @@ window.rfSubmitForm = async function() {
     var id='REC-'+(Math.floor(Math.random()*900000)+100000);
     var payload={
       action:'crearTicket', titular:rfForm.titular, banco:rfForm.titular, tipo_reclamo:rfForm.tipo_reclamo,
+      monto:rfForm.monto||'',
       detalle:rfForm.detalle||'', excel_nombre:rfExcelFiles.map(function(f){return f.name;}).join(', '),
       carrier_nombre:rfCarrierFiles.map(function(f){return f.name;}).join(', '),
       // Pide al backend que envíe el mail automático a operaciones al crear el ticket.
