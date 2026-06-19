@@ -282,6 +282,28 @@ function fileToBase64(file) {
   });
 }
 
+// Muchos navegadores (sobre todo en celulares) no informan bien el tipo de
+// archivo real (file.type llega vacío o como "application/octet-stream"),
+// y eso hace que Drive guarde el archivo con un tipo incorrecto, generando
+// el error "Excel no puede abrir el archivo" al intentar abrirlo después.
+// Por eso forzamos el mimeType correcto según la extensión del nombre.
+function getMimeType(nombre) {
+  var ext = (nombre.split('.').pop() || '').toLowerCase();
+  var tipos = {
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    xls:  'application/vnd.ms-excel',
+    csv:  'text/csv',
+    pdf:  'application/pdf',
+    png:  'image/png',
+    jpg:  'image/jpeg',
+    jpeg: 'image/jpeg',
+    heic: 'image/heic',
+    eml:  'message/rfc822',
+    msg:  'application/vnd.ms-outlook'
+  };
+  return tipos[ext] || 'application/octet-stream';
+}
+
 async function api(body) {
   body.token = currentUser ? currentUser.token : '';
   if (body.action === 'getTickets' && currentUser && currentUser.clientes && currentUser.clientes.length) {
@@ -550,9 +572,9 @@ function renderRfPaso1() {
     <div class="rf-fgroup" style="margin-bottom:14px">
       <label>Adjuntar planilla de consumos completa<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">(podés adjuntar más de un archivo)</span></label>
       <div class="rf-upload${rfExcelFiles.length?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
-        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="rfAddFiles('excel',this)">
+        <input id="rf-excel-inp" type="file" accept=".xlsx" multiple style="display:none" onchange="rfAddFiles('excel',this)">
         <div style="font-size:20px;margin-bottom:5px">${rfExcelFiles.length?'✅':'📊'}</div>
-        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
+        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx</p>'}
       </div>
       ${renderRfFileList('excel')}
       ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
@@ -572,9 +594,9 @@ function renderRfPaso1() {
     <div class="rf-fgroup" style="margin-bottom:14px">
       <label>Adjuntar planilla de no recepción completa<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">(podés adjuntar más de un archivo)</span></label>
       <div class="rf-upload${rfExcelFiles.length?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
-        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="rfAddFiles('excel',this)">
+        <input id="rf-excel-inp" type="file" accept=".xlsx" multiple style="display:none" onchange="rfAddFiles('excel',this)">
         <div style="font-size:20px;margin-bottom:5px">${rfExcelFiles.length?'✅':'📊'}</div>
-        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
+        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx</p>'}
       </div>
       ${renderRfFileList('excel')}
       ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
@@ -598,9 +620,9 @@ function renderRfPaso1() {
     <div class="rf-fgroup">
       <label>Acuse de recibo / mail del cliente <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional — podés adjuntar más de un archivo)</span></label>
       <div class="rf-upload${rfCarrierFiles.length?' ok':''}" onclick="document.getElementById('rf-carrier-inp').click()">
-        <input id="rf-carrier-inp" type="file" multiple style="display:none" onchange="rfAddFiles('carrier',this)">
+        <input id="rf-carrier-inp" type="file" accept="image/*,.pdf,.eml,.msg" multiple style="display:none" onchange="rfAddFiles('carrier',this)">
         <div style="font-size:20px;margin-bottom:5px">${rfCarrierFiles.length?'✅':'📄'}</div>
-        ${rfCarrierFiles.length?`<p class="rf-ok-text">${rfCarrierFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar foto(s) del acuse o mail</p><p class="rf-hint">PDF, imagen o cualquier formato</p>'}
+        ${rfCarrierFiles.length?`<p class="rf-ok-text">${rfCarrierFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar foto(s) del acuse o mail</p><p class="rf-hint">Imagen, PDF o archivo de mail (.eml/.msg)</p>'}
       </div>
       ${renderRfFileList('carrier')}
     </div>` : ''}
@@ -760,7 +782,7 @@ window.rfSubmitForm = async function() {
       for (var i = 0; i < rfExcelFiles.length; i++) {
         var f = rfExcelFiles[i];
         var b64 = await fileToBase64(f);
-        var ur = await api({ action:'uploadArchivo', base64:b64, nombre:f.name, mimeType:f.type, ticketId:id });
+        var ur = await api({ action:'uploadArchivo', base64:b64, nombre:f.name, mimeType:getMimeType(f.name), ticketId:id });
         if (ur.ok) {
           if (i === 0) payload.excel_fileId = ur.fileId; // compatibilidad con columna original
           adjuntosIniciales.push({ nombre:f.name, fileId:ur.fileId, origen:'Comercial (planilla)', de:'comercial' });
@@ -771,7 +793,7 @@ window.rfSubmitForm = async function() {
       for (var j = 0; j < rfCarrierFiles.length; j++) {
         var fc = rfCarrierFiles[j];
         var b64c = await fileToBase64(fc);
-        var urc = await api({ action:'uploadArchivo', base64:b64c, nombre:fc.name, mimeType:fc.type, ticketId:id });
+        var urc = await api({ action:'uploadArchivo', base64:b64c, nombre:fc.name, mimeType:getMimeType(fc.name), ticketId:id });
         if (urc.ok) {
           if (j === 0) payload.carrier_fileId = urc.fileId; // compatibilidad con columna original
           adjuntosIniciales.push({ nombre:fc.name, fileId:urc.fileId, origen:'Comercial (acuse/mail)', de:'comercial' });
@@ -933,7 +955,7 @@ async function agregarComentarioTicket(id) {
     var fileId = null;
     if (detailArchivo) {
       var b64 = await fileToBase64(detailArchivo);
-      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:detailArchivo.type, ticketId:id });
+      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:getMimeType(detailArchivo.name), ticketId:id });
       if (ur.ok) fileId = ur.fileId;
     }
 
