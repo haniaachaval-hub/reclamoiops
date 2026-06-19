@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReclamiOps — Acceso</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;--gr700:#15803d;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--p50:#f5f3ff;--p600:#7c3aed;
+  --rad:8px;--rad-lg:14px;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:100%;max-width:480px}
+.logo{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:32px}
+.logo-icon{width:42px;height:42px;border-radius:10px;background:var(--b600);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+.logo h1{font-size:22px;font-weight:600;color:var(--g900)}
+.logo p{font-size:13px;color:var(--g400);margin-top:2px}
+
+/* Pantalla de selección de perfil */
+.card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 16px rgba(0,0,0,.07);padding:32px}
+.card-title{font-size:16px;font-weight:600;color:var(--g900);margin-bottom:6px;text-align:center}
+.card-sub{font-size:13px;color:var(--g500);margin-bottom:24px;text-align:center}
+.profile-grid{display:flex;flex-direction:column;gap:10px}
+.profile-btn{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid var(--g200);border-radius:var(--rad-lg);cursor:pointer;background:var(--w);text-align:left;width:100%;font-family:inherit;transition:all .13s}
+.profile-btn:hover{border-color:var(--b500);background:var(--b50)}
+.profile-btn.sel{border-color:var(--b500);background:var(--b50);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.p-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.p-icon.comercial{background:#f0fdf4}
+.p-icon.operaciones{background:#f5f3ff}
+.p-name{font-size:14px;font-weight:600;color:var(--g900)}
+.p-desc{font-size:12px;color:var(--g500);margin-top:2px}
+.p-domain{font-size:10px;color:var(--g400);margin-top:3px;font-style:italic}
+.btn-continue{width:100%;margin-top:20px;padding:11px;background:var(--b600);color:#fff;border:none;border-radius:var(--rad-lg);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .12s}
+.btn-continue:hover:not(:disabled){background:var(--b700)}
+.btn-continue:disabled{opacity:.4;cursor:default}
+
+/* Pantalla de login */
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--g500);font-size:12px;cursor:pointer;font-family:inherit;margin-bottom:18px;padding:0}
+.back-btn:hover{color:var(--g700)}
+.profile-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-bottom:20px}
+.chip-comercial{background:var(--gr50);color:var(--gr700);border:1px solid var(--gr100)}
+.chip-operaciones{background:var(--p50);color:var(--p600);border:1px solid #e9d5ff}
+.login-title{font-size:15px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--g500);margin-bottom:22px}
+.google-btn-wrap{display:flex;justify-content:center;margin-bottom:12px}
+.err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:9px 12px;font-size:12px;margin-top:12px;display:none}
+.loading{text-align:center;padding:20px;color:var(--g400);font-size:13px}
+
+/* Formulario manual de acceso Comercial (sin cuenta Google) */
+.cf-title{font-size:15px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.cf-sub{font-size:13px;color:var(--g500);margin-bottom:20px}
+.cf-group{margin-bottom:14px;text-align:left}
+.cf-group label{display:block;font-size:12px;font-weight:500;color:var(--g700);margin-bottom:5px}
+.cf-group input[type=text],.cf-group input[type=email]{width:100%;padding:9px 11px;border:1px solid var(--g300);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g900);outline:none}
+.cf-group input:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+.cf-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf-clientes{border:1px solid var(--g200);border-radius:var(--rad);max-height:190px;overflow-y:auto}
+.cf-cliente-opt{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--g100);cursor:pointer;font-size:12.5px;color:var(--g700)}
+.cf-cliente-opt:last-child{border-bottom:none}
+.cf-cliente-opt:hover{background:var(--b50)}
+.cf-cliente-opt input{width:15px;height:15px;accent-color:var(--b600)}
+.cf-hint{font-size:11px;color:var(--g400);margin-top:5px}
+.cf-err-msg{font-size:11px;color:var(--r500);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    <div>
+      <h1>ReclamiOps</h1>
+      <p>Sistema de gestión de reclamos</p>
+    </div>
+  </div>
+
+  <div class="card" id="card">
+    <!-- Se renderiza por JS -->
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIGURACIÓN — editá solo estas líneas
+var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
+var ALLOWED_DOMAIN   = 'ocasa.com';
+// URLs de cada interfaz (ajustar si cambia el nombre del repo)
+var BASE_URL = window.location.href.replace(/\/[^\/]*$/, '/');
+var URL_COMERCIAL    = BASE_URL + 'comercial.html';
+var URL_OPERACIONES  = BASE_URL + 'operaciones.html';
+// ─────────────────────────────────────────────
+
+var selectedProfile = null; // 'comercial' | 'operaciones'
+var screen = 'select';      // 'select' | 'login' | 'comercial-form'
+
+// Listado de clientes postales disponibles para asignar a un comercial
+var CLIENTES_POSTALES = ['Banco Macro','Banco Ciudad','Banco de Cordoba','Banco de Formosa','Banco de la pampa'];
+var cfEmail = '', cfNombre = '', cfApellido = '', cfClientes = [];
+var cfErrors = {};
+
+// Perfil Cliente eliminado: el flujo de carga de reclamos de clientes
+// ahora se realiza desde el Portal Comercial (botón "Cargar reclamo").
+var profiles = [
+  {
+    id: 'comercial',
+    icon: '💼',
+    iconClass: 'comercial',
+    name: 'Comercial',
+    desc: 'Ver tickets de tus clientes asignados y cargar nuevos reclamos',
+    domain: 'Requiere @' + ALLOWED_DOMAIN,
+    chip: 'chip-comercial',
+    url: URL_COMERCIAL
+  },
+  {
+    id: 'operaciones',
+    icon: '⚙️',
+    iconClass: 'operaciones',
+    name: 'Operaciones',
+    desc: 'Gestión completa de tickets, KPIs e informes',
+    domain: 'Requiere @' + ALLOWED_DOMAIN,
+    chip: 'chip-operaciones',
+    url: URL_OPERACIONES
+  }
+];
+
+function render() {
+  var card = document.getElementById('card');
+  if (screen === 'select') renderSelect(card);
+  else if (screen === 'comercial-form') renderComercialForm(card);
+  else renderLogin(card);
+}
+
+function renderSelect(card) {
+  card.innerHTML = `
+    <div class="card-title">¿Con qué perfil ingresás?</div>
+    <div class="card-sub">Seleccioná tu tipo de usuario para continuar</div>
+    <div class="profile-grid">
+      ${profiles.map(function(p) {
+        return `<button class="profile-btn${selectedProfile===p.id?' sel':''}" onclick="selectProfile('${p.id}')">
+          <div class="p-icon ${p.iconClass}">${p.icon}</div>
+          <div>
+            <div class="p-name">${p.name}</div>
+            <div class="p-desc">${p.desc}</div>
+            <div class="p-domain">${p.domain}</div>
+          </div>
+        </button>`;
+      }).join('')}
+    </div>
+    <button class="btn-continue" ${!selectedProfile?'disabled':''} onclick="goToLogin()">
+      Continuar →
+    </button>`;
+}
+
+function renderLogin(card) {
+  var p = profiles.find(function(x){ return x.id === selectedProfile; });
+  card.innerHTML = `
+    <button class="back-btn" onclick="screen='select';selectedProfile=null;render()">← Volver</button>
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+      <span class="profile-chip ${p.chip}">${p.icon} ${p.name}</span>
+      <div class="login-title">Ingresá con Google</div>
+      <div class="login-sub">Usá tu cuenta corporativa <strong>@${ALLOWED_DOMAIN}</strong> para acceder.</div>
+      <div class="google-btn-wrap" id="google-btn"></div>
+      <div class="err" id="login-err"></div>
+    </div>`;
+  initGoogleBtn(p);
+}
+
+function selectProfile(id) {
+  selectedProfile = id;
+  render();
+}
+
+function goToLogin() {
+  if (!selectedProfile) return;
+  if (selectedProfile === 'comercial') {
+    screen = 'comercial-form';
+  } else {
+    screen = 'login';
+  }
+  render();
+}
+
+// ── Formulario manual de acceso para Comercial (sin cuenta Google) ──
+function renderComercialForm(card) {
+  card.innerHTML = `
+    <button class="back-btn" onclick="screen='select';selectedProfile=null;render()">← Volver</button>
+    <span class="profile-chip chip-comercial">💼 Comercial</span>
+    <div class="cf-title">Acceso de Comercial</div>
+    <div class="cf-sub">Completá tus datos para ingresar. Usá tu mail corporativo, aunque no tengas cuenta de Google asociada.</div>
+    <div class="cf-group">
+      <label>Email corporativo</label>
+      <input type="email" id="cf-email" placeholder="nombre.apellido@${ALLOWED_DOMAIN}" value="${cfEmail}">
+      ${cfErrors.email?`<p class="cf-err-msg">${cfErrors.email}</p>`:''}
+    </div>
+    <div class="cf-row2">
+      <div class="cf-group">
+        <label>Nombre</label>
+        <input type="text" id="cf-nombre" placeholder="Ej: Juan" value="${cfNombre}">
+        ${cfErrors.nombre?`<p class="cf-err-msg">${cfErrors.nombre}</p>`:''}
+      </div>
+      <div class="cf-group">
+        <label>Apellido</label>
+        <input type="text" id="cf-apellido" placeholder="Ej: Pérez" value="${cfApellido}">
+        ${cfErrors.apellido?`<p class="cf-err-msg">${cfErrors.apellido}</p>`:''}
+      </div>
+    </div>
+    <div class="cf-group">
+      <label>Clientes a cargo</label>
+      <div class="cf-clientes">
+        ${CLIENTES_POSTALES.map(function(c, i){
+          var checked = cfClientes.indexOf(c) > -1;
+          return `<label class="cf-cliente-opt">
+            <input type="checkbox" ${checked?'checked':''} onchange="toggleCfCliente('${c.replace(/'/g,"\\'")}')">
+            <span>${c}</span>
+          </label>`;
+        }).join('')}
+      </div>
+      <p class="cf-hint">Seleccioná uno o más clientes postales.</p>
+      ${cfErrors.clientes?`<p class="cf-err-msg">${cfErrors.clientes}</p>`:''}
+    </div>
+    <div class="err" id="cf-err" style="${cfErrors.general?'display:block':''}">${cfErrors.general||''}</div>
+    <button class="btn-continue" onclick="submitComercialForm()">Ingresar →</button>
+  `;
+}
+
+function toggleCfCliente(c) {
+  syncCfInputs();
+  var i = cfClientes.indexOf(c);
+  if (i > -1) cfClientes.splice(i, 1); else cfClientes.push(c);
+  render();
+}
+
+function syncCfInputs() {
+  var e = document.getElementById('cf-email'); if (e) cfEmail = e.value;
+  var n = document.getElementById('cf-nombre'); if (n) cfNombre = n.value;
+  var a = document.getElementById('cf-apellido'); if (a) cfApellido = a.value;
+}
+
+function submitComercialForm() {
+  syncCfInputs();
+  cfErrors = {};
+  var email = (cfEmail || '').trim().toLowerCase();
+  if (!email) cfErrors.email = 'Ingresá tu mail corporativo.';
+  else if (!email.endsWith('@' + ALLOWED_DOMAIN)) cfErrors.email = 'Acceso restringido. Necesitás un mail @' + ALLOWED_DOMAIN + ' para ingresar como Comercial.';
+  if (!cfNombre.trim()) cfErrors.nombre = 'Campo obligatorio.';
+  if (!cfApellido.trim()) cfErrors.apellido = 'Campo obligatorio.';
+  if (cfClientes.length === 0) cfErrors.clientes = 'Seleccioná al menos un cliente a cargo.';
+
+  if (Object.keys(cfErrors).length > 0) { render(); return; }
+
+  // No hay token de Google: generamos un identificador estable a partir del
+  // mail para que el backend (Apps Script) pueda reconocer la sesión.
+  // NOTA: esto NO es un mecanismo de autenticación seguro — solo identifica
+  // al usuario por mail de dominio corporativo. Si se requiere más seguridad,
+  // conviene validar el alta del comercial contra una hoja de "Comerciales habilitados"
+  // en el backend antes de dejarlo operar.
+  var pseudoToken = btoa(unescape(encodeURIComponent(email + '|' + Date.now())));
+
+  sessionStorage.setItem('ro_token', pseudoToken);
+  sessionStorage.setItem('ro_email', email);
+  sessionStorage.setItem('ro_name', cfNombre.trim() + ' ' + cfApellido.trim());
+  sessionStorage.setItem('ro_nombre', cfNombre.trim());
+  sessionStorage.setItem('ro_apellido', cfApellido.trim());
+  sessionStorage.setItem('ro_clientes', JSON.stringify(cfClientes));
+  sessionStorage.setItem('ro_profile', 'comercial');
+  sessionStorage.setItem('ro_auth_method', 'manual');
+
+  window.location.href = URL_COMERCIAL;
+}
+
+function initGoogleBtn(profile) {
+  if (!window.google) {
+    setTimeout(function(){ initGoogleBtn(profile); }, 300);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: function(response) {
+      handleLogin(response, profile);
+    },
+    // Ambos perfiles ahora son corporativos: solo cuentas del dominio
+    hosted_domain: ALLOWED_DOMAIN
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-btn'),
+    { theme: 'outline', size: 'large', text: 'continue_with', locale: 'es', width: 280 }
+  );
+}
+
+function handleLogin(response, profile) {
+  var payload = JSON.parse(atob(response.credential.split('.')[1]));
+  var email = payload.email || '';
+
+  // Validar dominio corporativo (obligatorio para ambos perfiles)
+  if (!email.endsWith('@' + ALLOWED_DOMAIN)) {
+    showErr('Acceso restringido. Necesitás una cuenta @' + ALLOWED_DOMAIN + ' para ingresar como ' + profile.name + '.');
+    return;
+  }
+
+  // Guardar token y perfil en sessionStorage para que la página destino los lea
+  sessionStorage.setItem('ro_token', response.credential);
+  sessionStorage.setItem('ro_email', email);
+  sessionStorage.setItem('ro_name', payload.name || email.split('@')[0]);
+  sessionStorage.setItem('ro_profile', profile.id);
+
+  // Redirigir a la página correcta
+  window.location.href = profile.url;
+}
+
+function showErr(msg) {
+  var el = document.getElementById('login-err');
+  if (el) { el.style.display = 'block'; el.textContent = msg; }
+}
+
+// Si ya hay sesión guardada, redirigir directo
+(function checkExistingSession() {
+  var token = sessionStorage.getItem('ro_token');
+  var prof = sessionStorage.getItem('ro_profile');
+  if (token && prof) {
+    var p = profiles.find(function(x){ return x.id === prof; });
+    if (p) { window.location.href = p.url; return; }
+    // Perfil guardado era 'cliente' (ya eliminado) -> limpiar sesión
+    sessionStorage.clear();
+  }
+  render();
+})();
+</script>
+</body>
+</html>
