@@ -54,6 +54,22 @@ body{background:var(--g50);min-height:100vh;display:flex;align-items:center;just
 .google-btn-wrap{display:flex;justify-content:center;margin-bottom:12px}
 .err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:9px 12px;font-size:12px;margin-top:12px;display:none}
 .loading{text-align:center;padding:20px;color:var(--g400);font-size:13px}
+
+/* Formulario manual de acceso Comercial (sin cuenta Google) */
+.cf-title{font-size:15px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.cf-sub{font-size:13px;color:var(--g500);margin-bottom:20px}
+.cf-group{margin-bottom:14px;text-align:left}
+.cf-group label{display:block;font-size:12px;font-weight:500;color:var(--g700);margin-bottom:5px}
+.cf-group input[type=text],.cf-group input[type=email]{width:100%;padding:9px 11px;border:1px solid var(--g300);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g900);outline:none}
+.cf-group input:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+.cf-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf-clientes{border:1px solid var(--g200);border-radius:var(--rad);max-height:190px;overflow-y:auto}
+.cf-cliente-opt{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--g100);cursor:pointer;font-size:12.5px;color:var(--g700)}
+.cf-cliente-opt:last-child{border-bottom:none}
+.cf-cliente-opt:hover{background:var(--b50)}
+.cf-cliente-opt input{width:15px;height:15px;accent-color:var(--b600)}
+.cf-hint{font-size:11px;color:var(--g400);margin-top:5px}
+.cf-err-msg{font-size:11px;color:var(--r500);margin-top:4px}
 </style>
 </head>
 <body>
@@ -83,7 +99,12 @@ var URL_OPERACIONES  = BASE_URL + 'operaciones.html';
 // ─────────────────────────────────────────────
 
 var selectedProfile = null; // 'comercial' | 'operaciones'
-var screen = 'select';      // 'select' | 'login'
+var screen = 'select';      // 'select' | 'login' | 'comercial-form'
+
+// Listado de clientes postales disponibles para asignar a un comercial
+var CLIENTES_POSTALES = ['Banco Macro','Banco Ciudad','Banco de Cordoba','Banco de Formosa','Banco de la pampa'];
+var cfEmail = '', cfNombre = '', cfApellido = '', cfClientes = [];
+var cfErrors = {};
 
 // Perfil Cliente eliminado: el flujo de carga de reclamos de clientes
 // ahora se realiza desde el Portal Comercial (botón "Cargar reclamo").
@@ -113,6 +134,7 @@ var profiles = [
 function render() {
   var card = document.getElementById('card');
   if (screen === 'select') renderSelect(card);
+  else if (screen === 'comercial-form') renderComercialForm(card);
   else renderLogin(card);
 }
 
@@ -158,8 +180,100 @@ function selectProfile(id) {
 
 function goToLogin() {
   if (!selectedProfile) return;
-  screen = 'login';
+  if (selectedProfile === 'comercial') {
+    screen = 'comercial-form';
+  } else {
+    screen = 'login';
+  }
   render();
+}
+
+// ── Formulario manual de acceso para Comercial (sin cuenta Google) ──
+function renderComercialForm(card) {
+  card.innerHTML = `
+    <button class="back-btn" onclick="screen='select';selectedProfile=null;render()">← Volver</button>
+    <span class="profile-chip chip-comercial">💼 Comercial</span>
+    <div class="cf-title">Acceso de Comercial</div>
+    <div class="cf-sub">Completá tus datos para ingresar. Usá tu mail corporativo, aunque no tengas cuenta de Google asociada.</div>
+    <div class="cf-group">
+      <label>Email corporativo</label>
+      <input type="email" id="cf-email" placeholder="nombre.apellido@${ALLOWED_DOMAIN}" value="${cfEmail}">
+      ${cfErrors.email?`<p class="cf-err-msg">${cfErrors.email}</p>`:''}
+    </div>
+    <div class="cf-row2">
+      <div class="cf-group">
+        <label>Nombre</label>
+        <input type="text" id="cf-nombre" placeholder="Ej: Juan" value="${cfNombre}">
+        ${cfErrors.nombre?`<p class="cf-err-msg">${cfErrors.nombre}</p>`:''}
+      </div>
+      <div class="cf-group">
+        <label>Apellido</label>
+        <input type="text" id="cf-apellido" placeholder="Ej: Pérez" value="${cfApellido}">
+        ${cfErrors.apellido?`<p class="cf-err-msg">${cfErrors.apellido}</p>`:''}
+      </div>
+    </div>
+    <div class="cf-group">
+      <label>Clientes a cargo</label>
+      <div class="cf-clientes">
+        ${CLIENTES_POSTALES.map(function(c, i){
+          var checked = cfClientes.indexOf(c) > -1;
+          return `<label class="cf-cliente-opt">
+            <input type="checkbox" ${checked?'checked':''} onchange="toggleCfCliente('${c.replace(/'/g,"\\'")}')">
+            <span>${c}</span>
+          </label>`;
+        }).join('')}
+      </div>
+      <p class="cf-hint">Seleccioná uno o más clientes postales.</p>
+      ${cfErrors.clientes?`<p class="cf-err-msg">${cfErrors.clientes}</p>`:''}
+    </div>
+    <div class="err" id="cf-err" style="${cfErrors.general?'display:block':''}">${cfErrors.general||''}</div>
+    <button class="btn-continue" onclick="submitComercialForm()">Ingresar →</button>
+  `;
+}
+
+function toggleCfCliente(c) {
+  syncCfInputs();
+  var i = cfClientes.indexOf(c);
+  if (i > -1) cfClientes.splice(i, 1); else cfClientes.push(c);
+  render();
+}
+
+function syncCfInputs() {
+  var e = document.getElementById('cf-email'); if (e) cfEmail = e.value;
+  var n = document.getElementById('cf-nombre'); if (n) cfNombre = n.value;
+  var a = document.getElementById('cf-apellido'); if (a) cfApellido = a.value;
+}
+
+function submitComercialForm() {
+  syncCfInputs();
+  cfErrors = {};
+  var email = (cfEmail || '').trim().toLowerCase();
+  if (!email) cfErrors.email = 'Ingresá tu mail corporativo.';
+  else if (!email.endsWith('@' + ALLOWED_DOMAIN)) cfErrors.email = 'Acceso restringido. Necesitás un mail @' + ALLOWED_DOMAIN + ' para ingresar como Comercial.';
+  if (!cfNombre.trim()) cfErrors.nombre = 'Campo obligatorio.';
+  if (!cfApellido.trim()) cfErrors.apellido = 'Campo obligatorio.';
+  if (cfClientes.length === 0) cfErrors.clientes = 'Seleccioná al menos un cliente a cargo.';
+
+  if (Object.keys(cfErrors).length > 0) { render(); return; }
+
+  // No hay token de Google: generamos un identificador estable a partir del
+  // mail para que el backend (Apps Script) pueda reconocer la sesión.
+  // NOTA: esto NO es un mecanismo de autenticación seguro — solo identifica
+  // al usuario por mail de dominio corporativo. Si se requiere más seguridad,
+  // conviene validar el alta del comercial contra una hoja de "Comerciales habilitados"
+  // en el backend antes de dejarlo operar.
+  var pseudoToken = btoa(unescape(encodeURIComponent(email + '|' + Date.now())));
+
+  sessionStorage.setItem('ro_token', pseudoToken);
+  sessionStorage.setItem('ro_email', email);
+  sessionStorage.setItem('ro_name', cfNombre.trim() + ' ' + cfApellido.trim());
+  sessionStorage.setItem('ro_nombre', cfNombre.trim());
+  sessionStorage.setItem('ro_apellido', cfApellido.trim());
+  sessionStorage.setItem('ro_clientes', JSON.stringify(cfClientes));
+  sessionStorage.setItem('ro_profile', 'comercial');
+  sessionStorage.setItem('ro_auth_method', 'manual');
+
+  window.location.href = URL_COMERCIAL;
 }
 
 function initGoogleBtn(profile) {
