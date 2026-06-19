@@ -149,7 +149,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby45L7EAm8ovhUWzAY22052lf_cNfFRvQB16NwXD1bsSPo1MDwEt0mayliSV-gN8Bhwmw/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVEGPmddBwr13H9Gp7RGjyoW5Fr-5LzxqLGNTbtHnRh8o-31v9KQjCZnb3Fd0QGyH-0Q/exec';
 var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -192,8 +192,8 @@ var rfSaving = false;
 var rfTicketId = '';
 var rfEditField = null;
 var rfForm = { titular:'', tipo_reclamo:'', detalle:'' };
-var rfExcelFile = null;
-var rfCarrierFile = null;
+var rfExcelFiles = [];
+var rfCarrierFiles = [];
 var rfErrors = {};
 var rfValidated = false;
 var rfValidando = false;
@@ -201,7 +201,7 @@ var rfValidando = false;
 function resetRfForm() {
   rfStep = 1; rfSaving = false; rfTicketId = ''; rfEditField = null;
   rfForm = { titular:'', tipo_reclamo:'', detalle:'' };
-  rfExcelFile = null; rfCarrierFile = null; rfErrors = {}; rfValidated = false; rfValidando = false;
+  rfExcelFiles = []; rfCarrierFiles = []; rfErrors = {}; rfValidated = false; rfValidando = false;
 }
 
 function toast(msg, type) {
@@ -284,6 +284,9 @@ function fileToBase64(file) {
 
 async function api(body) {
   body.token = currentUser ? currentUser.token : '';
+  if (body.action === 'getTickets' && currentUser && currentUser.clientes && currentUser.clientes.length) {
+    body.clientesAsignados = currentUser.clientes;
+  }
   var res = await fetch(APPS_SCRIPT_URL, {
     method:'POST',
     redirect:'follow',
@@ -490,8 +493,8 @@ function renderNuevoReclamoView() {
     { key:'titular', label:'Cliente', value:rfForm.titular },
     { key:'tipo_reclamo', label:'Tipo de reclamo', value:rfForm.tipo_reclamo },
     rfForm.detalle ? { key:'detalle', label:'Observaciones', value:rfForm.detalle } : null,
-    rfExcelFile ? { key:'excel', label:'Planilla adjunta', value:rfExcelFile.name, noEdit:true } : null,
-    rfCarrierFile ? { key:'carrier', label:'Acuse/mail adjunto', value:rfCarrierFile.name, noEdit:true } : null,
+    rfExcelFiles.length ? { key:'excel', label:'Planilla(s) adjunta(s)', value:rfExcelFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
+    rfCarrierFiles.length ? { key:'carrier', label:'Acuse/mail adjunto(s)', value:rfCarrierFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
   ].filter(Boolean);
 
   return `
@@ -529,7 +532,7 @@ function renderRfPaso1() {
 
     <div class="rf-frow full"><div class="rf-fgroup">
       <label>Tipo de reclamo<span class="rf-req">*</span></label>
-      <select id="rf-tipo_reclamo" onchange="rfForm.tipo_reclamo=this.value;rfExcelFile=null;rfValidated=false;render()">
+      <select id="rf-tipo_reclamo" onchange="rfForm.tipo_reclamo=this.value;rfExcelFiles=[];rfValidated=false;render()">
         <option value="">— Seleccionar —</option>
         <option value="Desconocimiento de consumo" ${esConsumo?'selected':''}>Desconocimiento de consumo</option>
         <option value="No recepción de tarjeta" ${esNoRecepcion?'selected':''}>No recepción de tarjeta</option>
@@ -544,12 +547,13 @@ function renderRfPaso1() {
       <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla de consumos</a>
     </div>
     <div class="rf-fgroup" style="margin-bottom:14px">
-      <label>Adjuntar planilla de consumos completa<span class="rf-req">*</span></label>
-      <div class="rf-upload${rfExcelFile?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
-        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="rfSetFile('excel',this)">
-        <div style="font-size:20px;margin-bottom:5px">${rfExcelFile?'✅':'📊'}</div>
-        ${rfExcelFile?`<p class="rf-ok-text">${rfExcelFile.name}</p>`:'<p>Clic para adjuntar la planilla</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
+      <label>Adjuntar planilla de consumos completa<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">(podés adjuntar más de un archivo)</span></label>
+      <div class="rf-upload${rfExcelFiles.length?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
+        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="rfAddFiles('excel',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfExcelFiles.length?'✅':'📊'}</div>
+        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
       </div>
+      ${renderRfFileList('excel')}
       ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
     </div>` : ''}
 
@@ -560,12 +564,13 @@ function renderRfPaso1() {
       <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla de no recepción</a>
     </div>
     <div class="rf-fgroup" style="margin-bottom:14px">
-      <label>Adjuntar planilla de no recepción completa<span class="rf-req">*</span></label>
-      <div class="rf-upload${rfExcelFile?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
-        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="rfSetFile('excel',this)">
-        <div style="font-size:20px;margin-bottom:5px">${rfExcelFile?'✅':'📊'}</div>
-        ${rfExcelFile?`<p class="rf-ok-text">${rfExcelFile.name}</p>`:'<p>Clic para adjuntar la planilla</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
+      <label>Adjuntar planilla de no recepción completa<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">(podés adjuntar más de un archivo)</span></label>
+      <div class="rf-upload${rfExcelFiles.length?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
+        <input id="rf-excel-inp" type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="rfAddFiles('excel',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfExcelFiles.length?'✅':'📊'}</div>
+        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx / .xls / .csv</p>'}
       </div>
+      ${renderRfFileList('excel')}
       ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
     </div>` : ''}
 
@@ -584,12 +589,13 @@ function renderRfPaso1() {
       <textarea id="rf-detalle" placeholder="Describí brevemente el caso...">${esc(rfForm.detalle)}</textarea>
     </div></div>
     <div class="rf-fgroup">
-      <label>Acuse de recibo / mail del cliente <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional)</span></label>
-      <div class="rf-upload${rfCarrierFile?' ok':''}" onclick="document.getElementById('rf-carrier-inp').click()">
-        <input id="rf-carrier-inp" type="file" style="display:none" onchange="rfSetFile('carrier',this)">
-        <div style="font-size:20px;margin-bottom:5px">${rfCarrierFile?'✅':'📄'}</div>
-        ${rfCarrierFile?`<p class="rf-ok-text">${rfCarrierFile.name}</p>`:'<p>Clic para adjuntar foto del acuse o mail</p><p class="rf-hint">PDF, imagen o cualquier formato</p>'}
+      <label>Acuse de recibo / mail del cliente <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional — podés adjuntar más de un archivo)</span></label>
+      <div class="rf-upload${rfCarrierFiles.length?' ok':''}" onclick="document.getElementById('rf-carrier-inp').click()">
+        <input id="rf-carrier-inp" type="file" multiple style="display:none" onchange="rfAddFiles('carrier',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfCarrierFiles.length?'✅':'📄'}</div>
+        ${rfCarrierFiles.length?`<p class="rf-ok-text">${rfCarrierFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar foto(s) del acuse o mail</p><p class="rf-hint">PDF, imagen o cualquier formato</p>'}
       </div>
+      ${renderRfFileList('carrier')}
     </div>` : ''}
 
     <div class="rf-btn-row">
@@ -599,12 +605,26 @@ function renderRfPaso1() {
   </div>`;
 }
 
+// Lista de archivos ya seleccionados, con opción de sacar cada uno
+function renderRfFileList(tipo) {
+  var files = tipo === 'excel' ? rfExcelFiles : rfCarrierFiles;
+  if (!files.length) return '';
+  return `<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+    ${files.map(function(f, idx){
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g100);border-radius:var(--rad);font-size:11.5px;background:var(--g50)">
+        <span>📎</span><span style="flex:1;color:var(--g700)">${esc(f.name)}</span>
+        <button type="button" style="background:none;border:none;color:var(--r500);cursor:pointer;font-size:13px" onclick="rfRemoveFile('${tipo}',${idx})">✕</button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 window.rfValidarInformacion = function() {
   rfSaveFormState();
   rfErrors = {};
   if (!rfForm.titular) rfErrors.titular = 'Seleccioná un cliente';
   if (!rfForm.tipo_reclamo) rfErrors.tipo_reclamo = 'Seleccioná un tipo de reclamo';
-  if (!rfExcelFile) rfErrors.excel = 'Debés adjuntar la planilla completa';
+  if (!rfExcelFiles.length) rfErrors.excel = 'Debés adjuntar al menos una planilla';
 
   if (Object.keys(rfErrors).length > 0) {
     var faltantes = Object.values(rfErrors);
@@ -678,7 +698,19 @@ function bindRfEvents() {
   });
 }
 
-window.rfSetFile = function(tipo, input){ if(input.files[0]){ if(tipo==='excel'){ rfExcelFile=input.files[0]; rfValidated=false; } else rfCarrierFile=input.files[0]; render(); } };
+window.rfAddFiles = function(tipo, input){
+  var nuevos = Array.prototype.slice.call(input.files || []);
+  if (!nuevos.length) return;
+  if (tipo === 'excel') { rfExcelFiles = rfExcelFiles.concat(nuevos); rfValidated = false; }
+  else { rfCarrierFiles = rfCarrierFiles.concat(nuevos); }
+  input.value = ''; // permite volver a elegir el mismo archivo si lo saca y lo vuelve a agregar
+  render();
+};
+window.rfRemoveFile = function(tipo, idx){
+  if (tipo === 'excel') { rfExcelFiles.splice(idx,1); rfValidated = false; }
+  else { rfCarrierFiles.splice(idx,1); }
+  render();
+};
 window.rfSaveEdit = function(key, val){ rfForm[key]=val; rfEditField=null; render(); };
 
 function rfSaveFormState() {
@@ -698,24 +730,40 @@ window.rfSubmitForm = async function() {
   try {
     var id='REC-'+(Math.floor(Math.random()*900000)+100000);
     var payload={
-      action:'crearTicket', titular:rfForm.titular, tipo_reclamo:rfForm.tipo_reclamo,
-      detalle:rfForm.detalle||'', excel_nombre:rfExcelFile?rfExcelFile.name:'',
-      carrier_nombre:rfCarrierFile?rfCarrierFile.name:'',
+      action:'crearTicket', titular:rfForm.titular, banco:rfForm.titular, tipo_reclamo:rfForm.tipo_reclamo,
+      detalle:rfForm.detalle||'', excel_nombre:rfExcelFiles.map(function(f){return f.name;}).join(', '),
+      carrier_nombre:rfCarrierFiles.map(function(f){return f.name;}).join(', '),
       // Pide al backend que envíe el mail automático a operaciones al crear el ticket.
       // Requiere soporte en el Apps Script (ver notificarNuevoTicket en el backend).
       notificarOperaciones:true, mailOperaciones:MAIL_OPERACIONES,
       comercial_nombre: currentUser.name, comercial_email: currentUser.email
     };
-    if (rfExcelFile) {
-      var b64=await fileToBase64(rfExcelFile);
-      var ur=await api({action:'uploadArchivo',base64:b64,nombre:rfExcelFile.name,mimeType:rfExcelFile.type,ticketId:id});
-      if(ur.ok) payload.excel_fileId=ur.fileId;
+    var adjuntosIniciales = [];
+
+    if (rfExcelFiles.length) {
+      for (var i = 0; i < rfExcelFiles.length; i++) {
+        var f = rfExcelFiles[i];
+        var b64 = await fileToBase64(f);
+        var ur = await api({ action:'uploadArchivo', base64:b64, nombre:f.name, mimeType:f.type, ticketId:id });
+        if (ur.ok) {
+          if (i === 0) payload.excel_fileId = ur.fileId; // compatibilidad con columna original
+          adjuntosIniciales.push({ nombre:f.name, fileId:ur.fileId, origen:'Comercial (planilla)', de:'comercial' });
+        }
+      }
     }
-    if (rfCarrierFile) {
-      var b64c=await fileToBase64(rfCarrierFile);
-      var urc=await api({action:'uploadArchivo',base64:b64c,nombre:rfCarrierFile.name,mimeType:rfCarrierFile.type,ticketId:id});
-      if(urc.ok) payload.carrier_fileId=urc.fileId;
+    if (rfCarrierFiles.length) {
+      for (var j = 0; j < rfCarrierFiles.length; j++) {
+        var fc = rfCarrierFiles[j];
+        var b64c = await fileToBase64(fc);
+        var urc = await api({ action:'uploadArchivo', base64:b64c, nombre:fc.name, mimeType:fc.type, ticketId:id });
+        if (urc.ok) {
+          if (j === 0) payload.carrier_fileId = urc.fileId; // compatibilidad con columna original
+          adjuntosIniciales.push({ nombre:fc.name, fileId:urc.fileId, origen:'Comercial (acuse/mail)', de:'comercial' });
+        }
+      }
     }
+    payload.adjuntosIniciales = JSON.stringify(adjuntosIniciales);
+
     var data=await api(payload);
     if(!data.ok) throw new Error(data.error||'Error desconocido');
     rfTicketId=data.id||id;
