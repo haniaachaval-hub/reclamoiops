@@ -149,7 +149,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbys5nviAh5KHOlH8P0qKIZ0FRBP4Ic0ik1rYXqLpUAW7ZeaFy9G3PSPRSt1_A9aHwUOwQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVEGPmddBwr13H9Gp7RGjyoW5Fr-5LzxqLGNTbtHnRh8o-31v9KQjCZnb3Fd0QGyH-0Q/exec';
 var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -823,13 +823,12 @@ function renderPanel() {
           <div class="dsec">
             <div class="dsec-title">General</div>
             <div class="dgrid">
+              <div class="dfield"><div class="dlbl">Cliente</div><div class="dval">${t.empresa||t.cliente||'—'}</div></div>
               <div class="dfield"><div class="dlbl">Tipo</div><div class="dval">${t.tipo_reclamo||'—'}</div></div>
               <div class="dfield"><div class="dlbl">Fecha</div><div class="dval">${fmtDate(t.creado)}</div></div>
-              <div class="dfield"><div class="dlbl">Tarjeta</div><div class="dval">${t.tipo_tarjeta||'—'}</div></div>
               <div class="dfield"><div class="dlbl">Estado</div><div class="dval">${t.estado||'—'}</div></div>
-              ${t.num_secuencia ? `<div class="dfield"><div class="dlbl">N° Secuencia</div><div class="dval">${t.num_secuencia}</div></div>` : ''}
-              ${t.num_tarjeta ? `<div class="dfield"><div class="dlbl">N° Tarjeta</div><div class="dval">${t.num_tarjeta}</div></div>` : ''}
-              ${t.detalle ? `<div class="dfield" style="grid-column:span 2"><div class="dlbl">Detalle</div><div class="dval">${t.detalle}</div></div>` : ''}
+              ${t.monto ? `<div class="dfield"><div class="dlbl">Monto total desconocido</div><div class="dval">${esc(String(t.monto))}</div></div>` : ''}
+              ${t.detalle ? `<div class="dfield" style="grid-column:span 2"><div class="dlbl">Observaciones</div><div class="dval">${t.detalle}</div></div>` : ''}
             </div>
           </div>
 
