@@ -462,7 +462,7 @@ function renderAdjuntosOp(t, adjs) {
   // Si no (tickets viejos), mostramos solo los nombres sin link.
   if (adjs && adjs.length) {
     return adjs.map(function(a){
-      return renderAdjuntoRow(a.nombre, a.fileId||null, a.origen||(a.de==='operaciones'?'Operaciones':'Comercial'));
+      return renderAdjuntoRow(a.nombre, a.fileId||null, a.origen||(a.de==='operaciones'?'Operaciones':'Comercial'), a.url||null);
     }).join('');
   }
   // Fallback para tickets viejos sin fileId
@@ -470,20 +470,20 @@ function renderAdjuntosOp(t, adjs) {
   if (t.excel_nombre) lista.push({ nombre: t.excel_nombre, fileId: t.excel_fileId||null, origen: 'Comercial (planilla)' });
   if (t.carrier_nombre) lista.push({ nombre: t.carrier_nombre, fileId: t.carrier_fileId||null, origen: 'Comercial (acuse/mail)' });
   if (!lista.length) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
-  return lista.map(function(a){ return renderAdjuntoRow(a.nombre, a.fileId, a.origen); }).join('');
+  return lista.map(function(a){ return renderAdjuntoRow(a.nombre, a.fileId, a.origen, a.url||null); }).join('');
 }
 
-function renderAdjuntoRow(nombre, fileId, origen) {
+function renderAdjuntoRow(nombre, fileId, origen, url) {
   var ext = (nombre||'').split('.').pop().toLowerCase();
-  var url = fileId
+  var finalUrl = url || (fileId
     ? (ext==='xlsx'||ext==='xls'||ext==='csv'
         ? 'https://docs.google.com/spreadsheets/d/'+fileId+'/export?format=xlsx'
         : 'https://drive.google.com/uc?export=download&id='+fileId)
-    : null;
+    : null);
   return `<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:5px;font-size:12px">
     <span>📎</span>
-    ${url
-      ? `<a href="${url}" target="_blank" rel="noopener" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(nombre)}</a>`
+    ${finalUrl
+      ? `<a href="${finalUrl}" target="_blank" rel="noopener" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(nombre)}</a>`
       : `<span style="flex:1;color:var(--g700)">${esc(nombre)}</span>`}
     <span style="font-size:10px;color:var(--g400)">${esc(origen||'')}</span>
   </div>`;
