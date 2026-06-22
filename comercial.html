@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Plataforma de gestión — Operaciones</title>
+<title>Comercial — ReclamiOps</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -13,577 +15,1028 @@
   --b50:#eff6ff;--b100:#dbeafe;--b400:#60a5fa;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
   --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;--gr700:#15803d;
   --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
-  --a50:#fffbeb;--a100:#fef3c7;--a500:#f59e0b;--a600:#d97706;
+  --a50:#fffbeb;--a500:#f59e0b;--a600:#d97706;
   --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
   --rad:7px;--rad-lg:11px;
   font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
 }
 body{background:var(--g50);min-height:100vh}
 .app{display:flex;height:100vh;overflow:hidden}
-.sb{width:200px;min-width:200px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
-.sb-logo{padding:14px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:8px}
-.sb-icon{width:28px;height:28px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.sidebar{width:208px;min-width:208px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb-logo{padding:15px 15px 12px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:9px}
+.sb-logo-icon{width:29px;height:29px;border-radius:var(--rad);background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
 .sb-logo h1{font-size:13px;font-weight:600;color:var(--g900)}
-.sb-logo p{font-size:10px;color:var(--g400)}
-.sb-nav{flex:1;padding:9px 7px}
-.sb-sec{font-size:9px;font-weight:600;color:var(--g400);letter-spacing:.07em;text-transform:uppercase;padding:7px 7px 3px}
-.ni{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .1s;margin-bottom:1px}
-.ni:hover{background:var(--g50);color:var(--g900)}
-.ni.on{background:var(--b50);color:var(--b700);font-weight:500}
-.sb-foot{padding:9px 11px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:7px}
+.sb-logo p{font-size:10px;color:var(--g400);margin-top:1px}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .11s;margin-bottom:1px}
+.nav-item:hover{background:var(--g50);color:var(--g900)}
+.nav-item.active{background:var(--gr50);color:var(--gr700);font-weight:500}
+.sb-footer{padding:9px 12px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
 .sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:46px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px}
+.topbar{height:48px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 18px;gap:10px}
 .topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
-.content{flex:1;overflow-y:auto;padding:16px 18px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
-.kpi{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:12px 13px}
-.kl{font-size:10px;color:var(--g400);font-weight:500;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
-.kv{font-size:23px;font-weight:600;line-height:1;color:var(--g900)}
-.kpi.info .kv{color:var(--b600)}
-.kpi.warn .kv{color:var(--a500)}
-.kpi.ok .kv{color:var(--gr600)}
-.kpi.danger .kv{color:var(--r500)}
-.kpi.purple .kv{color:var(--p600)}
-.tabs{display:flex;gap:3px;margin-bottom:11px;background:var(--g100);border-radius:var(--rad);padding:3px}
-.tab{flex:1;padding:6px 8px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--g500);border-radius:6px;font-family:inherit;transition:all .11s;text-align:center}
-.tab.on{background:var(--w);color:var(--g900);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.tc{display:inline-block;background:var(--r100);color:var(--r600);font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px}
-.tab.on .tc{background:var(--b100);color:var(--b700)}
+.content{flex:1;overflow-y:auto;padding:18px 20px}
+.search{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:6px 10px;font-size:12px;color:var(--g700);font-family:inherit;outline:none;width:200px}
+.search:focus{border-color:var(--b400)}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.shdr h2{font-size:13px;font-weight:600;color:var(--g900)}
 .tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--g200);background:var(--g50)}
-tbody td{padding:9px 10px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
+thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:9px 11px;border-bottom:1px solid var(--g200);background:var(--g50)}
+tbody td{padding:10px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
-.row-unread td{background:#f8faff}
-.row-read td{background:var(--g50)}
 tbody tr:hover td{background:var(--b50);cursor:pointer}
 .tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--b600)}
-.badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
 .bn{background:var(--b50);color:var(--b700)}
 .ba{background:var(--p50);color:var(--p600)}
-.bfin{background:var(--gr100);color:var(--gr700)}
+.bfin{background:var(--gr100);color:var(--gr700);border:1px solid var(--gr500)}
 .breo{background:var(--r50);color:var(--r600)}
-.db{display:inline-flex;align-items:center;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600}
-.dok{background:var(--gr50);color:var(--gr700)}
-.dwarn{background:var(--a50);color:var(--a600)}
-.ddanger{background:var(--r50);color:var(--r600)}
-.empty{text-align:center;padding:36px;color:var(--g400);font-size:12px}
+.empty{text-align:center;padding:40px;color:var(--g400)}
 .overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
 .panel{background:var(--w);width:540px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200)}
-.ph{padding:14px 16px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5;display:flex;align-items:flex-start;gap:8px}
-.ph-info{flex:1}
-.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:14px}
-.pb{padding:16px}
-.sec{margin-bottom:16px}
-.sec-t{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.df{background:var(--g50);border-radius:var(--rad);padding:7px 9px;border:1px solid var(--g100)}
-.dl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
-.dv{font-size:12px;color:var(--g900);font-weight:500}
-.sel-e{padding:6px 9px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .1s}
-.btn-p{background:var(--b600);color:#fff}
-.btn-p:hover:not(:disabled){background:var(--b700)}
-.btn-g{background:transparent;color:var(--g600);border:1px solid var(--g200)}
-.btn-g:hover{background:var(--g50)}
+.ph{padding:15px 18px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5}
+.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:15px}
+.pbody{padding:18px}
+.dsec{margin-bottom:18px}
+.dsec-title{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dfield{background:var(--g50);border-radius:var(--rad);padding:8px 10px;border:1px solid var(--g100)}
+.dlbl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.dval{font-size:12px;color:var(--g900);font-weight:500}
+.al{display:flex;gap:7px;padding:9px 12px;border-radius:var(--rad);font-size:12px;margin-bottom:12px;line-height:1.5}
+.al-amber{background:var(--a50);border:1px solid #fcd34d;color:#92400e}
+.al-green{background:var(--gr50);border:1px solid var(--gr100);color:var(--gr700)}
+.al-blue{background:var(--b50);border:1px solid var(--b100);color:var(--b700)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .11s}
+.btn-primary{background:var(--b600);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--b700)}
+.btn-danger{background:var(--r50);color:var(--r600);border:1px solid var(--r100)}
+.btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-ghost:hover{background:var(--g50)}
 .btn:disabled{opacity:.4;cursor:default}
-.cinp{width:100%;padding:7px 9px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical}
+.spinner{width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cinp{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;min-height:80px}
 .cinp:focus{border-color:var(--b400)}
-.toast-wrap{position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
-.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:8px 12px;font-size:12px;color:var(--g700);max-width:260px;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 4px 14px rgba(0,0,0,.07);padding:34px;width:100%;max-width:320px;text-align:center}
+.login-card p{font-size:12px;color:var(--g500);margin-bottom:24px}
+.lg-err{background:var(--r50);border:1px solid var(--r100);color:var(--r600);border-radius:var(--rad);padding:8px 11px;font-size:11px;margin-bottom:12px;text-align:left}
+.toast-wrap{position:fixed;bottom:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:9px 13px;font-size:12px;color:var(--g700);max-width:280px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
 .toast.ok{border-left:3px solid var(--gr500)}
 .toast.err{border-left:3px solid var(--r500)}
-.loading{display:flex;align-items:center;justify-content:center;height:100%;color:var(--g400);font-size:13px;flex-direction:column;gap:10px}
-.spin{width:20px;height:20px;border:2px solid var(--g200);border-top-color:var(--b500);border-radius:50%;animation:sp .7s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── Estilos del formulario de carga de reclamo (portado de cliente.html) ── */
+.rf-wrap{max-width:660px;margin:0 auto}
+.rf-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);box-shadow:0 1px 3px rgba(0,0,0,.07);padding:28px 32px}
+.rf-title{font-size:18px;font-weight:600;color:var(--g900);margin-bottom:4px}
+.rf-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.rf-steps{display:flex;margin-bottom:28px}
+.rf-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.rf-step::before{content:'';position:absolute;top:12px;left:calc(-50% + 12px);right:calc(50% + 12px);height:1px;background:var(--g200)}
+.rf-step:first-child::before{display:none}
+.rf-step.done::before{background:var(--b500)}
+.rf-snum{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1.5px solid var(--g300);background:var(--w);color:var(--g400);z-index:1;position:relative}
+.rf-step.done .rf-snum{border-color:var(--b500);background:var(--b500);color:#fff}
+.rf-step.active .rf-snum{border-color:var(--b600);color:var(--b600)}
+.rf-slbl{font-size:10px;color:var(--g400);margin-top:5px}
+.rf-step.active .rf-slbl{color:var(--b600);font-weight:500}
+.rf-frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.rf-frow.full{grid-template-columns:1fr}
+.rf-fgroup{display:flex;flex-direction:column;gap:5px}
+.rf-fgroup label{font-size:12px;font-weight:500;color:var(--g700)}
+.rf-req{color:var(--r500);margin-left:2px}
+.rf-fgroup input[type=text],.rf-fgroup select,.rf-fgroup textarea{width:100%;padding:8px 11px;border:1px solid var(--g300);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g900);background:var(--w);outline:none;transition:border-color .13s;-webkit-appearance:none}
+.rf-fgroup input:focus,.rf-fgroup select:focus,.rf-fgroup textarea:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+.rf-fgroup textarea{resize:vertical;min-height:78px;line-height:1.5}
+.rf-fgroup select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.rf-pills{display:flex;gap:7px;flex-wrap:wrap}
+.rf-pill{padding:6px 13px;border:1px solid var(--g200);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;color:var(--g600);background:var(--w);transition:all .12s;font-family:inherit}
+.rf-pill:hover{border-color:var(--b500);color:var(--b600)}
+.rf-pill.on{border-color:var(--b500);background:var(--b50);color:var(--b700)}
+.rf-upload{border:1.5px dashed var(--g300);border-radius:var(--rad);padding:18px;text-align:center;cursor:pointer;background:var(--g50);transition:all .13s}
+.rf-upload:hover{border-color:var(--b500);background:var(--b50)}
+.rf-upload.ok{border-color:var(--gr500);background:var(--gr50)}
+.rf-upload p{font-size:12px;color:var(--g500)}
+.rf-upload .rf-hint{font-size:11px;color:var(--g400);margin-top:2px}
+.rf-upload .rf-ok-text{font-size:12px;color:var(--gr600);font-weight:500}
+.rf-err-msg{font-size:11px;color:var(--r500);margin-top:4px}
+.rf-btn-row{display:flex;gap:9px;margin-top:24px}
+.rf-confirm-box{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);overflow:hidden;margin-bottom:16px}
+.rf-confirm-row{display:flex;align-items:flex-start;gap:8px;padding:9px 13px;border-bottom:1px solid var(--g100)}
+.rf-confirm-row:last-child{border-bottom:none}
+.rf-ck{font-size:11px;font-weight:600;color:var(--g400);width:140px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
+.rf-cv{font-size:12px;color:var(--g900);flex:1;line-height:1.5}
+.rf-edit-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--g400);padding:0 4px;flex-shrink:0}
+.rf-edit-btn:hover{color:var(--b500)}
+.rf-success{text-align:center;padding:12px 0 4px}
+.rf-success-icon{font-size:46px;margin-bottom:13px}
+.rf-success h2{font-size:19px;font-weight:600;color:var(--g900);margin-bottom:6px}
+.rf-success p{font-size:13px;color:var(--g500);margin-bottom:18px}
+.rf-id-badge{display:inline-block;background:var(--b50);border:1px solid var(--b100);color:var(--b700);font-size:17px;font-weight:700;padding:9px 22px;border-radius:var(--rad);font-family:'Courier New',monospace}
+.rf-success-note{font-size:12px;color:var(--g400);margin-top:13px}
+.btn-new{background:var(--gr600);color:#fff}
+.btn-new:hover{background:var(--gr700)}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="root"></div>
 <div class="toast-wrap" id="toasts"></div>
+
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────
+// =====================================================================
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbys5nviAh5KHOlH8P0qKIZ0FRBP4Ic0ik1rYXqLpUAW7ZeaFy9G3PSPRSt1_A9aHwUOwQ/exec';
-// ─────────────────────────────────────────────────────────────
+var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
+var ALLOWED_DOMAIN = 'ocasa.com';
+var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
+// =====================================================================
 
-var _u=(function(){
-  var t=sessionStorage.getItem('ro_token'),e=sessionStorage.getItem('ro_email'),n=sessionStorage.getItem('ro_name');
-  if(!t||!e){window.location.href='index.html';return null;}
-  return{token:t,email:e,name:n};
+var currentUser = (function(){
+  var token = sessionStorage.getItem("ro_token");
+  var email = sessionStorage.getItem("ro_email");
+  var name  = sessionStorage.getItem("ro_name");
+  if (!token || !email) { window.location.href = "index.html"; return null; }
+  var clientesRaw = sessionStorage.getItem("ro_clientes");
+  var clientes = [];
+  try { clientes = clientesRaw ? JSON.parse(clientesRaw) : []; } catch(e) { clientes = []; }
+  return { token: token, email: email, name: name, clientes: clientes };
 })();
+var tickets = [];
+var perfil = null;
+var selectedTicket = null;
+var searchQ = '';
+var searchInput = ''; // valor del input antes de ejecutar la búsqueda con Enter/botón
+var filtroCliente = '';
+var filtroEstado = '';
+var filtroFechaDesde = '';
+var filtroFechaHasta = '';
+var ordenFecha = 'desc'; // 'desc' = más reciente primero, 'asc' = más viejo primero
+var saving = false;
+var showReopen = false;
+var reopenMsg = '';
+var loading = true;
+// Texto nuevo / archivo nuevo en el panel de detalle, agregado por comercial
+var detailComentario = '';
+var detailArchivo = null;
 
-var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
-var mailPara='', mailAsunto='', mailCuerpo='', adjuntoFile=null;
-var activeNav='tickets'; // tickets | clientes
-var clientes=[], comerciales=[];
+// ── Estado de la vista actual: 'tickets' | 'nuevo' ──
+var activeView = 'tickets';
 
-function toast(msg,tipo){
-  var w=document.getElementById('toasts'),d=document.createElement('div');
-  d.className='toast '+(tipo||'');d.textContent=msg;w.appendChild(d);
-  setTimeout(function(){d.remove();},3200);
+// ── Estado del formulario de nuevo reclamo (portado de cliente.html) ──
+var rfStep = 1;
+var rfSaving = false;
+var rfTicketId = '';
+var rfEditField = null;
+var rfForm = { titular:'', tipo_reclamo:'', detalle:'', monto:'' };
+var rfExcelFiles = [];
+var rfCarrierFiles = [];
+var rfErrors = {};
+var rfValidated = false;
+var rfValidando = false;
+
+function resetRfForm() {
+  rfStep = 1; rfSaving = false; rfTicketId = ''; rfEditField = null;
+  rfForm = { titular:'', tipo_reclamo:'', detalle:'', monto:'' };
+  rfExcelFiles = []; rfCarrierFiles = []; rfErrors = {}; rfValidated = false; rfValidando = false;
 }
-function fmtDate(s){
-  if(!s)return'—';if(s.includes('/'))return s;
-  var d=s.slice(0,10).split('-');return d.length<3?s:d[2]+'/'+d[1]+'/'+d[0];
-}
-function bc(e){return{'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e]||'bn';}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function diasClass(d){return d<=3?'dok':d<=7?'dwarn':'ddanger';}
 
-async function api(body){
-  // Siempre usar el token más fresco de sessionStorage
-  var token = sessionStorage.getItem('ro_token') || '';
-  body.token = token;
-  _u.token = token; // sincronizar
-  var r=await fetch(APPS_SCRIPT_URL,{
+function toast(msg, type) {
+  var w = document.getElementById('toasts');
+  var d = document.createElement('div');
+  d.className = 'toast ' + (type||'info');
+  d.textContent = msg;
+  w.appendChild(d);
+  setTimeout(function(){ d.remove(); }, 3500);
+}
+
+function getFilteredTickets() {
+  var list = tickets.slice();
+
+  if (searchQ) {
+    var q = searchQ.toLowerCase();
+    list = list.filter(function(t) {
+      return (t.ID||'').toLowerCase().includes(q)
+        || (t.titular||'').toLowerCase().includes(q)
+        || (t.email_cliente||'').toLowerCase().includes(q)
+        || (t.empresa||t.cliente||'').toLowerCase().includes(q)
+        || (t.tipo_reclamo||'').toLowerCase().includes(q)
+        || (t.detalle||'').toLowerCase().includes(q)
+        || fmtDate(t.creado).includes(q);
+    });
+  }
+  if (filtroCliente) {
+    list = list.filter(function(t){ return (t.empresa||t.cliente||t.email_cliente||'') === filtroCliente; });
+  }
+  if (filtroEstado) {
+    list = list.filter(function(t){ return (t.estado||'') === filtroEstado; });
+  }
+  if (filtroFechaDesde) {
+    list = list.filter(function(t){ return ticketDateValue(t) >= filtroFechaDesde; });
+  }
+  if (filtroFechaHasta) {
+    list = list.filter(function(t){ return ticketDateValue(t) <= filtroFechaHasta; });
+  }
+  list.sort(function(a, b) {
+    var da = ticketDateValue(a), db = ticketDateValue(b);
+    return ordenFecha === 'asc' ? (da < db ? -1 : da > db ? 1 : 0) : (da > db ? -1 : da < db ? 1 : 0);
+  });
+  return list;
+}
+
+// Devuelve la fecha del ticket en formato comparable YYYY-MM-DD
+function ticketDateValue(t) {
+  var str = t.creado || '';
+  if (!str) return '';
+  if (str.includes('/')) { var p = str.split(' ')[0].split('/'); return p.length===3 ? (p[2]+'-'+p[1]+'-'+p[0]) : str; }
+  return str.slice(0,10);
+}
+
+function ejecutarBusqueda() {
+  searchQ = searchInput.trim();
+  render();
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  if (str.includes('/')) return str;
+  var d = str.slice(0,10).split('-');
+  return d.length<3 ? str : d[2]+'/'+d[1]+'/'+d[0];
+}
+
+function getBC(e) {
+  return {Recibido:'bn','En análisis':'ba',Finalizado:'bfin','Re abierto':'breo'}[e]||'bn';
+}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fileToBase64(file) {
+  return new Promise(function(res, rej) {
+    var r = new FileReader();
+    r.onload = function(){ res(r.result.split(',')[1]); };
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// Muchos navegadores (sobre todo en celulares) no informan bien el tipo de
+// archivo real (file.type llega vacío o como "application/octet-stream"),
+// y eso hace que Drive guarde el archivo con un tipo incorrecto, generando
+// el error "Excel no puede abrir el archivo" al intentar abrirlo después.
+// Por eso forzamos el mimeType correcto según la extensión del nombre.
+function getMimeType(nombre) {
+  var ext = (nombre.split('.').pop() || '').toLowerCase();
+  var tipos = {
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    xls:  'application/vnd.ms-excel',
+    csv:  'text/csv',
+    pdf:  'application/pdf',
+    png:  'image/png',
+    jpg:  'image/jpeg',
+    jpeg: 'image/jpeg',
+    heic: 'image/heic',
+    eml:  'message/rfc822',
+    msg:  'application/vnd.ms-outlook'
+  };
+  return tipos[ext] || 'application/octet-stream';
+}
+
+async function api(body) {
+  body.token = currentUser ? currentUser.token : '';
+  if (body.action === 'getTickets' && currentUser && currentUser.clientes && currentUser.clientes.length) {
+    body.clientesAsignados = currentUser.clientes;
+  }
+  var res = await fetch(APPS_SCRIPT_URL, {
     method:'POST',
     redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(body)
+    body: JSON.stringify(body)
   });
-  var data = await r.json();
-  // Si token expiró, avisar al usuario
-  if(data && data.error && data.error.includes('Token')){
-    toast('Tu sesión expiró. Por favor volvé a ingresar.','err');
-    setTimeout(function(){sessionStorage.clear();window.location.href='index.html';},2500);
-    throw new Error('Token expirado');
-  }
-  return data;
+  return await res.json();
 }
 
-async function loadData(){
-  try{
-    var[tr,cr,comr]=await Promise.all([
-      api({action:'getTickets',esOperario:true}),
-      api({action:'getClientes'}),
-      api({action:'getComerciales'})
-    ]);
-    tickets=tr.tickets||[];
-    clientes=cr.clientes||[];
-    comerciales=comr.comerciales||[];
-  }catch(e){console.error('Error:',e);}
-  loading=false;render();
-  setTimeout(async function(){
-    if(_u){try{var r=await api({action:'getTickets',esOperario:true});tickets=r.tickets||[];render();}catch(e){}}
-  },60000);
+// ── LOGIN ─────────────────────────────────────────────────────
+function renderLogin() {
+  document.getElementById('root').innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:18px">
+          <div style="width:29px;height:29px;border-radius:7px;background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center">💼</div>
+          <div style="text-align:left">
+            <div style="font-size:16px;font-weight:600;color:var(--g900)">ReclamiOps</div>
+            <div style="font-size:10px;color:#9ca3af">Portal Comercial</div>
+          </div>
+        </div>
+        <p>Ingresá con tu cuenta Google corporativa.</p>
+        <div id="lg-err" class="lg-err" style="display:none"></div>
+        <div id="google-btn" style="display:flex;justify-content:center"></div>
+        <p style="font-size:10px;color:#9ca3af;margin-top:13px">Solo cuentas @${ALLOWED_DOMAIN}</p>
+      </div>
+    </div>`;
+  if (window.google) initGoogleLogin();
 }
 
-function getTab(tab){
-  return tickets.filter(function(t){
-    if(tab==='recibidos')return t.estado==='Recibido';
-    if(tab==='analisis')return t.estado==='En análisis';
-    if(tab==='finalizados')return t.estado==='Finalizado';
-    if(tab==='reabiertos')return t.estado==='Re abierto';
-    return false;
-  }).sort(function(a,b){
-    if(tab==='analisis')return new Date(a.creado)-new Date(b.creado);
-    return new Date(b.creado)-new Date(a.creado);
+function initGoogleLogin() {
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: async function(response) {
+      var payload = JSON.parse(atob(response.credential.split('.')[1]));
+      if (!payload.email.endsWith('@' + ALLOWED_DOMAIN)) {
+        var err = document.getElementById('lg-err');
+        if (err) { err.style.display='block'; err.textContent='Acceso restringido a cuentas @' + ALLOWED_DOMAIN; }
+        return;
+      }
+      currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential };
+      loading = true;
+      render();
+      await loadData();
+      loading = false;
+      render();
+    }
   });
+  google.accounts.id.renderButton(document.getElementById('google-btn'), { theme:'outline', size:'large', locale:'es' });
 }
 
-function calcDias(t){return parseInt(t.dias_analisis)||0;}
+async function loadData() {
+  try {
+    var pr = await api({ action:'getPerfilComercial' });
+    perfil = pr.perfil;
+    var tr = await api({ action:'getTickets', esOperario:false });
+    tickets = tr.tickets || [];
+    // Actualizar polling cada 60s
+    setTimeout(async function(){ if(currentUser){ var r=await api({action:'getTickets',esOperario:false}); tickets=r.tickets||[]; if(activeView==='tickets') render(); } }, 60000);
+  } catch(e) { console.error(e); }
+}
 
-function render(){
-  var app=document.getElementById('app');
-  if(loading){
-    app.innerHTML='<div class="app"><div style="flex:1" class="loading"><div class="spin"></div><span>Cargando tickets...</span></div></div>';
+// ── RENDER PRINCIPAL ──────────────────────────────────────────
+function render() {
+  if (!currentUser) { renderLogin(); return; }
+  if (loading) {
+    document.getElementById('root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--g400);font-size:12px">Cargando...</div>';
     return;
   }
-  var rec=getTab('recibidos'),ana=getTab('analisis'),fin=getTab('finalizados'),reo=getTab('reabiertos');
-  var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:activeTab==='finalizados'?fin:reo;
-  var promDias=ana.length?Math.round(ana.reduce(function(s,t){return s+calcDias(t);},0)/ana.length):0;
+  renderApp();
+  // El panel de detalle (.overlay) se inserta fuera de #root con
+  // insertAdjacentHTML, así que render() no lo toca automáticamente.
+  // Si no hay ticket seleccionado, hay que removerlo explícitamente
+  // para que el botón ✕ / clic-afuera realmente cierren el panel.
+  if (!selectedTicket) {
+    var existingOverlay = document.querySelector('.overlay');
+    if (existingOverlay) existingOverlay.remove();
+  }
+}
 
-  app.innerHTML=`
-  <div class="app">
-    <div class="sb">
-      <div class="sb-logo"><div class="sb-icon">⚙️</div><div><h1>Plataforma de gestión</h1><p>Operaciones</p></div></div>
-      <div class="sb-nav">
-        <div class="sb-sec">Panel</div>
-        <div class="ni${activeNav==='tickets'?' on':''}" onclick="activeNav='tickets';render()">🎫 Ticketera</div>
-        <div class="ni${activeNav==='clientes'?' on':''}" onclick="activeNav='clientes';render()">👥 Clientes <span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r100)':'var(--g100)'};color:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r600)':'var(--g500)'}">${clientes.filter(function(c){return!c.comercial_asignado;}).length||''}</span></div>
+function renderApp() {
+  var filtered = getFilteredTickets();
+
+  document.getElementById('root').innerHTML = `
+    <div class="app">
+      <div class="sidebar">
+        <div class="sb-logo">
+          <div class="sb-logo-icon">💼</div>
+          <div><h1>ReclamiOps</h1><p>Portal Comercial</p></div>
+        </div>
+        <div class="sb-nav">
+          <div class="nav-item${activeView==='tickets'?' active':''}" onclick="goToTickets()">🎫 Mis tickets</div>
+          <div class="nav-item${activeView==='nuevo'?' active':''}" onclick="goToNuevoReclamo()">➕ Cargar reclamo</div>
+        </div>
+        <div class="sb-footer">
+          <div style="font-size:22px">👤</div>
+          <div class="sf-name">${currentUser.name}</div>
+          <button class="btn-out" onclick="sessionStorage.clear();window.location.href='index.html'">Salir</button>
+        </div>
       </div>
-      <div class="sb-foot">
-        <div style="font-size:20px">👤</div>
-        <div class="sf-name">${esc(_u.name)}</div>
-        <button class="btn-out" onclick="sessionStorage.clear();window.location.href='index.html'">Salir</button>
+      <div class="main">
+        ${activeView === 'nuevo' ? renderTopbarNuevo() : renderTopbarTickets()}
+        <div class="content">
+          ${activeView === 'nuevo' ? renderNuevoReclamoView() : renderTicketsView(filtered)}
+        </div>
       </div>
-    </div>
-    <div class="main">
-      <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Clientes':'Ticketera'}</h2></div>
-      <div class="content">
-        ${activeNav==='clientes'?renderClientesSection():renderTicketsSection(rec,ana,fin,reo,tab,promDias)}
-      </div>
+    </div>`;
+
+  if (activeView === 'nuevo') bindRfEvents();
+}
+
+function renderTopbarTickets() {
+  return `<div class="topbar">
+    <h2>Mis tickets</h2>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <input class="search" id="search-inp" placeholder="Buscar por cliente, N° ticket, fecha o palabra clave..." style="width:280px" value="${esc(searchInput)}"
+        oninput="searchInput=this.value"
+        onkeydown="if(event.key==='Enter'){ejecutarBusqueda()}">
+      <button class="btn btn-ghost" onclick="ejecutarBusqueda()">🔍 Buscar</button>
+      ${searchQ ? `<button class="btn btn-ghost" onclick="searchQ='';searchInput='';render()">✕ Limpiar</button>` : ''}
+      <button class="btn btn-primary" onclick="goToNuevoReclamo()">➕ Cargar reclamo</button>
     </div>
   </div>`;
 }
 
-function renderClientesSection(){
-  var sinAsignar=clientes.filter(function(c){return!c.comercial_asignado;});
-  var asignados=clientes.filter(function(c){return c.comercial_asignado;});
-  var optsComercial=comerciales.map(function(c){return`<option value="${esc(c.email)}">${esc(c.nombre)} (${esc(c.email)})</option>`;}).join('');
-
-  return`
-  <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-    <div>
-      <div style="font-size:13px;font-weight:600;color:var(--g900)">Clientes registrados (${clientes.length})</div>
-      ${sinAsignar.length?`<div style="font-size:11px;color:var(--r500);margin-top:2px">⚠ ${sinAsignar.length} sin comercial asignado</div>`:'<div style="font-size:11px;color:var(--gr600);margin-top:2px">✅ Todos los clientes tienen comercial asignado</div>'}
+function renderTopbarNuevo() {
+  return `<div class="topbar">
+    <h2>Cargar reclamo</h2>
+    <div style="margin-left:auto">
+      <button class="btn btn-ghost" onclick="goToTickets()">← Volver a tickets</button>
     </div>
-  </div>
-  ${sinAsignar.length?`
-  <div style="margin-bottom:18px">
-    <div style="font-size:11px;font-weight:600;color:var(--r600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Sin asignar</div>
-    <div class="tw">
-      <table>
-        <thead><tr><th>Email</th><th>Nombre</th><th>Empresa</th><th>Registrado</th><th>Asignar comercial</th></tr></thead>
-        <tbody>
-          ${sinAsignar.map(function(c){return`<tr>
-            <td style="font-size:11px">${esc(c.email)}</td>
-            <td>${esc(c.nombre||'—')}</td>
-            <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px">${esc(c.empresa||'—')}</span></td>
-            <td style="font-size:11px">${esc(c.creado||'—')}</td>
-            <td>
-              <div style="display:flex;gap:6px;align-items:center">
-                <select id="sel-com-${esc(c.email.replace('@','_').replace('.','_'))}" style="font-size:11px;padding:4px 8px;border:1px solid var(--g200);border-radius:var(--rad);background:var(--w);font-family:inherit;outline:none;color:var(--g700)">
-                  <option value="">— Elegir —</option>
-                  ${optsComercial}
-                </select>
-                <button style="font-size:11px;padding:4px 9px;background:var(--b600);color:#fff;border:none;border-radius:var(--rad);cursor:pointer;font-family:inherit" onclick="asignar('${esc(c.email)}')">Asignar</button>
-              </div>
-            </td>
-          </tr>`;}).join('')}
-        </tbody>
-      </table>
-    </div>
-  </div>`:''}
-  ${asignados.length?`
-  <div>
-    <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Asignados</div>
-    <div class="tw">
-      <table>
-        <thead><tr><th>Email</th><th>Nombre</th><th>Empresa</th><th>Comercial asignado</th><th>Registrado</th></tr></thead>
-        <tbody>
-          ${asignados.map(function(c){return`<tr>
-            <td style="font-size:11px">${esc(c.email)}</td>
-            <td>${esc(c.nombre||'—')}</td>
-            <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px">${esc(c.empresa||'—')}</span></td>
-            <td style="font-size:11px;color:var(--gr700)">✅ ${esc(c.comercial_asignado)}</td>
-            <td style="font-size:11px">${esc(c.creado||'—')}</td>
-          </tr>`;}).join('')}
-        </tbody>
-      </table>
-    </div>
-  </div>`:''}`;
+  </div>`;
 }
 
-function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
-  return`
-        <div class="kpis">
-          <div class="kpi info"><div class="kl">Total</div><div class="kv">${tickets.length}</div></div>
-          <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
-          <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
-          <div class="kpi purple"><div class="kl">Prom. días</div><div class="kv">${promDias}</div></div>
-          <div class="kpi danger"><div class="kl">Re abiertos</div><div class="kv">${reo.length}</div></div>
-        </div>
-        <div class="tabs">
-          <button class="tab${activeTab==='recibidos'?' on':''}" onclick="activeTab='recibidos';render()">Recibidos<span class="tc">${rec.length}</span></button>
-          <button class="tab${activeTab==='analisis'?' on':''}" onclick="activeTab='analisis';render()">En análisis<span class="tc">${ana.length}</span></button>
-          <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
-          <button class="tab${activeTab==='reabiertos'?' on':''}" onclick="activeTab='reabiertos';render()">Re abiertos<span class="tc">${reo.length}</span></button>
-        </div>
-        <div class="tw">
-          <table>
-            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Empresa</th><th>Cliente</th><th>Estado</th><th>Días análisis</th></tr></thead>
-            <tbody>
-              ${tab.length===0
-                ?'<tr><td colspan="7" class="empty">No hay tickets en esta sección</td></tr>'
-                :tab.map(function(t){
-                  var leido=t.leido==='SI'||t.leido===true;
-                  var d=calcDias(t);
-                  return`<tr class="${leido?'row-read':'row-unread'}" onclick="openPanel('${esc(t.ID)}')">
-                    <td><span class="tid">${t.ID||'—'}</span></td>
-                    <td>${fmtDate(t.creado)}</td>
-                    <td>${esc(t.tipo_reclamo||'—')}</td>
-                    <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
-                    <td style="font-size:11px">${(t.email_cliente||'—').split('@')[0]}</td>
-                    <td><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></td>
-                    <td><span class="db ${diasClass(d)}">${d} días</span></td>
-                  </tr>`;
-                }).join('')}
-            </tbody>
-          </table>
-        </div>`;
+function renderTicketsView(filtered) {
+  var clientesDisponibles = (currentUser.clientes && currentUser.clientes.length) ? currentUser.clientes : Array.from(new Set(tickets.map(function(t){ return t.empresa||t.cliente||t.email_cliente||''; }).filter(Boolean)));
+  var estadosDisponibles = ['Recibido','En análisis','Finalizado','Re abierto'];
+  return `
+    <div class="shdr">
+      <h2>Tickets de mis clientes (${filtered.length})</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:9px 11px">
+      <select class="search" style="width:160px" onchange="filtroCliente=this.value;render()">
+        <option value="">Todos los clientes</option>
+        ${clientesDisponibles.map(function(c){ return `<option value="${esc(c)}" ${filtroCliente===c?'selected':''}>${esc(c)}</option>`; }).join('')}
+      </select>
+      <select class="search" style="width:140px" onchange="filtroEstado=this.value;render()">
+        <option value="">Todos los estados</option>
+        ${estadosDisponibles.map(function(e){ return `<option value="${e}" ${filtroEstado===e?'selected':''}>${e}</option>`; }).join('')}
+      </select>
+      <span style="font-size:11px;color:var(--g400)">Desde</span>
+      <input class="search" type="date" style="width:135px" value="${filtroFechaDesde}" onchange="filtroFechaDesde=this.value;render()">
+      <span style="font-size:11px;color:var(--g400)">Hasta</span>
+      <input class="search" type="date" style="width:135px" value="${filtroFechaHasta}" onchange="filtroFechaHasta=this.value;render()">
+      <select class="search" style="width:170px" onchange="ordenFecha=this.value;render()">
+        <option value="desc" ${ordenFecha==='desc'?'selected':''}>Más reciente primero</option>
+        <option value="asc" ${ordenFecha==='asc'?'selected':''}>Más viejo primero</option>
+      </select>
+      ${(filtroCliente||filtroEstado||filtroFechaDesde||filtroFechaHasta) ? `<button class="btn btn-ghost" onclick="filtroCliente='';filtroEstado='';filtroFechaDesde='';filtroFechaHasta='';render()">✕ Limpiar filtros</button>` : ''}
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Estado</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.length === 0
+            ? '<tr><td colspan="6" class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px">🎫</div><p>No hay tickets</p></td></tr>'
+            : filtered.map(function(t) {
+              return `<tr onclick="selectedTicket=${JSON.stringify(t).replace(/"/g,'&quot;')};detailComentario='';detailArchivo=null;renderPanel()">
+                <td><span class="tid">${t.ID||'—'}</span></td>
+                <td>${fmtDate(t.creado)}</td>
+                <td>${t.tipo_reclamo||'—'}</td>
+                <td style="font-size:11px">${esc(t.empresa||t.cliente||(t.email_cliente||'').split('@')[0]||'—')}</td>
+                <td>${t.monto||'—'}</td>
+                <td><span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span></td>
+              </tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
-window.openPanel=function(id){
-  selTicket=tickets.find(function(x){return x.ID===id;});
-  if(!selTicket)return;
-  if(selTicket.leido!=='SI'){
-    selTicket.leido='SI';
-    api({action:'updateTicket',id:selTicket.ID,campos:{leido:'SI'}});
+function goToTickets() {
+  activeView = 'tickets';
+  render();
+}
+
+function goToNuevoReclamo() {
+  resetRfForm();
+  activeView = 'nuevo';
+  render();
+}
+
+// ════════════════════════════════════════════════════════════════
+// FORMULARIO DE NUEVO RECLAMO (portado de cliente.html, integrado
+// dentro del panel de Comercial — el comercial carga en nombre
+// del cliente).
+// ════════════════════════════════════════════════════════════════
+function renderNuevoReclamoView() {
+  if (rfStep === 3) return renderRfSuccess();
+
+  var resumen = [
+    { key:'titular', label:'Cliente', value:rfForm.titular },
+    { key:'tipo_reclamo', label:'Tipo de reclamo', value:rfForm.tipo_reclamo },
+    rfForm.monto ? { key:'monto', label:'Monto total desconocido', value:rfForm.monto } : null,
+    rfForm.detalle ? { key:'detalle', label:'Observaciones', value:rfForm.detalle } : null,
+    rfExcelFiles.length ? { key:'excel', label:'Planilla(s) adjunta(s)', value:rfExcelFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
+    rfCarrierFiles.length ? { key:'carrier', label:'Acuse/mail adjunto(s)', value:rfCarrierFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
+  ].filter(Boolean);
+
+  return `
+    <div class="rf-wrap">
+      <div class="rf-card">
+        <div class="rf-title">Nuevo Reclamo</div>
+        <div class="rf-sub">${rfStep===1?'Completá los datos del reclamo en nombre del cliente.':'Revisá el resumen antes de enviar.'}</div>
+        <div class="rf-steps">
+          <div class="rf-step ${rfStep>1?'done':'active'}">
+            <div class="rf-snum">${rfStep>1?'✓':'1'}</div><div class="rf-slbl">Datos</div>
+          </div>
+          <div class="rf-step ${rfStep===2?'active':''}">
+            <div class="rf-snum">2</div><div class="rf-slbl">Resumen</div>
+          </div>
+        </div>
+        ${rfStep===1 ? renderRfPaso1() : renderRfPaso2(resumen)}
+      </div>
+    </div>`;
+}
+
+function renderRfPaso1() {
+  var clientesOpts = (currentUser.clientes && currentUser.clientes.length) ? currentUser.clientes : [];
+  var esConsumo = rfForm.tipo_reclamo === 'Desconocimiento de consumo';
+  var esNoRecepcion = rfForm.tipo_reclamo === 'No recepción de tarjeta';
+
+  return `<div>
+    <div class="rf-frow full"><div class="rf-fgroup">
+      <label>Cliente<span class="rf-req">*</span></label>
+      <select id="rf-titular" onchange="rfForm.titular=this.value;rfValidated=false">
+        <option value="">— Seleccionar cliente —</option>
+        ${clientesOpts.map(function(c){ return `<option value="${esc(c)}" ${rfForm.titular===c?'selected':''}>${esc(c)}</option>`; }).join('')}
+      </select>
+      ${rfErrors.titular?`<p class="rf-err-msg">${rfErrors.titular}</p>`:''}
+    </div></div>
+
+    <div class="rf-frow full"><div class="rf-fgroup">
+      <label>Tipo de reclamo<span class="rf-req">*</span></label>
+      <select id="rf-tipo_reclamo" onchange="rfForm.tipo_reclamo=this.value;rfExcelFiles=[];rfValidated=false;render()">
+        <option value="">— Seleccionar —</option>
+        <option value="Desconocimiento de consumo" ${esConsumo?'selected':''}>Desconocimiento de consumo</option>
+        <option value="No recepción de tarjeta" ${esNoRecepcion?'selected':''}>No recepción de tarjeta</option>
+      </select>
+      ${rfErrors.tipo_reclamo?`<p class="rf-err-msg">${rfErrors.tipo_reclamo}</p>`:''}
+    </div></div>
+
+    ${esConsumo ? `
+    <div class="al al-amber">⚠ Descargá la planilla de consumos, completá los campos en <strong>negrita</strong> (obligatorios) y adjuntala completa.</div>
+    <div class="rf-fgroup" style="margin-bottom:12px">
+      <label>Planilla de consumos</label>
+      <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla de consumos</a>
+    </div>
+    <div class="rf-fgroup" style="margin-bottom:14px">
+      <label>Adjuntar planilla de consumos completa<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">(podés adjuntar más de un archivo)</span></label>
+      <div class="rf-upload${rfExcelFiles.length?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
+        <input id="rf-excel-inp" type="file" accept=".xlsx" multiple style="display:none" onchange="rfAddFiles('excel',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfExcelFiles.length?'✅':'📊'}</div>
+        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx</p>'}
+      </div>
+      ${renderRfFileList('excel')}
+      ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
+    </div>
+    <div class="rf-frow full"><div class="rf-fgroup">
+      <label>Monto total desconocido<span class="rf-req">*</span></label>
+      <input type="text" id="rf-monto" value="${esc(rfForm.monto)}" placeholder="Ej: $125.000" oninput="rfForm.monto=this.value">
+      ${rfErrors.monto?`<p class="rf-err-msg">${rfErrors.monto}</p>`:''}
+    </div></div>` : ''}
+
+    ${esNoRecepcion ? `
+    <div class="al al-amber">⚠ Descargá la planilla de no recepción, completá los campos en <strong>negrita</strong> (obligatorios) y adjuntala completa.</div>
+    <div class="rf-fgroup" style="margin-bottom:12px">
+      <label>Planilla de no recepción</label>
+      <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla de no recepción</a>
+    </div>
+    <div class="rf-fgroup" style="margin-bottom:14px">
+      <label>Adjuntar planilla de no recepción completa<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">(podés adjuntar más de un archivo)</span></label>
+      <div class="rf-upload${rfExcelFiles.length?' ok':''}" onclick="document.getElementById('rf-excel-inp').click()">
+        <input id="rf-excel-inp" type="file" accept=".xlsx" multiple style="display:none" onchange="rfAddFiles('excel',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfExcelFiles.length?'✅':'📊'}</div>
+        ${rfExcelFiles.length?`<p class="rf-ok-text">${rfExcelFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar la(s) planilla(s)</p><p class="rf-hint">.xlsx</p>'}
+      </div>
+      ${renderRfFileList('excel')}
+      ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
+    </div>` : ''}
+
+    ${rfForm.tipo_reclamo ? `
+    <div class="rf-fgroup" style="margin-bottom:14px">
+      <button class="btn ${rfValidated?'btn-ghost':'btn-primary'}" onclick="rfValidarInformacion()" ${rfValidando?'disabled':''}>
+        ${rfValidando?'<span class="spinner"></span> Validando...':(rfValidated?'✓ Información validada':'🔎 Validar información')}
+      </button>
+      ${rfErrors.validacion?`<p class="rf-err-msg">${rfErrors.validacion}</p>`:''}
+    </div>` : ''}
+
+    ${rfValidated ? `
+    <div class="al al-green">✅ Información validada correctamente. Completá los siguientes campos para finalizar.</div>
+    <div class="rf-frow full"><div class="rf-fgroup">
+      <label>Observaciones<span class="rf-req">*</span> <span style="font-size:11px;color:var(--g400);font-weight:400">— breve descripción del caso</span></label>
+      <textarea id="rf-detalle" placeholder="Describí brevemente el caso..." oninput="rfForm.detalle=this.value">${esc(rfForm.detalle)}</textarea>
+      ${rfErrors.detalle?`<p class="rf-err-msg">${rfErrors.detalle}</p>`:''}
+    </div></div>
+    <div class="rf-fgroup">
+      <label>Acuse de recibo / mail del cliente <span style="font-size:11px;color:var(--g400);font-weight:400">(Opcional — podés adjuntar más de un archivo)</span></label>
+      <div class="rf-upload${rfCarrierFiles.length?' ok':''}" onclick="document.getElementById('rf-carrier-inp').click()">
+        <input id="rf-carrier-inp" type="file" accept="image/*,.pdf,.eml,.msg" multiple style="display:none" onchange="rfAddFiles('carrier',this)">
+        <div style="font-size:20px;margin-bottom:5px">${rfCarrierFiles.length?'✅':'📄'}</div>
+        ${rfCarrierFiles.length?`<p class="rf-ok-text">${rfCarrierFiles.length} archivo(s) seleccionado(s)</p>`:'<p>Clic para adjuntar foto(s) del acuse o mail</p><p class="rf-hint">Imagen, PDF o archivo de mail (.eml/.msg)</p>'}
+      </div>
+      ${renderRfFileList('carrier')}
+    </div>` : ''}
+
+    <div class="rf-btn-row">
+      <button class="btn btn-ghost" onclick="goToTickets()">← Cancelar</button>
+      <button class="btn btn-primary" onclick="rfGoStep2()" ${rfValidated?'':'disabled'}>Continuar →</button>
+    </div>
+  </div>`;
+}
+
+// Lista de archivos ya seleccionados, con opción de sacar cada uno
+function renderRfFileList(tipo) {
+  var files = tipo === 'excel' ? rfExcelFiles : rfCarrierFiles;
+  if (!files.length) return '';
+  return `<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+    ${files.map(function(f, idx){
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g100);border-radius:var(--rad);font-size:11.5px;background:var(--g50)">
+        <span>📎</span><span style="flex:1;color:var(--g700)">${esc(f.name)}</span>
+        <button type="button" style="background:none;border:none;color:var(--r500);cursor:pointer;font-size:13px" onclick="rfRemoveFile('${tipo}',${idx})">✕</button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+window.rfValidarInformacion = function() {
+  rfSaveFormState();
+  rfErrors = {};
+  if (!rfForm.titular) rfErrors.titular = 'Seleccioná un cliente';
+  if (!rfForm.tipo_reclamo) rfErrors.tipo_reclamo = 'Seleccioná un tipo de reclamo';
+  if (!rfExcelFiles.length) rfErrors.excel = 'Debés adjuntar al menos una planilla';
+  if (rfForm.tipo_reclamo === 'Desconocimiento de consumo' && !rfForm.monto.trim()) rfErrors.monto = 'Campo obligatorio';
+
+  if (Object.keys(rfErrors).length > 0) {
+    var faltantes = Object.values(rfErrors);
+    rfErrors.validacion = 'Faltan completar ' + faltantes.length + ' campo(s) obligatorio(s) antes de continuar.';
+    rfValidated = false;
     render();
+    return;
   }
-  renderPanel();
+
+  // Validación del contenido de la planilla: por ahora valida presencia y
+  // extensión del archivo. Si en el futuro se quiere validar columnas
+  // específicas dentro de la planilla, conviene parsearla con una librería
+  // como SheetJS (xlsx) en el navegador antes de habilitar este botón.
+  rfValidando = true; render();
+  setTimeout(function() {
+    rfValidando = false;
+    rfValidated = true;
+    rfErrors = {};
+    toast('Información validada correctamente', 'ok');
+    render();
+  }, 500);
 };
 
-function renderPanel(){
-  var t=selTicket;
-  var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
-  var coms=[];try{coms=Array.isArray(t.comentarios)?t.comentarios:JSON.parse(t.comentarios||'[]');}catch(e){}
-  var adjs=[];try{adjs=Array.isArray(t.adjuntos)?t.adjuntos:JSON.parse(t.adjuntos||'[]');}catch(e){}
-  var d=calcDias(t);
-  var existing=document.querySelector('.overlay');if(existing)existing.remove();
-
-  document.body.insertAdjacentHTML('beforeend',`
-  <div class="overlay" onclick="if(event.target.className==='overlay')closePanel()">
-    <div class="panel">
-      <div class="ph">
-        <div class="ph-info">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-            <span class="tid">${t.ID}</span>
-            <span class="badge ${bc(t.estado)}">${t.estado||'—'}</span>
-            <span class="db ${diasClass(d)}">${d} días en análisis</span>
-          </div>
-          <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.empresa||t.titular||'—')}</div>
-          <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo||'—')}</div>
-        </div>
-        <button class="close" onclick="closePanel()">✕</button>
-      </div>
-      <div class="pb">
-
-        <!-- DATOS DEL RECLAMO -->
-        <div class="sec">
-          <div class="sec-t">Datos del reclamo</div>
-          <div class="dgrid">
-            <div class="df"><div class="dl">Cliente</div><div class="dv">${esc(t.empresa||t.titular||'—')}</div></div>
-            <div class="df"><div class="dl">Tipo</div><div class="dv">${esc(t.tipo_reclamo||'—')}</div></div>
-            <div class="df"><div class="dl">Fecha ingreso</div><div class="dv">${fmtDate(t.creado)}</div></div>
-            <div class="df"><div class="dl">Estado</div><div class="dv"><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></div></div>
-            ${t.monto?`<div class="df" style="grid-column:span 2"><div class="dl">Monto total desconocido</div><div class="dv">${esc(String(t.monto))}</div></div>`:''}
-            ${t.detalle?`<div class="df" style="grid-column:span 2"><div class="dl">Observaciones</div><div class="dv">${esc(t.detalle)}</div></div>`:''}
-            ${t.fecha_inicio_analisis?`<div class="df"><div class="dl">Inicio análisis</div><div class="dv">${fmtDate(t.fecha_inicio_analisis)}</div></div>`:''}
-          </div>
-        </div>
-
-        <!-- ADJUNTOS -->
-        <div class="sec">
-          <div class="sec-t">Archivos adjuntos</div>
-          ${renderAdjuntosOp(t, adjs)}
-        </div>
-
-        <!-- COMENTARIOS DE COMERCIAL -->
-        <div class="sec">
-          <div class="sec-t">Comentarios de Comercial</div>
-          ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Sin comentarios de Comercial</p>':
-            coms.map(function(c){
-              var esCom=c.de==='comercial';
-              return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
-                <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
-                <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
-                ${c.archivo?`<div style="font-size:11px;color:var(--g500);margin-top:3px">📎 ${esc(c.archivo)}</div>`:''}
-              </div>`;
-            }).join('')}
-        </div>
-
-        <!-- NOTAS INTERNAS DE OPERACIONES -->
-        <div class="sec">
-          <div class="sec-t">Notas internas de análisis</div>
-          <p style="font-size:11px;color:var(--g400);margin-bottom:8px">Registrá avances y cambios del análisis. Estas notas <strong>solo las ve Operaciones</strong>.</p>
-          ${renderNotasOp(t)}
-          <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:10px;margin-top:8px">
-            <textarea class="cinp" id="op-nota-txt" rows="3" placeholder="Agregar nota de avance..."></textarea>
-            <button class="btn btn-p" style="margin-top:8px;font-size:11px" onclick="agregarNotaOp('${t.ID}')">Agregar nota</button>
-          </div>
-        </div>
-
-        <!-- HISTORIAL -->
-        <div class="sec">
-          <div class="sec-t">Historial</div>
-          ${hist.length===0?'<p style="font-size:12px;color:var(--g400)">Sin historial</p>':
-            hist.map(function(h){return`<div style="border-left:2px solid var(--g200);padding:4px 9px;margin-bottom:5px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${esc(h.accion)}</div>`;}).join('')}
-        </div>
-
-        <!-- ESTADO -->
-        <div class="sec">
-          <div class="sec-t">Cambiar estado</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <select class="sel-e" id="sel-estado">
-              <option value="Recibido" ${t.estado==='Recibido'?'selected':''}>Recibido</option>
-              <option value="En análisis" ${t.estado==='En análisis'?'selected':''}>En análisis</option>
-              <option value="Finalizado" ${t.estado==='Finalizado'?'selected':''}>Finalizado</option>
-            </select>
-            <button class="btn btn-p" style="padding:6px 11px;font-size:11px" onclick="guardarEstado('${t.ID}')">Guardar</button>
-          </div>
-        </div>
-
-        <!-- ENVÍO DE MAIL -->
-        <div class="sec">
-          <div class="sec-t">Envío de informe comercial</div>
-          <div style="display:flex;flex-direction:column;gap:7px">
-            <input type="text" class="cinp" style="min-height:unset;resize:none" id="mp" placeholder="Para: email@dominio.com" value="${esc(mailPara)}" oninput="mailPara=this.value">
-            <input type="text" class="cinp" style="min-height:unset;resize:none" id="ma" placeholder="Asunto" value="${esc(mailAsunto)}" oninput="mailAsunto=this.value">
-            <textarea class="cinp" id="mc" rows="4" placeholder="Cuerpo del mail..." oninput="mailCuerpo=this.value">${esc(mailCuerpo)}</textarea>
-            <div>
-              <label style="font-size:11px;font-weight:500;color:var(--g600);display:block;margin-bottom:4px">Adjuntar archivo (Excel, PDF, etc.) — Opcional</label>
-              <div id="adj-box" style="border:1.5px dashed var(--g300);border-radius:var(--rad);padding:12px;text-align:center;cursor:pointer;background:var(--g50);font-size:12px;color:var(--g500)" onclick="document.getElementById('adj-inp').click()">
-                <input id="adj-inp" type="file" style="display:none" onchange="setAdjunto(this)">
-                <span id="adj-label">📎 Clic para adjuntar archivo</span>
-              </div>
-            </div>
-            <button class="btn btn-p" style="align-self:flex-start" onclick="enviarMail()">📤 Enviar</button>
-          </div>
-        </div>
-
-      </div>
+function renderRfPaso2(resumen) {
+  return `<div>
+    <div class="al al-blue">ℹ Revisá todos los datos. Podés editar con el ✏ si detectás algún error.</div>
+    <div class="rf-confirm-box">
+      ${resumen.map(function(row){
+        var isEditing = rfEditField===row.key;
+        return `<div class="rf-confirm-row">
+          <span class="rf-ck">${row.label}</span>
+          ${isEditing
+            ? `<input type="text" style="flex:1;font-size:12px;padding:4px 8px;border:1px solid var(--b500);border-radius:5px;outline:none;font-family:inherit" value="${esc(row.value)}" autofocus onblur="rfSaveEdit('${row.key}',this.value)" onkeydown="if(event.key==='Enter')rfSaveEdit('${row.key}',this.value)">`
+            : `<span class="rf-cv">${esc(row.value)||'—'}</span>`}
+          ${!row.noEdit&&!isEditing?`<button class="rf-edit-btn" onclick="rfEditField='${row.key}';render()">✏</button>`:''}
+        </div>`;
+      }).join('')}
     </div>
-  </div>`);
+    <div class="rf-btn-row">
+      <button class="btn btn-ghost" onclick="rfStep=1;render()">← Atrás</button>
+      <button class="btn btn-primary" onclick="rfSubmitForm()" ${rfSaving?'disabled':''}>
+        ${rfSaving?'<span class="spinner"></span>':''}Enviar reclamo
+      </button>
+    </div>
+  </div>`;
 }
 
-function renderAdjuntosOp(t, adjs) {
-  var lista = [];
-  if (t.excel_nombre) lista.push({ nombre: t.excel_nombre, fileId: t.excel_fileId||null, origen: 'Comercial (planilla)' });
-  if (t.carrier_nombre) lista.push({ nombre: t.carrier_nombre, fileId: t.carrier_fileId||null, origen: 'Comercial (acuse/mail)' });
-  adjs.forEach(function(a){ lista.push({ nombre: a.nombre, fileId: a.fileId||null, origen: a.origen||(a.de==='operaciones'?'Operaciones':'Comercial') }); });
+function renderRfSuccess() {
+  return `
+    <div class="rf-wrap">
+      <div class="rf-card">
+        <div class="rf-success">
+          <div class="rf-success-icon">✅</div>
+          <h2>¡Reclamo enviado!</h2>
+          <p>El reclamo fue registrado exitosamente y ya aparece en tu panel de tickets.</p>
+          <div class="rf-id-badge">${rfTicketId}</div>
+          <p class="rf-success-note">Guardá este ID para futuras consultas.</p>
+          <div style="margin-top:24px;display:flex;gap:9px;justify-content:center">
+            <button class="btn btn-new" onclick="goToNuevoReclamo()">➕ Cargar otro reclamo</button>
+            <button class="btn btn-ghost" onclick="goToTickets()">Ver mis tickets</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
 
-  if (!lista.length) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
-  return lista.map(function(a){
+function bindRfEvents() {
+  ['tipo_reclamo','detalle'].forEach(function(k){
+    var el = document.getElementById('rf-'+k);
+    if (el) el.addEventListener('input', function(){ rfForm[k]=this.value; });
+  });
+}
+
+window.rfAddFiles = function(tipo, input){
+  var nuevos = Array.prototype.slice.call(input.files || []);
+  if (!nuevos.length) return;
+  if (tipo === 'excel') { rfExcelFiles = rfExcelFiles.concat(nuevos); rfValidated = false; }
+  else { rfCarrierFiles = rfCarrierFiles.concat(nuevos); }
+  input.value = ''; // permite volver a elegir el mismo archivo si lo saca y lo vuelve a agregar
+  render();
+};
+window.rfRemoveFile = function(tipo, idx){
+  if (tipo === 'excel') { rfExcelFiles.splice(idx,1); rfValidated = false; }
+  else { rfCarrierFiles.splice(idx,1); }
+  render();
+};
+window.rfSaveEdit = function(key, val){ rfForm[key]=val; rfEditField=null; render(); };
+
+function rfSaveFormState() {
+  ['titular','tipo_reclamo','detalle','monto'].forEach(function(k){
+    var el = document.getElementById('rf-'+k); if(el) rfForm[k]=el.value;
+  });
+}
+
+window.rfGoStep2 = function() {
+  rfSaveFormState();
+  if (!rfValidated) { toast('Primero validá la información', 'err'); return; }
+  rfErrors = {};
+  if (!rfForm.detalle.trim()) {
+    rfErrors.detalle = 'Campo obligatorio';
+    toast('Completá las observaciones antes de continuar', 'err');
+    render();
+    return;
+  }
+  rfStep=2; render();
+};
+
+window.rfSubmitForm = async function() {
+  rfSaving=true; render();
+  try {
+    var id='REC-'+(Math.floor(Math.random()*900000)+100000);
+    var payload={
+      action:'crearTicket', titular:rfForm.titular, banco:rfForm.titular, tipo_reclamo:rfForm.tipo_reclamo,
+      monto:rfForm.monto||'',
+      detalle:rfForm.detalle||'', excel_nombre:rfExcelFiles.map(function(f){return f.name;}).join(', '),
+      carrier_nombre:rfCarrierFiles.map(function(f){return f.name;}).join(', '),
+      // Pide al backend que envíe el mail automático a operaciones al crear el ticket.
+      // Requiere soporte en el Apps Script (ver notificarNuevoTicket en el backend).
+      notificarOperaciones:true, mailOperaciones:MAIL_OPERACIONES,
+      comercial_nombre: currentUser.name, comercial_email: currentUser.email
+    };
+    var adjuntosIniciales = [];
+
+    if (rfExcelFiles.length) {
+      for (var i = 0; i < rfExcelFiles.length; i++) {
+        var f = rfExcelFiles[i];
+        var b64 = await fileToBase64(f);
+        var ur = await api({ action:'uploadArchivo', base64:b64, nombre:f.name, mimeType:getMimeType(f.name), ticketId:id });
+        if (ur.ok) {
+          if (i === 0) payload.excel_fileId = ur.fileId; // compatibilidad con columna original
+          adjuntosIniciales.push({ nombre:f.name, fileId:ur.fileId, origen:'Comercial (planilla)', de:'comercial' });
+        }
+      }
+    }
+    if (rfCarrierFiles.length) {
+      for (var j = 0; j < rfCarrierFiles.length; j++) {
+        var fc = rfCarrierFiles[j];
+        var b64c = await fileToBase64(fc);
+        var urc = await api({ action:'uploadArchivo', base64:b64c, nombre:fc.name, mimeType:getMimeType(fc.name), ticketId:id });
+        if (urc.ok) {
+          if (j === 0) payload.carrier_fileId = urc.fileId; // compatibilidad con columna original
+          adjuntosIniciales.push({ nombre:fc.name, fileId:urc.fileId, origen:'Comercial (acuse/mail)', de:'comercial' });
+        }
+      }
+    }
+    payload.adjuntosIniciales = JSON.stringify(adjuntosIniciales);
+
+    var data=await api(payload);
+    if(!data.ok) throw new Error(data.error||'Error desconocido');
+    rfTicketId=data.id||id;
+    rfStep=3;
+    toast('Reclamo enviado correctamente','ok');
+    // refrescar tickets en segundo plano para que aparezca en "Mis tickets"
+    try { var tr = await api({ action:'getTickets', esOperario:false }); tickets = tr.tickets || []; } catch(e){}
+  } catch(err){ toast('Error al enviar: '+err.message, 'err'); }
+  rfSaving=false; render();
+};
+
+// ════════════════════════════════════════════════════════════════
+// PANEL DE DETALLE DE TICKET (sin cambios respecto a la versión anterior)
+// ════════════════════════════════════════════════════════════════
+function renderPanel() {
+  var t = typeof selectedTicket === 'string' ? JSON.parse(selectedTicket.replace(/&quot;/g,'"')) : selectedTicket;
+  if (!t) return;
+
+  var hist = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
+
+  var panelHtml = `
+    <div class="overlay" onclick="if(event.target.className==='overlay'){selectedTicket=null;render()}">
+      <div class="panel">
+        <div class="ph">
+          <div style="display:flex;align-items:flex-start;gap:9px">
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
+                <span class="tid" style="font-size:11px">${t.ID||'—'}</span>
+                <span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span>
+              </div>
+              <div style="font-size:14px;font-weight:600;color:var(--g900)">${t.titular||'—'}</div>
+              <div style="font-size:11px;color:var(--g500);margin-top:3px">${t.tipo_reclamo||'—'}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
+            </div>
+            <button class="close" onclick="selectedTicket=null;render()">✕</button>
+          </div>
+        </div>
+        <div class="pbody">
+          ${t.estado==='Finalizado' ? '<div class="al al-green">✅ Este ticket fue finalizado por el equipo de operaciones.</div>' : ''}
+          ${t.estado==='Re abierto' ? '<div class="al al-amber">🔄 Has re abierto este ticket. Operaciones fue notificado.</div>' : ''}
+
+          <div class="dsec">
+            <div class="dsec-title">General</div>
+            <div class="dgrid">
+              <div class="dfield"><div class="dlbl">Cliente</div><div class="dval">${t.empresa||t.cliente||'—'}</div></div>
+              <div class="dfield"><div class="dlbl">Tipo</div><div class="dval">${t.tipo_reclamo||'—'}</div></div>
+              <div class="dfield"><div class="dlbl">Fecha</div><div class="dval">${fmtDate(t.creado)}</div></div>
+              <div class="dfield"><div class="dlbl">Estado</div><div class="dval">${t.estado||'—'}</div></div>
+              ${t.monto ? `<div class="dfield"><div class="dlbl">Monto total desconocido</div><div class="dval">${esc(String(t.monto))}</div></div>` : ''}
+              ${t.detalle ? `<div class="dfield" style="grid-column:span 2"><div class="dlbl">Observaciones</div><div class="dval">${t.detalle}</div></div>` : ''}
+            </div>
+          </div>
+
+          <div class="dsec">
+            <div class="dsec-title">Historial</div>
+            ${hist.length === 0 ? '<p style="font-size:12px;color:var(--g400)">Sin historial</p>' :
+              hist.map(function(h){ return `<div style="border-left:2px solid var(--g200);padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${h.accion}</div>`; }).join('')}
+          </div>
+
+          <div class="dsec">
+            <div class="dsec-title">Adjuntos del ticket</div>
+            ${renderAdjuntosTicket(t)}
+          </div>
+
+          <div class="dsec">
+            <div class="dsec-title">Comentarios y archivos adicionales</div>
+            <p style="font-size:11px;color:var(--g400);margin-bottom:8px">Acá podés sumar información o archivos que te haya pasado el cliente después de cargado el ticket. Operaciones ve estos comentarios y puede responder, y vos ves los suyos.</p>
+            ${renderComentarios(t)}
+            <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:12px;margin-top:8px">
+              <textarea class="cinp" id="detail-comentario" placeholder="Agregar información adicional para operaciones..." rows="3" oninput="detailComentario=this.value">${esc(detailComentario)}</textarea>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                <div class="rf-upload" style="flex:1;padding:9px" onclick="document.getElementById('detail-archivo-inp').click()">
+                  <input id="detail-archivo-inp" type="file" style="display:none" onchange="syncDetailComentario();if(this.files[0]){detailArchivo=this.files[0];renderPanel()}">
+                  <p style="font-size:11px">${detailArchivo ? '📎 ' + esc(detailArchivo.name) : 'Clic para adjuntar un archivo (opcional)'}</p>
+                </div>
+                <button class="btn btn-primary" onclick="agregarComentarioTicket('${t.ID}')" ${saving?'disabled':''}>${saving?'<span class="spinner"></span>':''}Enviar</button>
+              </div>
+            </div>
+          </div>
+
+          ${t.estado==='Finalizado' ? `
+          <div class="dsec">
+            <div class="dsec-title">Reabrir ticket</div>
+            <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:14px">
+              <p style="font-size:12px;color:var(--g600);margin-bottom:10px">Podés reabrir este ticket con un mensaje para el equipo de operaciones.</p>
+              <textarea class="cinp" id="reopen-msg" placeholder="Describí el motivo del reclamo..." rows="3"></textarea>
+              <div style="margin-top:10px">
+                <button class="btn btn-danger" onclick="reabrirTicket('${t.ID}')">🔄 Reabrir ticket</button>
+              </div>
+            </div>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  var existing = document.querySelector('.overlay');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', panelHtml);
+}
+
+// Lista los archivos adjuntados al ticket por comercial y por operaciones
+function renderAdjuntosTicket(t) {
+  var adj = [];
+  if (t.excel_nombre) adj.push({ nombre: t.excel_nombre, origen: 'Comercial (planilla)', fileId: t.excel_fileId || t.excel_id || null });
+  if (t.carrier_nombre) adj.push({ nombre: t.carrier_nombre, origen: 'Comercial (acuse/mail)', fileId: t.carrier_fileId || t.carrier_id || null });
+  var extra = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try { return JSON.parse(t.adjuntos||'[]'); } catch(e){ return []; } })();
+  extra.forEach(function(a){ adj.push({ nombre: a.nombre, origen: a.origen || (a.de==='operaciones'?'Operaciones':'Comercial'), fileId: a.fileId || a.id || null, url: a.url || null }); });
+
+  if (adj.length === 0) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
+  return adj.map(function(a){
+    // Drive convierte .xlsx a Google Sheets automáticamente en algunas cuentas
+    // de Workspace. Para esos casos, la URL de exportación a xlsx funciona
+    // tanto si el archivo está convertido como si no.
     var ext = (a.nombre||'').split('.').pop().toLowerCase();
-    var url = a.fileId
-      ? (ext==='xlsx'||ext==='xls'||ext==='csv'
-          ? 'https://docs.google.com/spreadsheets/d/'+a.fileId+'/export?format=xlsx'
-          : 'https://drive.google.com/uc?export=download&id='+a.fileId)
-      : null;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:5px;font-size:12px">
+    var url;
+    if (a.url) {
+      url = a.url;
+    } else if (a.fileId) {
+      if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+        // Exporta como xlsx desde Google Sheets (funciona aunque Drive haya convertido el archivo)
+        url = 'https://docs.google.com/spreadsheets/d/' + a.fileId + '/export?format=xlsx';
+      } else {
+        // Para imágenes, PDF, eml, msg: descarga directa
+        url = 'https://drive.google.com/uc?export=download&id=' + a.fileId;
+      }
+    } else {
+      url = null;
+    }
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">
       <span>📎</span>
       ${url
         ? `<a href="${url}" target="_blank" rel="noopener" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>`
-        : `<span style="flex:1;color:var(--g700)">${esc(a.nombre)}</span>`}
+        : `<span style="flex:1;color:var(--g900)">${esc(a.nombre)} <span style="color:var(--g400);font-weight:400">(sin vista previa disponible)</span></span>`}
       <span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>
     </div>`;
   }).join('');
 }
 
-function renderNotasOp(t) {
-  var notas = [];
-  try { notas = Array.isArray(t.notas_op) ? t.notas_op : JSON.parse(t.notas_op||'[]'); } catch(e) { notas = []; }
-  if (!notas.length) return '<p style="font-size:12px;color:var(--g400)">Sin notas cargadas</p>';
-  return notas.map(function(n){
-    return `<div style="border-left:2px solid var(--a500);padding:6px 10px;margin-bottom:5px;background:var(--a50);border-radius:0 var(--rad) var(--rad) 0">
-      <div style="font-size:10px;font-weight:600;color:var(--a600);margin-bottom:2px">⚙️ ${esc(n.usuario||'')} · ${esc(n.ts||'')}</div>
-      <div style="font-size:12px;color:var(--g700)">${esc(n.texto||'')}</div>
+// Lista comentarios cargados sobre el ticket (de comercial u operaciones)
+function renderComentarios(t) {
+  var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try { return JSON.parse(t.comentarios||'[]'); } catch(e){ return []; } })();
+  if (coms.length === 0) return '<p style="font-size:12px;color:var(--g400)">Todavía no hay comentarios</p>';
+  return coms.map(function(c){
+    var esOperaciones = c.de === 'operaciones';
+    return `<div style="border-left:2px solid ${esOperaciones?'var(--p500)':'var(--b500)'};padding:7px 11px;margin-bottom:7px;background:${esOperaciones?'var(--p50)':'var(--b50)'};border-radius:0 var(--rad) var(--rad) 0">
+      <div style="font-size:10px;font-weight:600;color:${esOperaciones?'var(--p600)':'var(--b700)'};margin-bottom:2px">${esOperaciones?'⚙️ Operaciones':'💼 Comercial'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+      <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
+      ${c.archivo ? `<div style="font-size:11px;color:var(--g500);margin-top:3px">📎 ${esc(c.archivo)}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-window.agregarNotaOp = async function(id) {
-  var ta = document.getElementById('op-nota-txt');
-  var texto = ta ? ta.value.trim() : '';
-  if (!texto) { toast('Escribí una nota antes de agregar', 'err'); return; }
-  var ahora = new Date();
-  var ts = ahora.getDate().toString().padStart(2,'0')+'/'+(ahora.getMonth()+1).toString().padStart(2,'0')+'/'+ahora.getFullYear()+' '+ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
-  var nota = { usuario: _u.name||_u.email, ts: ts, texto: texto };
-  var t = tickets.find(function(x){ return x.ID===id; });
-  var notas = [];
-  try { notas = Array.isArray(t.notas_op) ? t.notas_op : JSON.parse(t.notas_op||'[]'); } catch(e) { notas = []; }
-  notas.push(nota);
+function syncDetailComentario() {
+  var ta = document.getElementById('detail-comentario');
+  if (ta) detailComentario = ta.value;
+}
+
+async function agregarComentarioTicket(id) {
+  syncDetailComentario();
+  var texto = detailComentario.trim();
+  if (!texto && !detailArchivo) { toast('Escribí un comentario o adjuntá un archivo', 'err'); return; }
+
+  saving = true; renderPanel();
   try {
-    var res = await api({ action:'updateTicket', id:id, campos:{ notas_op: JSON.stringify(notas) } });
-    if (!res.ok) throw new Error(res.error);
-    t.notas_op = notas;
-    selTicket = t;
-    toast('Nota agregada', 'ok');
-    renderPanel();
-  } catch(e) { toast('Error: '+e.message, 'err'); }
-};
+    var ahora = new Date();
+    var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+    var comentario = { de: 'comercial', usuario: currentUser.name || currentUser.email, ts: tsStr, texto: texto, archivo: detailArchivo ? detailArchivo.name : '' };
 
-window.closePanel=function(){var o=document.querySelector('.overlay');if(o)o.remove();selTicket=null;};
-
-window.guardarEstado=async function(id){
-  var estado=(document.getElementById('sel-estado')||{}).value;
-  if(!estado)return;
-  var t=tickets.find(function(x){return x.ID===id;});
-  if(!t||t.estado===estado)return;
-  var ahora=new Date();
-  var ts=ahora.getDate().toString().padStart(2,'0')+'/'+(ahora.getMonth()+1).toString().padStart(2,'0')+'/'+ahora.getFullYear()+' '+ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
-  var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
-  hist.push({ts:ts,accion:'Estado cambiado a "'+estado+'"',usuario:_u.email});
-  var campos={estado:estado,historial:hist};
-  if(estado==='Finalizado'&&t.fecha_inicio_analisis){
-    var p=t.fecha_inicio_analisis.split('/');
-    var fi=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(t.fecha_inicio_analisis);
-    var dias=Math.floor((new Date()-fi)/(86400000));
-    campos.dias_analisis=(parseInt(t.dias_analisis)||0)+dias;
-  }
-  try{
-    var res=await api({action:'updateTicket',id:id,campos:campos});
-    if(!res.ok)throw new Error(res.error);
-    t.estado=estado;t.historial=hist;if(campos.dias_analisis)t.dias_analisis=campos.dias_analisis;
-    toast('Estado actualizado','ok');
-    window.closePanel();render();
-  }catch(e){toast('Error: '+e.message,'err');}
-};
-
-window.setAdjunto=function(input){
-  if(!input.files[0])return;
-  adjuntoFile=input.files[0];
-  var lbl=document.getElementById('adj-label');
-  var box=document.getElementById('adj-box');
-  if(lbl){lbl.textContent='✅ '+adjuntoFile.name;}
-  if(box){box.style.borderColor='var(--gr500)';box.style.background='var(--gr50)';}
-};
-
-window.enviarMail=async function(){
-  var para=(document.getElementById('mp')||{}).value||'';
-  var asunto=(document.getElementById('ma')||{}).value||'';
-  var cuerpo=(document.getElementById('mc')||{}).value||'';
-  if(!para||!asunto||!cuerpo){toast('Completá Para, Asunto y Cuerpo','err');return;}
-
-  var btn=document.querySelector('.btn-p[onclick="enviarMail()"]');
-  if(btn){btn.disabled=true;btn.innerHTML='<span style="width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:inline-block"></span> Enviando...';}
-
-  try{
-    var payload={action:'enviarMail',para:para,asunto:asunto,cuerpo:cuerpo};
-
-    // Si hay adjunto, convertirlo a base64
-    if(adjuntoFile){
-      var b64=await new Promise(function(res,rej){
-        var r=new FileReader();
-        r.onload=function(){res(r.result.split(',')[1]);};
-        r.onerror=rej;
-        r.readAsDataURL(adjuntoFile);
-      });
-      payload.adjuntoBase64=b64;
-      payload.adjuntoNombre=adjuntoFile.name;
-      payload.adjuntoMime=adjuntoFile.type||'application/octet-stream';
+    var fileId = null;
+    if (detailArchivo) {
+      var b64 = await fileToBase64(detailArchivo);
+      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:getMimeType(detailArchivo.name), ticketId:id });
+      if (ur.ok) fileId = ur.fileId;
     }
 
-    var res=await api(payload);
-    if(!res.ok)throw new Error(res.error||'Error desconocido');
-    toast('Mail enviado correctamente ✓','ok');
-    mailPara='';mailAsunto='';mailCuerpo='';adjuntoFile=null;
-    window.closePanel();
-  }catch(e){
-    if(!e.message.includes('Token')){toast('Error: '+e.message,'err');}
-    if(btn){btn.disabled=false;btn.innerHTML='📤 Enviar';}
+    // NOTA: requiere una acción 'agregarComentario' en el backend (Apps Script)
+    // que haga push del comentario al array "comentarios" del ticket y, si
+    // hay archivo, lo agregue también a "adjuntos". Ver nota al final del chat.
+    var res = await api({ action:'agregarComentario', id:id, comentario:comentario, fileId:fileId });
+    if (!res.ok) throw new Error(res.error || 'No se pudo guardar el comentario');
+
+    var t = tickets.find(function(x){ return x.ID===id; });
+    if (t) {
+      var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
+      coms.push(comentario);
+      t.comentarios = coms;
+      selectedTicket = t;
+    }
+    detailComentario = ''; detailArchivo = null;
+    toast('Comentario agregado', 'ok');
+    renderPanel();
+  } catch (e) {
+    toast('Error al agregar comentario: ' + e.message, 'err');
   }
-};
+  saving = false; renderPanel();
+}
 
-window.asignar=async function(emailCliente){
-  var safeid=emailCliente.replace(/@/g,"_").replace(/\./g,"_");
-  var sel=document.getElementById("sel-com-"+safeid);
-  var emailComercial=sel?sel.value:"";
-  if(!emailComercial){toast("Elegí un comercial","err");return;}
-  try{
-    var res=await api({action:"asignarComercial",emailCliente:emailCliente,emailComercial:emailComercial});
-    if(!res.ok)throw new Error(res.error);
-    var c=clientes.find(function(x){return x.email===emailCliente;});
-    if(c)c.comercial_asignado=emailComercial;
-    toast("Comercial asignado","ok");render();
-  }catch(e){toast("Error: "+e.message,"err");}
-};
+async function reabrirTicket(id) {
+  var msg = document.getElementById('reopen-msg').value.trim();
+  if (!msg) { toast('Escribí un mensaje para el operario', 'err'); return; }
 
-if(_u){loadData();}
+  var ahora = new Date();
+  var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+
+  var t = tickets.find(function(x){ return x.ID===id; });
+  var hist = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
+  hist.push({ ts: tsStr, accion: 'Re abierto por comercial — ' + msg, usuario: currentUser.email });
+
+  try {
+    var res = await api({ action:'updateTicket', id:id, campos:{ estado:'Re abierto', historial:hist } });
+    if (!res.ok) throw new Error(res.error);
+    t.estado = 'Re abierto';
+    t.historial = hist;
+    toast('Ticket re abierto', 'ok');
+    selectedTicket = null;
+    render();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+document.querySelector('script[src*="gsi"]')?.addEventListener('load', function() {
+  if (!currentUser) renderLogin();
+});
+
+// Si ya hay sesión activa (currentUser viene de sessionStorage), cargar
+// los datos inmediatamente en lugar de esperar al callback de Google Login.
+if (currentUser) {
+  (async function initWithExistingSession() {
+    loading = true;
+    render();
+    await loadData();
+    loading = false;
+    render();
+  })();
+} else {
+  render();
+}
 </script>
 </body>
 </html>
