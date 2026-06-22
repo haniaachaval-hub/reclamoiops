@@ -911,7 +911,24 @@ function renderAdjuntosTicket(t) {
 
   if (adj.length === 0) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
   return adj.map(function(a){
-    var url = a.url || (a.fileId ? ('https://drive.google.com/uc?export=download&id=' + a.fileId) : null);
+    // Drive convierte .xlsx a Google Sheets automáticamente en algunas cuentas
+    // de Workspace. Para esos casos, la URL de exportación a xlsx funciona
+    // tanto si el archivo está convertido como si no.
+    var ext = (a.nombre||'').split('.').pop().toLowerCase();
+    var url;
+    if (a.url) {
+      url = a.url;
+    } else if (a.fileId) {
+      if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+        // Exporta como xlsx desde Google Sheets (funciona aunque Drive haya convertido el archivo)
+        url = 'https://docs.google.com/spreadsheets/d/' + a.fileId + '/export?format=xlsx';
+      } else {
+        // Para imágenes, PDF, eml, msg: descarga directa
+        url = 'https://drive.google.com/uc?export=download&id=' + a.fileId;
+      }
+    } else {
+      url = null;
+    }
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">
       <span>📎</span>
       ${url
