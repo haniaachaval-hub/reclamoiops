@@ -784,8 +784,8 @@ window.rfSubmitForm = async function() {
         var b64 = await fileToBase64(f);
         var ur = await api({ action:'uploadArchivo', base64:b64, nombre:f.name, mimeType:getMimeType(f.name), ticketId:id });
         if (ur.ok) {
-          if (i === 0) payload.excel_fileId = ur.fileId; // compatibilidad con columna original
-          adjuntosIniciales.push({ nombre:f.name, fileId:ur.fileId, origen:'Comercial (planilla)', de:'comercial' });
+          if (i === 0) payload.excel_fileId = ur.fileId;
+          adjuntosIniciales.push({ nombre:f.name, fileId:ur.fileId, url:ur.url||'', origen:'Comercial (planilla)', de:'comercial' });
         }
       }
     }
@@ -795,8 +795,8 @@ window.rfSubmitForm = async function() {
         var b64c = await fileToBase64(fc);
         var urc = await api({ action:'uploadArchivo', base64:b64c, nombre:fc.name, mimeType:getMimeType(fc.name), ticketId:id });
         if (urc.ok) {
-          if (j === 0) payload.carrier_fileId = urc.fileId; // compatibilidad con columna original
-          adjuntosIniciales.push({ nombre:fc.name, fileId:urc.fileId, origen:'Comercial (acuse/mail)', de:'comercial' });
+          if (j === 0) payload.carrier_fileId = urc.fileId;
+          adjuntosIniciales.push({ nombre:fc.name, fileId:urc.fileId, url:urc.url||'', origen:'Comercial (acuse/mail)', de:'comercial' });
         }
       }
     }
@@ -915,20 +915,11 @@ function renderAdjuntosTicket(t) {
     // de Workspace. Para esos casos, la URL de exportación a xlsx funciona
     // tanto si el archivo está convertido como si no.
     var ext = (a.nombre||'').split('.').pop().toLowerCase();
-    var url;
-    if (a.url) {
-      url = a.url;
-    } else if (a.fileId) {
-      if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
-        // Exporta como xlsx desde Google Sheets (funciona aunque Drive haya convertido el archivo)
-        url = 'https://docs.google.com/spreadsheets/d/' + a.fileId + '/export?format=xlsx';
-      } else {
-        // Para imágenes, PDF, eml, msg: descarga directa
-        url = 'https://drive.google.com/uc?export=download&id=' + a.fileId;
-      }
-    } else {
-      url = null;
-    }
+    var url = a.url || (a.fileId
+      ? (ext==='xlsx'||ext==='xls'||ext==='csv'
+          ? 'https://docs.google.com/spreadsheets/d/'+a.fileId+'/export?format=xlsx'
+          : 'https://drive.google.com/uc?export=download&id='+a.fileId)
+      : null);
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">
       <span>📎</span>
       ${url
@@ -974,6 +965,7 @@ async function agregarComentarioTicket(id) {
       var b64 = await fileToBase64(detailArchivo);
       var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:getMimeType(detailArchivo.name), ticketId:id });
       if (ur.ok) fileId = ur.fileId;
+      if (ur.url) comentario.archivoUrl = ur.url;
     }
 
     // NOTA: requiere una acción 'agregarComentario' en el backend (Apps Script)
