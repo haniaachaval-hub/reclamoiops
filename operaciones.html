@@ -105,7 +105,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzctJaWfYz7BymR9d9zT31VHPlxTNuTsf2Ggc-Gz7pBVcCay4rHbDMRlUoqWHuxWmL5Xw/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbys5nviAh5KHOlH8P0qKIZ0FRBP4Ic0ik1rYXqLpUAW7ZeaFy9G3PSPRSt1_A9aHwUOwQ/exec';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
@@ -330,6 +330,8 @@ window.openPanel=function(id){
 function renderPanel(){
   var t=selTicket;
   var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
+  var coms=[];try{coms=Array.isArray(t.comentarios)?t.comentarios:JSON.parse(t.comentarios||'[]');}catch(e){}
+  var adjs=[];try{adjs=Array.isArray(t.adjuntos)?t.adjuntos:JSON.parse(t.adjuntos||'[]');}catch(e){}
   var d=calcDias(t);
   var existing=document.querySelector('.overlay');if(existing)existing.remove();
 
@@ -343,43 +345,69 @@ function renderPanel(){
             <span class="badge ${bc(t.estado)}">${t.estado||'—'}</span>
             <span class="db ${diasClass(d)}">${d} días en análisis</span>
           </div>
-          <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.titular||'—')}</div>
-          <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo||'—')}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.empresa||t.titular||'—')}</div>
+          <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo||'—')}</div>
         </div>
         <button class="close" onclick="closePanel()">✕</button>
       </div>
       <div class="pb">
+
+        <!-- DATOS DEL RECLAMO -->
         <div class="sec">
           <div class="sec-t">Datos del reclamo</div>
           <div class="dgrid">
-            <div class="df"><div class="dl">Fecha ingreso</div><div class="dv">${fmtDate(t.creado)}</div></div>
+            <div class="df"><div class="dl">Cliente</div><div class="dv">${esc(t.empresa||t.titular||'—')}</div></div>
             <div class="df"><div class="dl">Tipo</div><div class="dv">${esc(t.tipo_reclamo||'—')}</div></div>
-            <div class="df"><div class="dl">Tarjeta</div><div class="dv">${esc(t.tipo_tarjeta||'—')}</div></div>
-            <div class="df"><div class="dl">Cliente</div><div class="dv" style="font-size:11px">${esc(t.email_cliente||'—')}</div></div>
-            ${t.num_secuencia?`<div class="df"><div class="dl">N° Secuencia</div><div class="dv">${t.num_secuencia}</div></div>`:''}
-            ${t.num_tarjeta?`<div class="df"><div class="dl">N° Tarjeta</div><div class="dv">${t.num_tarjeta}</div></div>`:''}
-            ${t.num_pst?`<div class="df"><div class="dl">N° PST</div><div class="dv">${t.num_pst}</div></div>`:''}
+            <div class="df"><div class="dl">Fecha ingreso</div><div class="dv">${fmtDate(t.creado)}</div></div>
+            <div class="df"><div class="dl">Estado</div><div class="dv"><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></div></div>
+            ${t.monto?`<div class="df" style="grid-column:span 2"><div class="dl">Monto total desconocido</div><div class="dv">${esc(String(t.monto))}</div></div>`:''}
+            ${t.detalle?`<div class="df" style="grid-column:span 2"><div class="dl">Observaciones</div><div class="dv">${esc(t.detalle)}</div></div>`:''}
             ${t.fecha_inicio_analisis?`<div class="df"><div class="dl">Inicio análisis</div><div class="dv">${fmtDate(t.fecha_inicio_analisis)}</div></div>`:''}
-            ${t.detalle?`<div class="df" style="grid-column:span 2"><div class="dl">Detalle</div><div class="dv">${esc(t.detalle)}</div></div>`:''}
           </div>
         </div>
-        ${t.excel_nombre?`
+
+        <!-- ADJUNTOS -->
         <div class="sec">
           <div class="sec-t">Archivos adjuntos</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);font-size:12px">📊 ${esc(t.excel_nombre)}</div>
-            ${t.carrier_nombre?`<div style="display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);font-size:12px">📄 ${esc(t.carrier_nombre)}</div>`:''}
+          ${renderAdjuntosOp(t, adjs)}
+        </div>
+
+        <!-- COMENTARIOS DE COMERCIAL -->
+        <div class="sec">
+          <div class="sec-t">Comentarios de Comercial</div>
+          ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Sin comentarios de Comercial</p>':
+            coms.map(function(c){
+              var esCom=c.de==='comercial';
+              return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
+                <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+                <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
+                ${c.archivo?`<div style="font-size:11px;color:var(--g500);margin-top:3px">📎 ${esc(c.archivo)}</div>`:''}
+              </div>`;
+            }).join('')}
+        </div>
+
+        <!-- NOTAS INTERNAS DE OPERACIONES -->
+        <div class="sec">
+          <div class="sec-t">Notas internas de análisis</div>
+          <p style="font-size:11px;color:var(--g400);margin-bottom:8px">Registrá avances y cambios del análisis. Estas notas <strong>solo las ve Operaciones</strong>.</p>
+          ${renderNotasOp(t)}
+          <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:10px;margin-top:8px">
+            <textarea class="cinp" id="op-nota-txt" rows="3" placeholder="Agregar nota de avance..."></textarea>
+            <button class="btn btn-p" style="margin-top:8px;font-size:11px" onclick="agregarNotaOp('${t.ID}')">Agregar nota</button>
           </div>
-        </div>`:''}
+        </div>
+
+        <!-- HISTORIAL -->
         <div class="sec">
           <div class="sec-t">Historial</div>
           ${hist.length===0?'<p style="font-size:12px;color:var(--g400)">Sin historial</p>':
             hist.map(function(h){return`<div style="border-left:2px solid var(--g200);padding:4px 9px;margin-bottom:5px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${esc(h.accion)}</div>`;}).join('')}
         </div>
+
+        <!-- ESTADO -->
         <div class="sec">
-          <div class="sec-t">Acciones</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-            <label style="font-size:12px;font-weight:500">Estado:</label>
+          <div class="sec-t">Cambiar estado</div>
+          <div style="display:flex;align-items:center;gap:8px">
             <select class="sel-e" id="sel-estado">
               <option value="Recibido" ${t.estado==='Recibido'?'selected':''}>Recibido</option>
               <option value="En análisis" ${t.estado==='En análisis'?'selected':''}>En análisis</option>
@@ -388,6 +416,8 @@ function renderPanel(){
             <button class="btn btn-p" style="padding:6px 11px;font-size:11px" onclick="guardarEstado('${t.ID}')">Guardar</button>
           </div>
         </div>
+
+        <!-- ENVÍO DE MAIL -->
         <div class="sec">
           <div class="sec-t">Envío de informe comercial</div>
           <div style="display:flex;flex-direction:column;gap:7px">
@@ -404,10 +434,68 @@ function renderPanel(){
             <button class="btn btn-p" style="align-self:flex-start" onclick="enviarMail()">📤 Enviar</button>
           </div>
         </div>
+
       </div>
     </div>
   </div>`);
 }
+
+function renderAdjuntosOp(t, adjs) {
+  var lista = [];
+  if (t.excel_nombre) lista.push({ nombre: t.excel_nombre, fileId: t.excel_fileId||null, origen: 'Comercial (planilla)' });
+  if (t.carrier_nombre) lista.push({ nombre: t.carrier_nombre, fileId: t.carrier_fileId||null, origen: 'Comercial (acuse/mail)' });
+  adjs.forEach(function(a){ lista.push({ nombre: a.nombre, fileId: a.fileId||null, origen: a.origen||(a.de==='operaciones'?'Operaciones':'Comercial') }); });
+
+  if (!lista.length) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
+  return lista.map(function(a){
+    var ext = (a.nombre||'').split('.').pop().toLowerCase();
+    var url = a.fileId
+      ? (ext==='xlsx'||ext==='xls'||ext==='csv'
+          ? 'https://docs.google.com/spreadsheets/d/'+a.fileId+'/export?format=xlsx'
+          : 'https://drive.google.com/uc?export=download&id='+a.fileId)
+      : null;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:5px;font-size:12px">
+      <span>📎</span>
+      ${url
+        ? `<a href="${url}" target="_blank" rel="noopener" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>`
+        : `<span style="flex:1;color:var(--g700)">${esc(a.nombre)}</span>`}
+      <span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderNotasOp(t) {
+  var notas = [];
+  try { notas = Array.isArray(t.notas_op) ? t.notas_op : JSON.parse(t.notas_op||'[]'); } catch(e) { notas = []; }
+  if (!notas.length) return '<p style="font-size:12px;color:var(--g400)">Sin notas cargadas</p>';
+  return notas.map(function(n){
+    return `<div style="border-left:2px solid var(--a500);padding:6px 10px;margin-bottom:5px;background:var(--a50);border-radius:0 var(--rad) var(--rad) 0">
+      <div style="font-size:10px;font-weight:600;color:var(--a600);margin-bottom:2px">⚙️ ${esc(n.usuario||'')} · ${esc(n.ts||'')}</div>
+      <div style="font-size:12px;color:var(--g700)">${esc(n.texto||'')}</div>
+    </div>`;
+  }).join('');
+}
+
+window.agregarNotaOp = async function(id) {
+  var ta = document.getElementById('op-nota-txt');
+  var texto = ta ? ta.value.trim() : '';
+  if (!texto) { toast('Escribí una nota antes de agregar', 'err'); return; }
+  var ahora = new Date();
+  var ts = ahora.getDate().toString().padStart(2,'0')+'/'+(ahora.getMonth()+1).toString().padStart(2,'0')+'/'+ahora.getFullYear()+' '+ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
+  var nota = { usuario: _u.name||_u.email, ts: ts, texto: texto };
+  var t = tickets.find(function(x){ return x.ID===id; });
+  var notas = [];
+  try { notas = Array.isArray(t.notas_op) ? t.notas_op : JSON.parse(t.notas_op||'[]'); } catch(e) { notas = []; }
+  notas.push(nota);
+  try {
+    var res = await api({ action:'updateTicket', id:id, campos:{ notas_op: JSON.stringify(notas) } });
+    if (!res.ok) throw new Error(res.error);
+    t.notas_op = notas;
+    selTicket = t;
+    toast('Nota agregada', 'ok');
+    renderPanel();
+  } catch(e) { toast('Error: '+e.message, 'err'); }
+};
 
 window.closePanel=function(){var o=document.querySelector('.overlay');if(o)o.remove();selTicket=null;};
 
