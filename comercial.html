@@ -298,7 +298,7 @@ window.abrirAdjunto = async function(e, fileId, nombreEnc, urlDirecta) {
     var res = await api({ action:'getFileUrl', fileId:fileId, nombre:nombre });
     if (!res.ok) { toast('No se pudo obtener el archivo: ' + (res.error||''), 'err'); return; }
     // Crear un Blob local desde el base64 y forzar descarga sin pasar por Drive
-    var byteChars = atob(res.base64);
+    var byteChars = atob(res.base64.replace(/[\s]/g, ''));
     var byteArr = new Uint8Array(byteChars.length);
     for (var i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
     var blob = new Blob([byteArr], { type: res.mimeType });
