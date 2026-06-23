@@ -149,7 +149,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAO-FMDiz32sKogAWrRZauPrqw6cmU2k0D_NHUVwRH5a-tFy9kEj7swoWBh8le6m7-wA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqvn3UNxSevedj7Pmdb7XEOrZ9MazGkHXv-xkgS_fjqu2ns55srQppxXe_Uwd4u2ltjA/exec';
 var GOOGLE_CLIENT_ID = '580223137501-ch4o1demv7u4mc7deuj6tqq8cmvkq5ge.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -292,17 +292,24 @@ function fileToBase64(file) {
 window.abrirAdjunto = async function(e, fileId, nombreEnc, urlDirecta) {
   e.preventDefault();
   var nombre = decodeURIComponent(nombreEnc);
-  if (urlDirecta && urlDirecta !== 'undefined' && urlDirecta !== '') {
-    window.open(urlDirecta, '_blank'); return;
-  }
   if (!fileId || fileId === 'undefined' || fileId === '') return;
   try {
-    toast('Preparando archivo...', 'ok');
+    toast('Descargando archivo...', 'ok');
     var res = await api({ action:'getFileUrl', fileId:fileId, nombre:nombre });
-    if (res.ok && res.url) { window.open(res.url, '_blank'); }
-    else { toast('No se pudo obtener el archivo: ' + (res.error||''), 'err'); }
+    if (!res.ok) { toast('No se pudo obtener el archivo: ' + (res.error||''), 'err'); return; }
+    // Crear un Blob local desde el base64 y forzar descarga sin pasar por Drive
+    var byteChars = atob(res.base64);
+    var byteArr = new Uint8Array(byteChars.length);
+    for (var i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+    var blob = new Blob([byteArr], { type: res.mimeType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = res.nombre || nombre;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
   } catch(err) { toast('Error: ' + err.message, 'err'); }
 };
+
 
 function getMimeType(nombre) {
   var ext = (nombre.split('.').pop() || '').toLowerCase();
