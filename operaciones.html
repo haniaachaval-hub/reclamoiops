@@ -164,7 +164,6 @@ window.abrirAdjunto = async function(e, fileId, nombreEnc, urlDirecta) {
     var res = await api({ action:'getFileUrl', fileId:fileId, nombre:nombre });
     if (!res.ok) { toast('No se pudo obtener el archivo: ' + (res.error||''), 'err'); return; }
     // DEBUG temporal — mostrá esto a Claude para diagnosticar el problema
-    alert('DEBUG:\nmimeType: ' + res.mimeType + '\nnombre: ' + res.nombre + '\nbase64 largo: ' + (res.base64||'').length + ' chars');
     // Crear un Blob local desde el base64 y forzar descarga sin pasar por Drive
     var byteChars = atob(res.base64.replace(/[\s]/g, ''));
     var byteArr = new Uint8Array(byteChars.length);
