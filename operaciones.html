@@ -209,14 +209,14 @@ function getTab(tab){
 }
 
 function calcDias(t){
-  // Si está en análisis y tiene fecha de inicio, calculamos en tiempo real
-  if (t.estado === 'En análisis' && t.fecha_inicio_analisis) {
-    var p = t.fecha_inicio_analisis.split('/');
-    var fi = p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(t.fecha_inicio_analisis);
-    if (!isNaN(fi)) return Math.floor((new Date() - fi) / 86400000);
+  // Segundos acumulados de períodos anteriores de análisis
+  var acum = parseFloat(t.analisis_segundos_acum) || 0;
+  // Si está en análisis ahora, sumamos el tiempo del período activo
+  if (t.estado === 'En análisis' && t.analisis_inicio_ts) {
+    var inicio = parseFloat(t.analisis_inicio_ts);
+    if (!isNaN(inicio)) acum += (Date.now() - inicio) / 1000;
   }
-  // Finalizados o re abiertos: usar el valor guardado en el sheet
-  return parseInt(t.dias_analisis) || 0;
+  return Math.floor(acum / 86400); // segundos → días
 }
 
 function render(){
@@ -553,16 +553,34 @@ window.guardarEstado=async function(id){
   var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
   hist.push({ts:ts,accion:'Estado cambiado a "'+estado+'"',usuario:_u.email});
   var campos={estado:estado,historial:hist};
-  if(estado==='Finalizado'&&t.fecha_inicio_analisis){
-    var p=t.fecha_inicio_analisis.split('/');
-    var fi=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(t.fecha_inicio_analisis);
-    var dias=Math.floor((new Date()-fi)/(86400000));
-    campos.dias_analisis=(parseInt(t.dias_analisis)||0)+dias;
+  var acumActual = parseFloat(t.analisis_segundos_acum) || 0;
+
+  if (t.estado === 'En análisis') {
+    // Estamos SALIENDO de análisis: cerrar el período activo y acumular
+    if (t.analisis_inicio_ts) {
+      var seg = (Date.now() - parseFloat(t.analisis_inicio_ts)) / 1000;
+      campos.analisis_segundos_acum = acumActual + seg;
+    }
+    campos.analisis_inicio_ts = ''; // limpiar inicio
   }
+
+  if (estado === 'En análisis') {
+    // Estamos ENTRANDO a análisis: guardar timestamp de inicio
+    campos.analisis_inicio_ts = String(Date.now());
+    // Si no tiene fecha_inicio_analisis (primera vez), la guardamos para mostrarla
+    if (!t.fecha_inicio_analisis) {
+      campos.fecha_inicio_analisis = ts.split(' ')[0]; // dd/MM/yyyy
+    }
+  }
+
   try{
     var res=await api({action:'updateTicket',id:id,campos:campos});
     if(!res.ok)throw new Error(res.error);
-    t.estado=estado;t.historial=hist;if(campos.dias_analisis)t.dias_analisis=campos.dias_analisis;
+    // Actualizar objeto local
+    t.estado=estado; t.historial=hist;
+    if(campos.analisis_segundos_acum !== undefined) t.analisis_segundos_acum = campos.analisis_segundos_acum;
+    if(campos.analisis_inicio_ts !== undefined) t.analisis_inicio_ts = campos.analisis_inicio_ts;
+    if(campos.fecha_inicio_analisis) t.fecha_inicio_analisis = campos.fecha_inicio_analisis;
     toast('Estado actualizado','ok');
     window.closePanel();render();
   }catch(e){toast('Error: '+e.message,'err');}
