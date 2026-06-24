@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comercial </title>
+<title>Comercial — ReclamiOps</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -44,7 +44,7 @@ body{background:var(--g50);min-height:100vh}
 .shdr h2{font-size:13px;font-weight:600;color:var(--g900)}
 .tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:9px 11px;border-bottom:1px solid var(--g200);background:var(--g50)}
+thead th{text-align:left;font-size:12px;font-weight:700;color:var(--g800);text-transform:uppercase;letter-spacing:.03em;padding:11px 13px;border-bottom:1px solid var(--g200);background:var(--g50)}
 tbody td{padding:10px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--b50);cursor:pointer}
@@ -356,7 +356,7 @@ function renderLogin() {
         <div style="display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:18px">
           <div style="width:29px;height:29px;border-radius:7px;background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center">💼</div>
           <div style="text-align:left">
-            <div style="font-size:16px;font-weight:600;color:var(--g900)">Plataforma de gestión</div>
+            <div style="font-size:16px;font-weight:600;color:var(--g900)">ReclamiOps</div>
             <div style="font-size:10px;color:#9ca3af">Portal Comercial</div>
           </div>
         </div>
@@ -494,7 +494,11 @@ function renderTicketsView(filtered) {
     <div class="tw">
       <table>
         <thead><tr>
-          <th>ID</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th style="cursor:pointer;user-select:none" onclick="ordenMonto=ordenMonto==='desc'?'asc':'desc';ordenFecha='';render()">Monto ${ordenMonto==='desc'?'↓':ordenMonto==='asc'?'↑':'↕'}</th><th>Estado</th>
+          <th>ID</th>
+          <th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="ordenFecha=ordenFecha==='desc'?'asc':'desc';ordenMonto='';render()">Fecha <span style="color:${ordenFecha&&!ordenMonto?'var(--b600)':'var(--g400)'}">${!ordenMonto?(ordenFecha==='asc'?'↑':'↓'):'⇅'}</span></th>
+          <th>Tipo</th><th>Cliente</th>
+          <th style="cursor:pointer;user-select:none;white-space:nowrap" onclick="ordenMonto=ordenMonto==='desc'?'asc':'desc';ordenFecha='';render()">Monto <span style="color:${ordenMonto?'var(--b600)':'var(--g400)'}">${ordenMonto==='asc'?'↑':ordenMonto==='desc'?'↓':'⇅'}</span></th>
+          <th>Estado</th>
         </tr></thead>
         <tbody>
           ${filtered.length === 0
