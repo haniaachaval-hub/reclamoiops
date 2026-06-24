@@ -225,7 +225,8 @@ function render(){
   }
   var rec=getTab('recibidos'),ana=getTab('analisis'),fin=getTab('finalizados'),reo=getTab('reabiertos');
   var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:activeTab==='finalizados'?fin:reo;
-  var promDias=fin.length?Math.round(fin.filter(function(t){return parseFloat(t.analisis_segundos_acum)>0;}).reduce(function(s,t,_,a){return s+calcDias(t)/a.length;},0)):0;
+  var finConDatos=fin.filter(function(t){return parseFloat(t.analisis_segundos_acum)>0;});
+  var promDias=finConDatos.length?Math.round(finConDatos.reduce(function(s,t){return s+calcDias(t);},0)/finConDatos.length):0;
 
   app.innerHTML=`
   <div class="app">
