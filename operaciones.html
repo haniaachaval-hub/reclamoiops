@@ -341,6 +341,7 @@ function thSort(field,label){
   var col=active?'var(--b600)':'var(--g400)';
   return '<th style="cursor:pointer;user-select:none" onclick="sortBy(\''+field+'\')">'+label+' <span style="color:'+col+'">'+arrow+'</span></th>';
 }
+function limpiarFiltros(){opSearchQ='';opFiltroTipo='';opFiltroEmpresa='';render();}
 function sortBy(field){
   if(opSortField===field){ opSortDir=opSortDir==='desc'?'asc':'desc'; }
   else { opSortField=field; opSortDir='desc'; }
@@ -373,7 +374,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
             <option value="">Todas las empresas</option>
             ${empresas.map(function(e){return'<option value="'+e+'"'+(opFiltroEmpresa===e?' selected':'')+'>'+e+'</option>';}).join('')}
           </select>
-          ${(opSearchQ||opFiltroTipo||opFiltroEmpresa)?'<button onclick="opSearchQ='';opFiltroTipo='';opFiltroEmpresa='';render()" style="padding:7px 11px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g500);background:var(--w);cursor:pointer">✕ Limpiar</button>':''}
+          ${(opSearchQ||opFiltroTipo||opFiltroEmpresa)?'<button onclick="limpiarFiltros()" style="padding:7px 11px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g500);background:var(--w);cursor:pointer">✕ Limpiar</button>':''}
         </div>
         <div class="tw">
           <table>
