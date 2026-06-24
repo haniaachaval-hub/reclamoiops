@@ -105,7 +105,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvZdweB9iWApDuvil_RKL40CLGx_pAVnKefgWWeQDLNka7OSfAx4Nwg4mcr5Yv32BYjQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1oW7snTqiZIY_YqQVxIX5aYS2uLy5mfYAUVGo-YqXVSQeevkoDCUMNxmQtBzwmQnC/exec';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
@@ -409,18 +409,12 @@ function renderPanel(){
                 var match = adjs.find(function(a){ return a.nombre===c.archivo; });
                 if (match) adjFileId = match.fileId||null;
               }
-              var adjExt = c.archivo ? c.archivo.split('.').pop().toLowerCase() : '';
-              var adjUrl = adjFileId
-                ? (adjExt==='xlsx'||adjExt==='xls'||adjExt==='csv'
-                    ? 'https://docs.google.com/spreadsheets/d/'+adjFileId+'/export?format=xlsx'
-                    : 'https://drive.google.com/uc?export=download&id='+adjFileId)
-                : null;
               return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
                 <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
                 <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
                 ${c.archivo?`<div style="font-size:11px;color:var(--g500);margin-top:3px">
-                  ${adjUrl
-                    ? `<a href="${adjUrl}" target="_blank" rel="noopener" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
+                  ${adjFileId
+                    ? `<a href="#" onclick="abrirAdjunto(event,'${adjFileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
                     : `📎 ${esc(c.archivo)}`}
                 </div>`:''}
               </div>`;
