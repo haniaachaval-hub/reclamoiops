@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReclamiOps — Operaciones</title>
+<title>Plataforma de gestión — Operaciones</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -16,26 +16,26 @@
   --a50:#fffbeb;--a100:#fef3c7;--a500:#f59e0b;--a600:#d97706;
   --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
   --rad:7px;--rad-lg:11px;
-  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
+  font-family:'Inter',system-ui,sans-serif;font-size:15px;color:var(--g700);
 }
 body{background:var(--g50);min-height:100vh}
 .app{display:flex;height:100vh;overflow:hidden}
-.sb{width:200px;min-width:200px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb{width:220px;min-width:220px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
 .sb-logo{padding:14px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:8px}
 .sb-icon{width:28px;height:28px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
-.sb-logo h1{font-size:13px;font-weight:600;color:var(--g900)}
+.sb-logo h1{font-size:15px;font-weight:600;color:var(--g900)}
 .sb-logo p{font-size:10px;color:var(--g400)}
 .sb-nav{flex:1;padding:9px 7px}
 .sb-sec{font-size:9px;font-weight:600;color:var(--g400);letter-spacing:.07em;text-transform:uppercase;padding:7px 7px 3px}
-.ni{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .1s;margin-bottom:1px}
+.ni{display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:var(--rad);cursor:pointer;font-size:13px;color:var(--g600);transition:all .1s;margin-bottom:2px}
 .ni:hover{background:var(--g50);color:var(--g900)}
 .ni.on{background:var(--b50);color:var(--b700);font-weight:500}
 .sb-foot{padding:9px 11px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:7px}
-.sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit}
+.sf-name{font-size:13px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{padding:5px 10px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g500);font-size:12px;cursor:pointer;font-family:inherit}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:46px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px}
-.topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
+.topbar h2{font-size:16px;font-weight:600;color:var(--g900)}
 .content{flex:1;overflow-y:auto;padding:16px 18px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
 .kpi{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:12px 13px}
@@ -53,8 +53,8 @@ body{background:var(--g50);min-height:100vh}
 .tab.on .tc{background:var(--b100);color:var(--b700)}
 .tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--g200);background:var(--g50)}
-tbody td{padding:9px 10px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
+thead th{text-align:left;font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.03em;padding:10px 12px;border-bottom:1px solid var(--g200);background:var(--g50)}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--g100);font-size:13px;color:var(--g600);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
 .row-unread td{background:#f8faff}
 .row-read td{background:var(--g50)}
@@ -231,7 +231,7 @@ function render(){
   app.innerHTML=`
   <div class="app">
     <div class="sb">
-      <div class="sb-logo"><div class="sb-icon">⚙️</div><div><h1>ReclamiOps</h1><p>Operaciones</p></div></div>
+      <div class="sb-logo"><div class="sb-icon">⚙️</div><div><h1>Plataforma de gestión</h1><p>Operaciones</p></div></div>
       <div class="sb-nav">
         <div class="sb-sec">Panel</div>
         <div class="ni${activeNav==='tickets'?' on':''}" onclick="activeNav='tickets';render()">🎫 Ticketera</div>
@@ -462,8 +462,9 @@ function renderPanel(){
 
         <!-- ENVÍO DE MAIL -->
         <div class="sec">
-          <div class="sec-t" style="cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none" onclick="var s=document.getElementById('mail-body');var a=document.getElementById('mail-arrow');s.style.display=s.style.display==='none'?'flex':'none';a.textContent=s.style.display==='none'?'▶':'▼'">
-            <span id="mail-arrow">▶</span> Envío de informe comercial
+          <div class="sec-t" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;background:var(--g100);padding:8px 10px;border-radius:var(--rad);border:1px solid var(--g200)" onclick="var s=document.getElementById('mail-body');var a=document.getElementById('mail-arrow');s.style.display=s.style.display==='none'?'flex':'none';a.textContent=s.style.display==='none'?'▼':'▲'">
+            <span style="font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.06em">📤 Envío de informe comercial</span>
+            <span id="mail-arrow" style="font-size:10px;color:var(--g400)">▼</span>
           </div>
           <div id="mail-body" style="display:none;flex-direction:column;gap:7px">
             <input type="text" class="cinp" style="min-height:unset;resize:none" id="mp" placeholder="Para: email@dominio.com" value="${esc(mailPara)}" oninput="mailPara=this.value">
