@@ -339,7 +339,12 @@ function thSort(field,label){
   var active=opSortField===field;
   var arrow=active?(opSortDir==='asc'?'↑':'↓'):'↕';
   var col=active?'var(--b600)':'var(--g400)';
-  return '<th style="cursor:pointer;user-select:none" onclick="opSortField=''+field+'';opSortDir=(opSortField===''+field+'' && opSortDir==='desc')?'asc':'desc';opSortField=''+field+'';render()">'+label+' <span style="color:'+col+'">'+arrow+'</span></th>';
+  return '<th style="cursor:pointer;user-select:none" onclick="sortBy(\''+field+'\')">'+label+' <span style="color:'+col+'">'+arrow+'</span></th>';
+}
+function sortBy(field){
+  if(opSortField===field){ opSortDir=opSortDir==='desc'?'asc':'desc'; }
+  else { opSortField=field; opSortDir='desc'; }
+  render();
 }
 function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
   var tipos=getOptipos();
