@@ -161,7 +161,6 @@ window.abrirAdjunto = async function(e, fileId, nombreEnc, urlDirecta) {
   if (!fileId || fileId === 'undefined' || fileId === '') return;
   try {
     toast('Descargando archivo...', 'ok');
-    console.log('campos a guardar:', JSON.stringify(campos));
     var res = await api({ action:'getFileUrl', fileId:fileId, nombre:nombre });
     if (!res.ok) { toast('No se pudo obtener el archivo: ' + (res.error||''), 'err'); return; }
     // DEBUG temporal — mostrá esto a Claude para diagnosticar el problema
@@ -212,12 +211,12 @@ function getTab(tab){
 function calcDias(t){
   // Segundos acumulados de períodos anteriores de análisis
   var acum = parseFloat(t.analisis_segundos_acum) || 0;
-  // Si está en análisis ahora, sumamos el tiempo del período activo
+  // Si está en análisis ahora, sumamos el tiempo del período activo en curso
   if (t.estado === 'En análisis' && t.analisis_inicio_ts) {
     var inicio = parseFloat(t.analisis_inicio_ts);
-    if (!isNaN(inicio)) acum += (Date.now() - inicio) / 1000;
+    if (!isNaN(inicio) && inicio > 0) acum += (Date.now() - inicio) / 1000;
   }
-  return Math.floor(acum / 86400); // segundos → días
+  return Math.floor(acum / 86400); // convertir segundos a días
 }
 
 function render(){
@@ -554,32 +553,35 @@ window.guardarEstado=async function(id){
   var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
   hist.push({ts:ts,accion:'Estado cambiado a "'+estado+'"',usuario:_u.email});
   var campos={estado:estado,historial:hist};
+
+  // ── Lógica de tiempo en análisis ──────────────────────────────────────────
   var acumActual = parseFloat(t.analisis_segundos_acum) || 0;
 
   if (t.estado === 'En análisis') {
-    // Estamos SALIENDO de análisis: cerrar el período activo y acumular
+    // SALIENDO de análisis: cerrar el período activo y sumar al acumulado
     if (t.analisis_inicio_ts) {
-      var seg = (Date.now() - parseFloat(t.analisis_inicio_ts)) / 1000;
-      campos.analisis_segundos_acum = acumActual + seg;
+      var segPeriodo = (Date.now() - parseFloat(t.analisis_inicio_ts)) / 1000;
+      campos.analisis_segundos_acum = String(acumActual + segPeriodo);
     }
-    campos.analisis_inicio_ts = ''; // limpiar inicio
+    campos.analisis_inicio_ts = ''; // borrar inicio del período activo
   }
 
   if (estado === 'En análisis') {
-    // Estamos ENTRANDO a análisis: guardar timestamp de inicio
+    // ENTRANDO a análisis: guardar timestamp exacto de inicio (ms)
     campos.analisis_inicio_ts = String(Date.now());
-    // Si no tiene fecha_inicio_analisis (primera vez), la guardamos para mostrarla
+    // Si es la primera vez, guardar también la fecha legible
     if (!t.fecha_inicio_analisis) {
-      campos.fecha_inicio_analisis = ts.split(' ')[0]; // dd/MM/yyyy
+      campos.fecha_inicio_analisis = ts.split(' ')[0];
     }
   }
+  // ─────────────────────────────────────────────────────────────────────────
 
   try{
     var res=await api({action:'updateTicket',id:id,campos:campos});
     if(!res.ok)throw new Error(res.error);
-    // Actualizar objeto local
+    // Actualizar el objeto local en memoria
     t.estado=estado; t.historial=hist;
-    if(campos.analisis_segundos_acum !== undefined) t.analisis_segundos_acum = campos.analisis_segundos_acum;
+    if(campos.analisis_segundos_acum !== undefined) t.analisis_segundos_acum = parseFloat(campos.analisis_segundos_acum);
     if(campos.analisis_inicio_ts !== undefined) t.analisis_inicio_ts = campos.analisis_inicio_ts;
     if(campos.fecha_inicio_analisis) t.fecha_inicio_analisis = campos.fecha_inicio_analisis;
     toast('Estado actualizado','ok');
