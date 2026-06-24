@@ -130,7 +130,7 @@ function fmtDate(s){
 }
 function bc(e){return{'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e]||'bn';}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function diasClass(d){return d<=3?'dok':d<=7?'dwarn':'ddanger';}
+function diasClass(d){return d<=72?'dok':d<=168?'dwarn':'ddanger';}
 
 async function api(body){
   // Siempre usar el token más fresco de sessionStorage
@@ -209,14 +209,12 @@ function getTab(tab){
 }
 
 function calcDias(t){
-  // Segundos acumulados de períodos anteriores de análisis
   var acum = parseFloat(t.analisis_segundos_acum) || 0;
-  // Si está en análisis ahora, sumamos el tiempo del período activo en curso
   if (t.estado === 'En análisis' && t.analisis_inicio_ts) {
     var inicio = parseFloat(t.analisis_inicio_ts);
     if (!isNaN(inicio) && inicio > 0) acum += (Date.now() - inicio) / 1000;
   }
-  return Math.floor(acum / 86400); // convertir segundos a días
+  return Math.floor(acum / 3600); // segundos → horas
 }
 
 function render(){
@@ -317,7 +315,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
           <div class="kpi info"><div class="kl">Total</div><div class="kv">${tickets.length}</div></div>
           <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
           <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
-          <div class="kpi purple"><div class="kl">Prom. días</div><div class="kv">${promDias}</div></div>
+          <div class="kpi purple"><div class="kl">Prom. horas</div><div class="kv">${promDias}</div></div>
           <div class="kpi danger"><div class="kl">Re abiertos</div><div class="kv">${reo.length}</div></div>
         </div>
         <div class="tabs">
@@ -342,7 +340,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
                     <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
                     <td style="font-size:12px;font-weight:500;color:var(--g900)">${t.monto ? '$'+esc(String(t.monto)) : '—'}</td>
                     <td><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></td>
-                    <td><span class="db ${diasClass(d)}">${d} días</span></td>
+                    <td><span class="db ${diasClass(d)}">${d} hs</span></td>
                   </tr>`;
                 }).join('')}
             </tbody>
@@ -377,7 +375,7 @@ function renderPanel(){
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
             <span class="tid">${t.ID}</span>
             <span class="badge ${bc(t.estado)}">${t.estado||'—'}</span>
-            <span class="db ${diasClass(d)}">${d} días en análisis</span>
+            <span class="db ${diasClass(d)}">${d} hs en análisis</span>
           </div>
           <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.empresa||t.titular||'—')}</div>
           <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo||'—')}</div>
@@ -553,33 +551,28 @@ window.guardarEstado=async function(id){
   var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
   hist.push({ts:ts,accion:'Estado cambiado a "'+estado+'"',usuario:_u.email});
   var campos={estado:estado,historial:hist};
-
-  // ── Lógica de tiempo en análisis ──────────────────────────────────────────
   var acumActual = parseFloat(t.analisis_segundos_acum) || 0;
 
   if (t.estado === 'En análisis') {
-    // SALIENDO de análisis: cerrar el período activo y sumar al acumulado
+    // SALIENDO de análisis: cerrar período activo y acumular segundos
     if (t.analisis_inicio_ts) {
-      var segPeriodo = (Date.now() - parseFloat(t.analisis_inicio_ts)) / 1000;
-      campos.analisis_segundos_acum = String(acumActual + segPeriodo);
+      var seg = (Date.now() - parseFloat(t.analisis_inicio_ts)) / 1000;
+      campos.analisis_segundos_acum = String(acumActual + seg);
     }
-    campos.analisis_inicio_ts = ''; // borrar inicio del período activo
+    campos.analisis_inicio_ts = '';
   }
 
   if (estado === 'En análisis') {
-    // ENTRANDO a análisis: guardar timestamp exacto de inicio (ms)
+    // ENTRANDO a análisis: guardar timestamp exacto de inicio en ms
     campos.analisis_inicio_ts = String(Date.now());
-    // Si es la primera vez, guardar también la fecha legible
     if (!t.fecha_inicio_analisis) {
       campos.fecha_inicio_analisis = ts.split(' ')[0];
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
   try{
     var res=await api({action:'updateTicket',id:id,campos:campos});
     if(!res.ok)throw new Error(res.error);
-    // Actualizar el objeto local en memoria
     t.estado=estado; t.historial=hist;
     if(campos.analisis_segundos_acum !== undefined) t.analisis_segundos_acum = parseFloat(campos.analisis_segundos_acum);
     if(campos.analisis_inicio_ts !== undefined) t.analisis_inicio_ts = campos.analisis_inicio_ts;
