@@ -347,6 +347,23 @@ function sortBy(field){
   else { opSortField=field; opSortDir='desc'; }
   render();
 }
+function renderFiltros(tipos,empresas){
+  var html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
+  html+='<input type="text" placeholder="🔍 Buscar ticket..." value="'+opSearchQ+'" oninput="opSearchQ=this.value;render()" style="padding:7px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:220px">';
+  html+='<select onchange="opFiltroTipo=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
+  html+='<option value="">Todos los tipos</option>';
+  tipos.forEach(function(t){html+='<option value="'+t+'"'+(opFiltroTipo===t?' selected':'')+'>'+t+'</option>';});
+  html+='</select>';
+  html+='<select onchange="opFiltroEmpresa=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
+  html+='<option value="">Todas las empresas</option>';
+  empresas.forEach(function(e){html+='<option value="'+e+'"'+(opFiltroEmpresa===e?' selected':'')+'>'+e+'</option>';});
+  html+='</select>';
+  if(opSearchQ||opFiltroTipo||opFiltroEmpresa){
+    html+='<button onclick="limpiarFiltros()" style="padding:7px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:12px;font-family:inherit;color:#6b7280;background:#fff;cursor:pointer">✕ Limpiar</button>';
+  }
+  html+='</div>';
+  return html;
+}
 function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
   var tipos=getOptipos();
   var empresas=getOpEmpresas();
@@ -364,18 +381,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
           <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
           <button class="tab${activeTab==='reabiertos'?' on':''}" onclick="activeTab='reabiertos';render()">Re abiertos<span class="tc">${reo.length}</span></button>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-          <input type="text" placeholder="🔍 Buscar ticket..." value="${opSearchQ}" oninput="opSearchQ=this.value;render()" style="padding:7px 11px;border:1px solid var(--g200);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;width:220px">
-          <select onchange="opFiltroTipo=this.value;render()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g700);background:var(--w);outline:none">
-            <option value="">Todos los tipos</option>
-            ${tipos.map(function(t){return'<option value="'+t+'"'+(opFiltroTipo===t?' selected':'')+'>'+t+'</option>';}).join('')}
-          </select>
-          <select onchange="opFiltroEmpresa=this.value;render()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g700);background:var(--w);outline:none">
-            <option value="">Todas las empresas</option>
-            ${empresas.map(function(e){return'<option value="'+e+'"'+(opFiltroEmpresa===e?' selected':'')+'>'+e+'</option>';}).join('')}
-          </select>
-          ${(opSearchQ||opFiltroTipo||opFiltroEmpresa)?'<button onclick="limpiarFiltros()" style="padding:7px 11px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g500);background:var(--w);cursor:pointer">✕ Limpiar</button>':''}
-        </div>
+        ${renderFiltros(tipos,empresas)}
         <div class="tw">
           <table>
             <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Empresa</th>${thSort('monto','Monto')}<th>Estado</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
