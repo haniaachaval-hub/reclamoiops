@@ -161,6 +161,7 @@ window.abrirAdjunto = async function(e, fileId, nombreEnc, urlDirecta) {
   if (!fileId || fileId === 'undefined' || fileId === '') return;
   try {
     toast('Descargando archivo...', 'ok');
+    console.log('campos a guardar:', JSON.stringify(campos));
     var res = await api({ action:'getFileUrl', fileId:fileId, nombre:nombre });
     if (!res.ok) { toast('No se pudo obtener el archivo: ' + (res.error||''), 'err'); return; }
     // DEBUG temporal — mostrá esto a Claude para diagnosticar el problema
