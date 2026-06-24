@@ -167,7 +167,8 @@ function renderSelect(card) {
     </div>
     <button class="btn-continue" ${!selectedProfile?'disabled':''} onclick="goToLogin()">
       Continuar →
-    </button>`;
+    </button>
+    ${!selectedProfile?'<p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:8px">Seleccioná un perfil para continuar</p>':''}` ;
 }
 
 function renderLogin(card) {
