@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Plataforma de gestión — Operaciones</title>
+<title>ReclamiOps — Operaciones</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -59,7 +59,7 @@ tbody tr:last-child td{border-bottom:none}
 .row-unread td{background:#f8faff}
 .row-read td{background:var(--g50)}
 tbody tr:hover td{background:var(--b50);cursor:pointer}
-.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--b600)}
+.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--g700)}
 .badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600}
 .bn{background:var(--b50);color:var(--b700)}
 .ba{background:var(--p50);color:var(--p600)}
@@ -231,7 +231,7 @@ function render(){
   app.innerHTML=`
   <div class="app">
     <div class="sb">
-      <div class="sb-logo"><div class="sb-icon">⚙️</div><div><h1>Plataforma de gestión</h1><p>Operaciones</p></div></div>
+      <div class="sb-logo"><div class="sb-icon">⚙️</div><div><h1>ReclamiOps</h1><p>Operaciones</p></div></div>
       <div class="sb-nav">
         <div class="sb-sec">Panel</div>
         <div class="ni${activeNav==='tickets'?' on':''}" onclick="activeNav='tickets';render()">🎫 Ticketera</div>
@@ -327,7 +327,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
         </div>
         <div class="tw">
           <table>
-            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Empresa</th><th>Monto</th><th>Estado</th><th>Días análisis</th></tr></thead>
+            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Empresa</th><th>Monto</th><th>Estado</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
             <tbody>
               ${tab.length===0
                 ?'<tr><td colspan="7" class="empty">No hay tickets en esta sección</td></tr>'
@@ -339,9 +339,9 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
                     <td>${fmtDate(t.creado)}</td>
                     <td>${esc(t.tipo_reclamo||'—')}</td>
                     <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
-                    <td style="font-size:12px;font-weight:500;color:var(--g900)">${t.monto ? '$'+esc(String(t.monto)) : '—'}</td>
+                    <td style="font-size:12px;font-weight:500;color:var(--g900)">${t.monto ? '$'+Number(String(t.monto).replace(/[^0-9.-]/g,'')).toLocaleString('es-AR') : '—'}</td>
                     <td><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></td>
-                    <td><span class="db ${diasClass(d)}">${d} hs</span></td>
+                    ${activeTab==='recibidos'?'':`<td><span class="db ${diasClass(d)}">${d} hs</span></td>`}
                   </tr>`;
                 }).join('')}
             </tbody>
@@ -393,7 +393,7 @@ function renderPanel(){
             <div class="df"><div class="dl">Tipo</div><div class="dv">${esc(t.tipo_reclamo||'—')}</div></div>
             <div class="df"><div class="dl">Fecha ingreso</div><div class="dv">${fmtDate(t.creado)}</div></div>
             <div class="df"><div class="dl">Estado</div><div class="dv"><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></div></div>
-            ${t.monto?`<div class="df" style="grid-column:span 2"><div class="dl">Monto total desconocido</div><div class="dv">${esc(String(t.monto))}</div></div>`:''}
+            ${t.monto?`<div class="df" style="grid-column:span 2"><div class="dl">Monto reclamado</div><div class="dv">${esc(String(t.monto))}</div></div>`:''}
             ${t.detalle?`<div class="df" style="grid-column:span 2"><div class="dl">Observaciones</div><div class="dv">${esc(t.detalle)}</div></div>`:''}
             ${t.fecha_inicio_analisis?`<div class="df"><div class="dl">Inicio análisis</div><div class="dv">${fmtDate(t.fecha_inicio_analisis)}</div></div>`:''}
           </div>
@@ -462,8 +462,10 @@ function renderPanel(){
 
         <!-- ENVÍO DE MAIL -->
         <div class="sec">
-          <div class="sec-t">Envío de informe comercial</div>
-          <div style="display:flex;flex-direction:column;gap:7px">
+          <div class="sec-t" style="cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none" onclick="var s=document.getElementById('mail-body');var a=document.getElementById('mail-arrow');s.style.display=s.style.display==='none'?'flex':'none';a.textContent=s.style.display==='none'?'▶':'▼'">
+            <span id="mail-arrow">▶</span> Envío de informe comercial
+          </div>
+          <div id="mail-body" style="display:none;flex-direction:column;gap:7px">
             <input type="text" class="cinp" style="min-height:unset;resize:none" id="mp" placeholder="Para: email@dominio.com" value="${esc(mailPara)}" oninput="mailPara=this.value">
             <input type="text" class="cinp" style="min-height:unset;resize:none" id="ma" placeholder="Asunto" value="${esc(mailAsunto)}" oninput="mailAsunto=this.value">
             <textarea class="cinp" id="mc" rows="4" placeholder="Cuerpo del mail..." oninput="mailCuerpo=this.value">${esc(mailCuerpo)}</textarea>
@@ -474,7 +476,7 @@ function renderPanel(){
                 <span id="adj-label">📎 Clic para adjuntar archivo</span>
               </div>
             </div>
-            <button class="btn btn-p" style="align-self:flex-start" onclick="enviarMail()">📤 Enviar</button>
+            <button class="btn btn-g" style="align-self:flex-start;border-color:var(--b400);color:var(--b600)" onclick="enviarMail()">📤 Enviar informe</button>
           </div>
         </div>
 
