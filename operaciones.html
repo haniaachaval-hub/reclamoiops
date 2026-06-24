@@ -20,34 +20,34 @@
 }
 body{background:var(--g50);min-height:100vh}
 .app{display:flex;height:100vh;overflow:hidden}
-.sb{width:220px;min-width:220px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb{width:240px;min-width:240px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
 .sb-logo{padding:14px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:8px}
 .sb-icon{width:28px;height:28px;border-radius:var(--rad);background:var(--b600);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
 .sb-logo h1{font-size:15px;font-weight:600;color:var(--g900)}
 .sb-logo p{font-size:10px;color:var(--g400)}
 .sb-nav{flex:1;padding:9px 7px}
-.sb-sec{font-size:9px;font-weight:600;color:var(--g400);letter-spacing:.07em;text-transform:uppercase;padding:7px 7px 3px}
-.ni{display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:var(--rad);cursor:pointer;font-size:13px;color:var(--g600);transition:all .1s;margin-bottom:2px}
+.sb-sec{font-size:10px;font-weight:600;color:var(--g500);letter-spacing:.07em;text-transform:uppercase;padding:9px 9px 4px}
+.ni{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--rad);cursor:pointer;font-size:14px;color:var(--g600);transition:all .1s;margin-bottom:2px}
 .ni:hover{background:var(--g50);color:var(--g900)}
 .ni.on{background:var(--b50);color:var(--b700);font-weight:500}
-.sb-foot{padding:9px 11px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:7px}
-.sf-name{font-size:13px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-out{padding:5px 10px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g500);font-size:12px;cursor:pointer;font-family:inherit}
+.sb-foot{padding:12px 14px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sf-name{font-size:14px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{padding:6px 12px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g500);font-size:13px;cursor:pointer;font-family:inherit}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:46px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px}
 .topbar h2{font-size:16px;font-weight:600;color:var(--g900)}
 .content{flex:1;overflow-y:auto;padding:16px 18px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
 .kpi{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:12px 13px}
-.kl{font-size:10px;color:var(--g400);font-weight:500;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+.kl{font-size:10px;color:var(--g700);font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
 .kv{font-size:23px;font-weight:600;line-height:1;color:var(--g900)}
 .kpi.info .kv{color:var(--b600)}
 .kpi.warn .kv{color:var(--a500)}
 .kpi.ok .kv{color:var(--gr600)}
 .kpi.danger .kv{color:var(--r500)}
 .kpi.purple .kv{color:var(--p600)}
-.tabs{display:flex;gap:3px;margin-bottom:11px;background:var(--g100);border-radius:var(--rad);padding:3px}
-.tab{flex:1;padding:6px 8px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--g500);border-radius:6px;font-family:inherit;transition:all .11s;text-align:center}
+.tabs{display:flex;gap:3px;margin-bottom:11px;background:var(--g100);border-radius:var(--rad);padding:4px}
+.tab{flex:1;padding:9px 10px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--g500);border-radius:6px;font-family:inherit;transition:all .11s;text-align:center}
 .tab.on{background:var(--w);color:var(--g900);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .tc{display:inline-block;background:var(--r100);color:var(--r600);font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px}
 .tab.on .tc{background:var(--b100);color:var(--b700)}
@@ -115,6 +115,7 @@ var _u=(function(){
 })();
 
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
+var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='';
 var mailPara='', mailAsunto='', mailCuerpo='', adjuntoFile=null;
 var activeNav='tickets'; // tickets | clientes
 var clientes=[], comerciales=[];
@@ -196,15 +197,29 @@ async function loadData(){
 }
 
 function getTab(tab){
+  var estadoMap={'recibidos':'Recibido','analisis':'En análisis','finalizados':'Finalizado','reabiertos':'Re abierto'};
   return tickets.filter(function(t){
-    if(tab==='recibidos')return t.estado==='Recibido';
-    if(tab==='analisis')return t.estado==='En análisis';
-    if(tab==='finalizados')return t.estado==='Finalizado';
-    if(tab==='reabiertos')return t.estado==='Re abierto';
-    return false;
+    if(t.estado !== estadoMap[tab]) return false;
+    if(opFiltroTipo && t.tipo_reclamo !== opFiltroTipo) return false;
+    if(opFiltroEmpresa && (t.empresa||t.titular||'') !== opFiltroEmpresa) return false;
+    if(opSearchQ){
+      var q=opSearchQ.toLowerCase();
+      var haystack=(t.ID||'')+(t.tipo_reclamo||'')+(t.empresa||'')+(t.titular||'')+(t.monto||'');
+      if(haystack.toLowerCase().indexOf(q)===-1) return false;
+    }
+    return true;
   }).sort(function(a,b){
-    if(tab==='analisis')return new Date(a.creado)-new Date(b.creado);
-    return new Date(b.creado)-new Date(a.creado);
+    if(opSortField==='creado'){
+      var da=new Date(a.creado.split('/').reverse().join('-'));
+      var db=new Date(b.creado.split('/').reverse().join('-'));
+      return opSortDir==='asc'?da-db:db-da;
+    }
+    if(opSortField==='monto'){
+      var ma=parseFloat(String(a.monto||'0').replace(/[^0-9.-]/g,''))||0;
+      var mb=parseFloat(String(b.monto||'0').replace(/[^0-9.-]/g,''))||0;
+      return opSortDir==='asc'?ma-mb:mb-ma;
+    }
+    return 0;
   });
 }
 
@@ -310,7 +325,25 @@ function renderClientesSection(){
   </div>`:''}`;
 }
 
+function getOptipos(){
+  var tipos={};
+  tickets.forEach(function(t){if(t.tipo_reclamo)tipos[t.tipo_reclamo]=1;});
+  return Object.keys(tipos);
+}
+function getOpEmpresas(){
+  var emps={};
+  tickets.forEach(function(t){var e=t.empresa||t.titular||'';if(e)emps[e]=1;});
+  return Object.keys(emps);
+}
+function thSort(field,label){
+  var active=opSortField===field;
+  var arrow=active?(opSortDir==='asc'?'↑':'↓'):'↕';
+  var col=active?'var(--b600)':'var(--g400)';
+  return '<th style="cursor:pointer;user-select:none" onclick="opSortField=''+field+'';opSortDir=(opSortField===''+field+'' && opSortDir==='desc')?'asc':'desc';opSortField=''+field+'';render()">'+label+' <span style="color:'+col+'">'+arrow+'</span></th>';
+}
 function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
+  var tipos=getOptipos();
+  var empresas=getOpEmpresas();
   return`
         <div class="kpis">
           <div class="kpi info"><div class="kl">Total</div><div class="kv">${tickets.length}</div></div>
@@ -325,9 +358,21 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
           <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
           <button class="tab${activeTab==='reabiertos'?' on':''}" onclick="activeTab='reabiertos';render()">Re abiertos<span class="tc">${reo.length}</span></button>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <input type="text" placeholder="🔍 Buscar ticket..." value="${opSearchQ}" oninput="opSearchQ=this.value;render()" style="padding:7px 11px;border:1px solid var(--g200);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;width:220px">
+          <select onchange="opFiltroTipo=this.value;render()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g700);background:var(--w);outline:none">
+            <option value="">Todos los tipos</option>
+            ${tipos.map(function(t){return'<option value="'+t+'"'+(opFiltroTipo===t?' selected':'')+'>'+t+'</option>';}).join('')}
+          </select>
+          <select onchange="opFiltroEmpresa=this.value;render()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:13px;font-family:inherit;color:var(--g700);background:var(--w);outline:none">
+            <option value="">Todas las empresas</option>
+            ${empresas.map(function(e){return'<option value="'+e+'"'+(opFiltroEmpresa===e?' selected':'')+'>'+e+'</option>';}).join('')}
+          </select>
+          ${(opSearchQ||opFiltroTipo||opFiltroEmpresa)?'<button onclick="opSearchQ='';opFiltroTipo='';opFiltroEmpresa='';render()" style="padding:7px 11px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g500);background:var(--w);cursor:pointer">✕ Limpiar</button>':''}
+        </div>
         <div class="tw">
           <table>
-            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Empresa</th><th>Monto</th><th>Estado</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
+            <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Empresa</th>${thSort('monto','Monto')}<th>Estado</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
             <tbody>
               ${tab.length===0
                 ?'<tr><td colspan="7" class="empty">No hay tickets en esta sección</td></tr>'
