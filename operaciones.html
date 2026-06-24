@@ -208,7 +208,16 @@ function getTab(tab){
   });
 }
 
-function calcDias(t){return parseInt(t.dias_analisis)||0;}
+function calcDias(t){
+  // Si está en análisis y tiene fecha de inicio, calculamos en tiempo real
+  if (t.estado === 'En análisis' && t.fecha_inicio_analisis) {
+    var p = t.fecha_inicio_analisis.split('/');
+    var fi = p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : new Date(t.fecha_inicio_analisis);
+    if (!isNaN(fi)) return Math.floor((new Date() - fi) / 86400000);
+  }
+  // Finalizados o re abiertos: usar el valor guardado en el sheet
+  return parseInt(t.dias_analisis) || 0;
+}
 
 function render(){
   var app=document.getElementById('app');
@@ -319,7 +328,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
         </div>
         <div class="tw">
           <table>
-            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Empresa</th><th>Cliente</th><th>Estado</th><th>Días análisis</th></tr></thead>
+            <thead><tr><th>ID</th><th>Fecha ingreso</th><th>Tipo</th><th>Empresa</th><th>Monto</th><th>Estado</th><th>Días análisis</th></tr></thead>
             <tbody>
               ${tab.length===0
                 ?'<tr><td colspan="7" class="empty">No hay tickets en esta sección</td></tr>'
@@ -331,7 +340,7 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias){
                     <td>${fmtDate(t.creado)}</td>
                     <td>${esc(t.tipo_reclamo||'—')}</td>
                     <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
-                    <td style="font-size:11px">${(t.email_cliente||'—').split('@')[0]}</td>
+                    <td style="font-size:12px;font-weight:500;color:var(--g900)">${t.monto ? '$'+esc(String(t.monto)) : '—'}</td>
                     <td><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></td>
                     <td><span class="db ${diasClass(d)}">${d} días</span></td>
                   </tr>`;
