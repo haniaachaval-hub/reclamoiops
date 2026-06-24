@@ -18,25 +18,25 @@
   --a50:#fffbeb;--a500:#f59e0b;--a600:#d97706;
   --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
   --rad:7px;--rad-lg:11px;
-  font-family:'Inter',system-ui,sans-serif;font-size:15px;color:var(--g700);
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--g700);
 }
 body{background:var(--g50);min-height:100vh}
 .app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:226px;min-width:226px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sidebar{width:208px;min-width:208px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
 .sb-logo{padding:15px 15px 12px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:9px}
 .sb-logo-icon{width:29px;height:29px;border-radius:var(--rad);background:#059669;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
-.sb-logo h1{font-size:15px;font-weight:600;color:var(--g900)}
+.sb-logo h1{font-size:13px;font-weight:600;color:var(--g900)}
 .sb-logo p{font-size:10px;color:var(--g400);margin-top:1px}
 .sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
-.nav-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:var(--rad);cursor:pointer;font-size:13px;color:var(--g600);transition:all .11s;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rad);cursor:pointer;font-size:12px;color:var(--g600);transition:all .11s;margin-bottom:1px}
 .nav-item:hover{background:var(--g50);color:var(--g900)}
 .nav-item.active{background:var(--gr50);color:var(--gr700);font-weight:500}
-.sb-footer{padding:11px 14px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
-.sf-name{font-size:13px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-out{padding:5px 10px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g500);font-size:12px;cursor:pointer;font-family:inherit}
+.sb-footer{padding:9px 12px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:48px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 18px;gap:10px}
-.topbar h2{font-size:16px;font-weight:600;color:var(--g900)}
+.topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
 .content{flex:1;overflow-y:auto;padding:18px 20px}
 .search{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:6px 10px;font-size:12px;color:var(--g700);font-family:inherit;outline:none;width:200px}
 .search:focus{border-color:var(--b400)}
@@ -44,11 +44,11 @@ body{background:var(--g50);min-height:100vh}
 .shdr h2{font-size:13px;font-weight:600;color:var(--g900)}
 .tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden}
 table{width:100%;border-collapse:collapse}
-thead th{text-align:left;font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.03em;padding:11px 13px;border-bottom:1px solid var(--g200);background:var(--g50)}
-tbody td{padding:12px 13px;border-bottom:1px solid var(--g100);font-size:13px;color:var(--g600);vertical-align:middle}
+thead th{text-align:left;font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;padding:9px 11px;border-bottom:1px solid var(--g200);background:var(--g50)}
+tbody td{padding:10px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g600);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--b50);cursor:pointer}
-.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--g700)}
+.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--b600)}
 .badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
 .bn{background:var(--b50);color:var(--b700)}
 .ba{background:var(--p50);color:var(--p600)}
@@ -175,6 +175,7 @@ var filtroEstado = '';
 var filtroFechaDesde = '';
 var filtroFechaHasta = '';
 var ordenFecha = 'desc'; // 'desc' = más reciente primero, 'asc' = más viejo primero
+var ordenMonto = ''; // '' = sin orden, 'desc' = mayor primero, 'asc' = menor primero
 var saving = false;
 var showReopen = false;
 var reopenMsg = '';
@@ -241,6 +242,11 @@ function getFilteredTickets() {
     list = list.filter(function(t){ return ticketDateValue(t) <= filtroFechaHasta; });
   }
   list.sort(function(a, b) {
+    if (ordenMonto) {
+      var ma = parseFloat(String(a.monto||'0').replace(/[^0-9.-]/g,''))||0;
+      var mb = parseFloat(String(b.monto||'0').replace(/[^0-9.-]/g,''))||0;
+      return ordenMonto === 'asc' ? ma-mb : mb-ma;
+    }
     var da = ticketDateValue(a), db = ticketDateValue(b);
     return ordenFecha === 'asc' ? (da < db ? -1 : da > db ? 1 : 0) : (da > db ? -1 : da < db ? 1 : 0);
   });
@@ -447,14 +453,6 @@ function renderApp() {
 function renderTopbarTickets() {
   return `<div class="topbar">
     <h2>Mis tickets</h2>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-      <input class="search" id="search-inp" placeholder="Buscar por cliente, N° ticket, fecha o palabra clave..." style="width:280px" value="${esc(searchInput)}"
-        oninput="searchInput=this.value"
-        onkeydown="if(event.key==='Enter'){ejecutarBusqueda()}">
-      <button class="btn btn-ghost" onclick="ejecutarBusqueda()">🔍 Buscar</button>
-      ${searchQ ? `<button class="btn btn-ghost" onclick="searchQ='';searchInput='';render()">✕ Limpiar</button>` : ''}
-      <button class="btn btn-primary" onclick="goToNuevoReclamo()">➕ Cargar reclamo</button>
-    </div>
   </div>`;
 }
 
@@ -472,31 +470,31 @@ function renderTicketsView(filtered) {
   var estadosDisponibles = ['Recibido','En análisis','Finalizado','Re abierto'];
   return `
     <div class="shdr">
-      <h2>Tickets de mis clientes (${filtered.length})</h2>
+      <h2>Total de tickets (${filtered.length})</h2>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;background:var(--w);border:1px solid var(--g200);border-radius:var(--rad);padding:9px 11px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <input class="search" id="search-inp" placeholder=" Buscar ticket..." style="width:200px" value="${esc(searchInput)}"
+        oninput="searchInput=this.value;ejecutarBusqueda()"
+        onkeydown="if(event.key==='Enter'){ejecutarBusqueda()}">
       <select class="search" style="width:160px" onchange="filtroCliente=this.value;render()">
         <option value="">Todos los clientes</option>
-        ${clientesDisponibles.map(function(c){ return `<option value="${esc(c)}" ${filtroCliente===c?'selected':''}>${esc(c)}</option>`; }).join('')}
+        ${clientesDisponibles.map(function(c){ return '<option value="'+esc(c)+'" '+(filtroCliente===c?'selected':'')+'>'+esc(c)+'</option>'; }).join('')}
       </select>
       <select class="search" style="width:140px" onchange="filtroEstado=this.value;render()">
         <option value="">Todos los estados</option>
-        ${estadosDisponibles.map(function(e){ return `<option value="${e}" ${filtroEstado===e?'selected':''}>${e}</option>`; }).join('')}
+        ${estadosDisponibles.map(function(e){ return '<option value="'+e+'" '+(filtroEstado===e?'selected':'')+'>'+e+'</option>'; }).join('')}
       </select>
       <span style="font-size:11px;color:var(--g400)">Desde</span>
       <input class="search" type="date" style="width:135px" value="${filtroFechaDesde}" onchange="filtroFechaDesde=this.value;render()">
       <span style="font-size:11px;color:var(--g400)">Hasta</span>
       <input class="search" type="date" style="width:135px" value="${filtroFechaHasta}" onchange="filtroFechaHasta=this.value;render()">
-      <select class="search" style="width:170px" onchange="ordenFecha=this.value;render()">
-        <option value="desc" ${ordenFecha==='desc'?'selected':''}>Más reciente primero</option>
-        <option value="asc" ${ordenFecha==='asc'?'selected':''}>Más viejo primero</option>
-      </select>
-      ${(filtroCliente||filtroEstado||filtroFechaDesde||filtroFechaHasta) ? `<button class="btn btn-ghost" onclick="filtroCliente='';filtroEstado='';filtroFechaDesde='';filtroFechaHasta='';render()">✕ Limpiar filtros</button>` : ''}
+      ${(filtroCliente||filtroEstado||filtroFechaDesde||filtroFechaHasta||searchQ) ? '<button class="btn btn-ghost" onclick="filtroCliente=\'\';filtroEstado=\'\';filtroFechaDesde=\'\';filtroFechaHasta=\'\';searchQ=\'\';searchInput=\'\';render()">✕ Limpiar</button>' : ''}
+      <button class="btn" style="margin-left:auto;background:#3b6fd4;color:#fff;font-size:14px;padding:9px 18px;font-weight:600" onclick="goToNuevoReclamo()">+ Cargar reclamo</button>
     </div>
     <div class="tw">
       <table>
         <thead><tr>
-          <th>ID</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Estado</th>
+          <th>ID</th><th>Fecha</th><th>Tipo</th><th>Cliente</th><th style="cursor:pointer;user-select:none" onclick="ordenMonto=ordenMonto==='desc'?'asc':'desc';ordenFecha='';render()">Monto ${ordenMonto==='desc'?'↓':ordenMonto==='asc'?'↑':'↕'}</th><th>Estado</th>
         </tr></thead>
         <tbody>
           ${filtered.length === 0
@@ -507,7 +505,7 @@ function renderTicketsView(filtered) {
                 <td>${fmtDate(t.creado)}</td>
                 <td>${t.tipo_reclamo||'—'}</td>
                 <td style="font-size:11px">${esc(t.empresa||t.cliente||(t.email_cliente||'').split('@')[0]||'—')}</td>
-                <td>${t.monto ? '$'+Number(String(t.monto).replace(/[^0-9.-]/g,'')).toLocaleString('es-AR') : '—'}</td>
+                <td>${t.monto||'—'}</td>
                 <td><span class="badge ${getBC(t.estado)}">${t.estado||'—'}</span></td>
               </tr>`;
             }).join('')}
@@ -538,7 +536,7 @@ function renderNuevoReclamoView() {
   var resumen = [
     { key:'titular', label:'Cliente', value:rfForm.titular },
     { key:'tipo_reclamo', label:'Tipo de reclamo', value:rfForm.tipo_reclamo },
-    rfForm.monto ? { key:'monto', label:'Monto reclamado', value:rfForm.monto } : null,
+    rfForm.monto ? { key:'monto', label:'Monto total desconocido', value:rfForm.monto } : null,
     rfForm.detalle ? { key:'detalle', label:'Observaciones', value:rfForm.detalle } : null,
     rfExcelFiles.length ? { key:'excel', label:'Planilla(s) adjunta(s)', value:rfExcelFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
     rfCarrierFiles.length ? { key:'carrier', label:'Acuse/mail adjunto(s)', value:rfCarrierFiles.map(function(f){return f.name;}).join(', '), noEdit:true } : null,
@@ -604,7 +602,7 @@ function renderRfPaso1() {
       ${rfErrors.excel?`<p class="rf-err-msg">${rfErrors.excel}</p>`:''}
     </div>
     <div class="rf-frow full"><div class="rf-fgroup">
-      <label>Monto reclamado<span class="rf-req">*</span></label>
+      <label>Monto total desconocido<span class="rf-req">*</span></label>
       <input type="text" id="rf-monto" value="${esc(rfForm.monto)}" placeholder="Ej: $125.000" oninput="rfForm.monto=this.value">
       ${rfErrors.monto?`<p class="rf-err-msg">${rfErrors.monto}</p>`:''}
     </div></div>` : ''}
@@ -629,7 +627,7 @@ function renderRfPaso1() {
     ${rfForm.tipo_reclamo ? `
     <div class="rf-fgroup" style="margin-bottom:14px">
       <button class="btn ${rfValidated?'btn-ghost':'btn-primary'}" onclick="rfValidarInformacion()" ${rfValidando?'disabled':''}>
-        ${rfValidando?'<span class="spinner"></span> Validando...':(rfValidated?'✅ Validado':'🔎 Validar información')}
+        ${rfValidando?'<span class="spinner"></span> Validando...':(rfValidated?'✓ Información validada':'🔎 Validar información')}
       </button>
       ${rfErrors.validacion?`<p class="rf-err-msg">${rfErrors.validacion}</p>`:''}
     </div>` : ''}
@@ -873,7 +871,7 @@ function renderPanel() {
               <div class="dfield"><div class="dlbl">Tipo</div><div class="dval">${t.tipo_reclamo||'—'}</div></div>
               <div class="dfield"><div class="dlbl">Fecha</div><div class="dval">${fmtDate(t.creado)}</div></div>
               <div class="dfield"><div class="dlbl">Estado</div><div class="dval">${t.estado||'—'}</div></div>
-              ${t.monto ? `<div class="dfield"><div class="dlbl">Monto reclamado</div><div class="dval">$${Number(String(t.monto).replace(/[^0-9.-]/g,'')).toLocaleString('es-AR')}</div></div>` : ''}
+              ${t.monto ? `<div class="dfield"><div class="dlbl">Monto total desconocido</div><div class="dval">${esc(String(t.monto))}</div></div>` : ''}
               ${t.detalle ? `<div class="dfield" style="grid-column:span 2"><div class="dlbl">Observaciones</div><div class="dval">${t.detalle}</div></div>` : ''}
             </div>
           </div>
