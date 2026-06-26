@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataforma de gestión — Auditoría</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --w:#fff;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g800:#1f2937;--g900:#111827;
+  --b50:#eff6ff;--b100:#dbeafe;--b400:#60a5fa;--b500:#3b82f6;--b600:#2563eb;--b700:#1d4ed8;
+  --gr50:#f0fdf4;--gr100:#dcfce7;--gr500:#22c55e;--gr600:#16a34a;--gr700:#15803d;
+  --r50:#fef2f2;--r100:#fee2e2;--r500:#ef4444;--r600:#dc2626;
+  --a50:#fffbeb;--a100:#fef3c7;--a500:#f59e0b;--a600:#d97706;
+  --p50:#f5f3ff;--p500:#8b5cf6;--p600:#7c3aed;
+  /* Color distintivo para Auditoría: ámbar/dorado */
+  --au50:#fffbeb;--au100:#fef3c7;--au500:#f59e0b;--au600:#d97706;--au700:#b45309;
+  --rad:7px;--rad-lg:11px;
+  font-family:'Inter',system-ui,sans-serif;font-size:15px;color:var(--g700);
+}
+body{background:var(--g50);min-height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+.sb{width:240px;min-width:240px;background:var(--w);border-right:1px solid var(--g200);display:flex;flex-direction:column}
+.sb-logo{padding:14px;border-bottom:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sb-icon{width:28px;height:28px;border-radius:var(--rad);background:var(--au600);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.sb-logo h1{font-size:15px;font-weight:600;color:var(--g900)}
+.sb-logo p{font-size:10px;color:var(--g400)}
+.sb-nav{flex:1;padding:9px 7px}
+.sb-sec{font-size:10px;font-weight:600;color:var(--g500);letter-spacing:.07em;text-transform:uppercase;padding:9px 9px 4px}
+.ni{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--rad);cursor:pointer;font-size:14px;color:var(--g600);transition:all .1s;margin-bottom:2px}
+.ni:hover{background:var(--g50);color:var(--g900)}
+.ni.on{background:var(--au50);color:var(--au700);font-weight:500}
+.sb-foot{padding:12px 14px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
+.sf-name{font-size:14px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-out{padding:6px 12px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g500);font-size:13px;cursor:pointer;font-family:inherit}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:46px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px;gap:10px}
+.topbar h2{font-size:16px;font-weight:600;color:var(--g900);flex:1}
+.badge-auditoria{background:var(--au100);color:var(--au700);font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;border:1px solid var(--au500)}
+.content{flex:1;overflow-y:auto;padding:16px 18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+.kpi{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:12px 13px}
+.kl{font-size:10px;color:var(--g700);font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
+.kv{font-size:23px;font-weight:600;line-height:1;color:var(--g900)}
+.kpi.info .kv{color:var(--b600)}
+.kpi.warn .kv{color:var(--a500)}
+.kpi.ok .kv{color:var(--gr600)}
+.kpi.danger .kv{color:var(--r500)}
+.kpi.purple .kv{color:var(--p600)}
+.tabs{display:flex;gap:3px;margin-bottom:11px;background:var(--g100);border-radius:var(--rad);padding:4px}
+.tab{flex:1;padding:9px 10px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--g500);border-radius:6px;font-family:inherit;transition:all .11s;text-align:center}
+.tab.on{background:var(--w);color:var(--g900);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tc{display:inline-block;background:var(--r100);color:var(--r600);font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px}
+.tab.on .tc{background:var(--b100);color:var(--b700)}
+.tw{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.03em;padding:10px 12px;border-bottom:1px solid var(--g200);background:var(--g50)}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--g100);font-size:13px;color:var(--g600);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--au50);cursor:pointer}
+.tid{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:var(--g700)}
+.badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600}
+.bn{background:var(--b50);color:var(--b700)}
+.ba{background:var(--p50);color:var(--p600)}
+.bfin{background:var(--gr100);color:var(--gr700)}
+.breo{background:var(--r50);color:var(--r600)}
+.db{display:inline-flex;align-items:center;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600}
+.dok{background:var(--gr50);color:var(--gr700)}
+.dwarn{background:var(--a50);color:var(--a600)}
+.ddanger{background:var(--r50);color:var(--r600)}
+.empty{text-align:center;padding:36px;color:var(--g400);font-size:12px}
+/* Panel de detalle (solo lectura) */
+.overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
+.panel{background:var(--w);width:540px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200)}
+.ph{padding:14px 16px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5;display:flex;align-items:flex-start;gap:8px}
+.ph-info{flex:1}
+.close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:14px}
+.pb{padding:16px}
+.sec{margin-bottom:16px}
+.sec-t{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.df{background:var(--g50);border-radius:var(--rad);padding:7px 9px;border:1px solid var(--g100)}
+.dl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+.dv{font-size:12px;color:var(--g900);font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .1s}
+.btn-g{background:transparent;color:var(--g600);border:1px solid var(--g200)}
+.btn-g:hover{background:var(--g50)}
+.toast-wrap{position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.toast{background:var(--w);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:8px 12px;font-size:12px;color:var(--g700);max-width:260px;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.toast.ok{border-left:3px solid var(--gr500)}
+.toast.err{border-left:3px solid var(--r500)}
+.loading{display:flex;align-items:center;justify-content:center;height:100%;color:var(--g400);font-size:13px;flex-direction:column;gap:10px}
+.spin{width:20px;height:20px;border:2px solid var(--g200);border-top-color:var(--au500);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Banner solo lectura */
+.readonly-banner{background:var(--au50);border:1px solid var(--au100);border-radius:var(--rad);padding:8px 12px;font-size:12px;color:var(--au700);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-wrap" id="toasts"></div>
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1oW7snTqiZIY_YqQVxIX5aYS2uLy5mfYAUVGo-YqXVSQeevkoDCUMNxmQtBzwmQnC/exec';
+// ─────────────────────────────────────────────────────────────
+
+// Verificar sesión y perfil
+var _u = (function(){
+  var t = sessionStorage.getItem('ro_token');
+  var e = sessionStorage.getItem('ro_email');
+  var n = sessionStorage.getItem('ro_name');
+  var p = sessionStorage.getItem('ro_profile');
+  if (!t || !e || p !== 'auditoria') { window.location.href = 'index.html'; return null; }
+  return { token: t, email: e, name: n };
+})();
+
+var tickets = [], loading = true, activeTab = 'recibidos', selTicket = null;
+var auSortField = 'creado', auSortDir = 'desc', auSearchQ = '', auFiltroTipo = '', auFiltroEmpresa = '';
+
+function toast(msg, tipo) {
+  var w = document.getElementById('toasts'), d = document.createElement('div');
+  d.className = 'toast ' + (tipo || ''); d.textContent = msg; w.appendChild(d);
+  setTimeout(function(){ d.remove(); }, 3200);
+}
+function fmtDate(s) {
+  if (!s) return '—'; if (s.includes('/')) return s;
+  var d = s.slice(0,10).split('-'); return d.length < 3 ? s : d[2] + '/' + d[1] + '/' + d[0];
+}
+function bc(e) { return {'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e] || 'bn'; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function diasClass(d) { return d <= 72 ? 'dok' : d <= 168 ? 'dwarn' : 'ddanger'; }
+
+async function api(body) {
+  var token = sessionStorage.getItem('ro_token') || '';
+  body.token = token;
+  _u.token = token;
+  var r = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  });
+  var data = await r.json();
+  if (data && data.error && data.error.includes('Token')) {
+    toast('Tu sesión expiró. Por favor volvé a ingresar.', 'err');
+    setTimeout(function(){ sessionStorage.clear(); window.location.href = 'index.html'; }, 2500);
+    throw new Error('Token expirado');
+  }
+  return data;
+}
+
+// Descarga de archivos (igual que operaciones, solo lectura)
+window.abrirAdjunto = async function(e, fileId, nombreEnc, urlDirecta) {
+  e.preventDefault();
+  var nombre = decodeURIComponent(nombreEnc);
+  if (!fileId || fileId === 'undefined' || fileId === '') return;
+  try {
+    toast('Descargando archivo...', 'ok');
+    var res = await api({ action: 'getFileUrl', fileId: fileId, nombre: nombre });
+    if (!res.ok) { toast('No se pudo obtener el archivo: ' + (res.error || ''), 'err'); return; }
+    var byteChars = atob(res.base64.replace(/[\s]/g, ''));
+    var byteArr = new Uint8Array(byteChars.length);
+    for (var i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+    var blob = new Blob([byteArr], { type: res.mimeType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = res.nombre || nombre;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  } catch(err) { toast('Error: ' + err.message, 'err'); }
+};
+
+async function loadData() {
+  try {
+    // Auditoría usa esOperario:true para ver todos los tickets (igual que Operaciones)
+    var tr = await api({ action: 'getTickets', esOperario: true });
+    tickets = tr.tickets || [];
+  } catch(e) { console.error('Error:', e); }
+  loading = false; render();
+}
+
+// ── Vencimientos (idéntico a operaciones) ──
+var PLAZO_HABILES = 10;
+function vencimientoInfo(t) {
+  if (t.estado === 'Finalizado') return null;
+  var str = t.creado || '';
+  if (!str) return null;
+  var fechaCreado;
+  if (str.includes('/')) {
+    var p = str.split(' ')[0].split('/');
+    fechaCreado = p.length === 3 ? new Date(p[2], p[1]-1, p[0]) : null;
+  } else {
+    fechaCreado = new Date(str.slice(0,10));
+  }
+  if (!fechaCreado || isNaN(fechaCreado)) return null;
+  var limite = new Date(fechaCreado);
+  var habilesSumados = 0;
+  while (habilesSumados < PLAZO_HABILES) {
+    limite.setDate(limite.getDate() + 1);
+    var dow = limite.getDay();
+    if (dow !== 0 && dow !== 6) habilesSumados++;
+  }
+  limite.setHours(23,59,59,999);
+  var ahora = new Date();
+  var diffMs = limite - ahora;
+  var diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  var habilesRestantes = Math.ceil(diffDias * 5 / 7);
+  if (diffMs < 0) {
+    var diasVencido = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    return { estado: 'vencido', dias: diasVencido, label: 'Vencido hace ' + diasVencido + ' día' + (diasVencido !== 1 ? 's' : '') };
+  } else if (habilesRestantes <= 3) {
+    return { estado: 'riesgo', dias: habilesRestantes, label: habilesRestantes <= 0 ? 'Vence hoy ⚠' : habilesRestantes + ' día' + (habilesRestantes !== 1 ? 's' : '') + ' ⚠' };
+  } else {
+    return { estado: 'ok', dias: habilesRestantes, label: habilesRestantes + ' días' };
+  }
+}
+
+function badgeVencimiento(v) {
+  if (!v) return '<span style="font-size:11px;color:var(--g300)">—</span>';
+  if (v.estado === 'vencido') return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:var(--r50);color:var(--r600);border:1px solid var(--r100)">🔴 ' + v.label + '</span>';
+  if (v.estado === 'riesgo')  return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:var(--a50);color:var(--a600);border:1px solid #fcd34d">🟡 ' + v.label + '</span>';
+  return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;background:var(--gr50);color:var(--gr600);border:1px solid var(--gr100)">🟢 ' + v.label + '</span>';
+}
+
+function calcDias(t) {
+  var acum = parseFloat(t.analisis_segundos_acum) || 0;
+  if (t.estado === 'En análisis' && t.analisis_inicio_ts) {
+    var inicio = parseFloat(t.analisis_inicio_ts);
+    if (!isNaN(inicio) && inicio > 0) acum += (Date.now() - inicio) / 1000;
+  }
+  return Math.floor(acum / 3600);
+}
+
+function getTab(tab) {
+  var estadoMap = { 'recibidos': 'Recibido', 'analisis': 'En análisis', 'finalizados': 'Finalizado', 'reabiertos': 'Re abierto' };
+  return tickets.filter(function(t) {
+    if (t.estado !== estadoMap[tab]) return false;
+    if (auFiltroTipo && t.tipo_reclamo !== auFiltroTipo) return false;
+    if (auFiltroEmpresa && (t.empresa || t.titular || '') !== auFiltroEmpresa) return false;
+    if (auSearchQ) {
+      var q = auSearchQ.toLowerCase();
+      var haystack = (t.ID||'') + (t.tipo_reclamo||'') + (t.empresa||'') + (t.titular||'') + (t.monto||'');
+      if (haystack.toLowerCase().indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort(function(a, b) {
+    if (auSortField === 'creado') {
+      var da = new Date(a.creado.split('/').reverse().join('-'));
+      var db = new Date(b.creado.split('/').reverse().join('-'));
+      return auSortDir === 'asc' ? da - db : db - da;
+    }
+    if (auSortField === 'monto') {
+      var ma = parseFloat(String(a.monto||'0').replace(/[^0-9.-]/g,'')) || 0;
+      var mb = parseFloat(String(b.monto||'0').replace(/[^0-9.-]/g,'')) || 0;
+      return auSortDir === 'asc' ? ma - mb : mb - ma;
+    }
+    return 0;
+  });
+}
+
+function getOptipos() {
+  var tipos = {}; tickets.forEach(function(t){ if(t.tipo_reclamo) tipos[t.tipo_reclamo] = 1; }); return Object.keys(tipos);
+}
+function getOpEmpresas() {
+  var emps = {}; tickets.forEach(function(t){ var e = t.empresa||t.titular||''; if(e) emps[e] = 1; }); return Object.keys(emps);
+}
+function thSort(field, label) {
+  var active = auSortField === field;
+  var arrow = active ? (auSortDir === 'asc' ? '↑' : '↓') : '↕';
+  var col = active ? 'var(--au600)' : 'var(--g400)';
+  return '<th style="cursor:pointer;user-select:none" onclick="sortBy(\'' + field + '\')">' + label + ' <span style="color:' + col + '">' + arrow + '</span></th>';
+}
+function limpiarFiltros() { auSearchQ = ''; auFiltroTipo = ''; auFiltroEmpresa = ''; render(); }
+function sortBy(field) {
+  if (auSortField === field) { auSortDir = auSortDir === 'desc' ? 'asc' : 'desc'; }
+  else { auSortField = field; auSortDir = 'desc'; }
+  render();
+}
+
+function render() {
+  var app = document.getElementById('app');
+  if (loading) {
+    app.innerHTML = '<div class="app"><div style="flex:1" class="loading"><div class="spin"></div><span>Cargando tickets...</span></div></div>';
+    return;
+  }
+  var rec = getTab('recibidos'), ana = getTab('analisis'), fin = getTab('finalizados'), reo = getTab('reabiertos');
+  var tab = activeTab === 'recibidos' ? rec : activeTab === 'analisis' ? ana : activeTab === 'finalizados' ? fin : reo;
+  var enRiesgo = tickets.filter(function(t){ var v = vencimientoInfo(t); return v && (v.estado === 'riesgo' || v.estado === 'vencido'); }).length;
+  var vencidos = tickets.filter(function(t){ var v = vencimientoInfo(t); return v && v.estado === 'vencido'; }).length;
+
+  app.innerHTML = `
+  <div class="app">
+    <div class="sb">
+      <div class="sb-logo"><div class="sb-icon">🔍</div><div><h1>Plataforma de gestión</h1><p>Auditoría</p></div></div>
+      <div class="sb-nav">
+        <div class="sb-sec">Panel</div>
+        <div class="ni on">🎫 Ticketera</div>
+      </div>
+      <div class="sb-foot">
+        <div style="font-size:20px">👤</div>
+        <div class="sf-name">${esc(_u.name)}</div>
+        <button class="btn-out" onclick="sessionStorage.clear();window.location.href='index.html'">Salir</button>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <h2>Ticketera — Vista de Auditoría</h2>
+        <span class="badge-auditoria">🔍 Solo lectura</span>
+      </div>
+      <div class="content">
+        ${renderTicketsSection(rec, ana, fin, reo, tab, enRiesgo, vencidos)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderFiltros(tipos, empresas) {
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
+  html += '<input type="text" placeholder="🔍 Buscar ticket..." value="' + auSearchQ + '" oninput="auSearchQ=this.value;render()" style="padding:7px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:220px">';
+  html += '<select onchange="auFiltroTipo=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
+  html += '<option value="">Todos los tipos</option>';
+  tipos.forEach(function(t){ html += '<option value="' + t + '"' + (auFiltroTipo === t ? ' selected' : '') + '>' + t + '</option>'; });
+  html += '</select>';
+  html += '<select onchange="auFiltroEmpresa=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
+  html += '<option value="">Todas las empresas</option>';
+  empresas.forEach(function(e){ html += '<option value="' + e + '"' + (auFiltroEmpresa === e ? ' selected' : '') + '>' + e + '</option>'; });
+  html += '</select>';
+  if (auSearchQ || auFiltroTipo || auFiltroEmpresa) {
+    html += '<button onclick="limpiarFiltros()" style="padding:7px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:12px;font-family:inherit;color:#6b7280;background:#fff;cursor:pointer">✕ Limpiar</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderTicketsSection(rec, ana, fin, reo, tab, enRiesgo, vencidos) {
+  var tipos = getOptipos();
+  var empresas = getOpEmpresas();
+  return `
+    <div class="readonly-banner">
+      🔒 Modo Auditoría — Podés ver el detalle completo de todos los tickets pero no podés modificarlos.
+    </div>
+    <div class="kpis">
+      <div class="kpi info"><div class="kl">Total</div><div class="kv">${tickets.length}</div></div>
+      <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
+      <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
+      <div class="kpi danger"><div class="kl">Re abiertos</div><div class="kv">${reo.length}</div></div>
+      <div class="kpi" style="border:1px solid ${vencidos > 0 ? 'var(--r100)' : enRiesgo > 0 ? '#fcd34d' : 'var(--g200)'}; background:${vencidos > 0 ? 'var(--r50)' : enRiesgo > 0 ? 'var(--a50)' : 'var(--w)'}">
+        <div class="kl" style="color:${vencidos > 0 ? 'var(--r600)' : enRiesgo > 0 ? 'var(--a600)' : 'var(--g700)'}">🚨 En riesgo</div>
+        <div class="kv" style="color:${vencidos > 0 ? 'var(--r600)' : enRiesgo > 0 ? 'var(--a500)' : 'var(--g400)'}">${enRiesgo}</div>
+        ${vencidos > 0 ? '<div style="font-size:10px;color:var(--r500);margin-top:4px;font-weight:500">' + vencidos + ' vencido' + (vencidos !== 1 ? 's' : '') + '</div>' : ''}
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab${activeTab === 'recibidos' ? ' on' : ''}" onclick="activeTab='recibidos';render()">Recibidos<span class="tc">${rec.length}</span></button>
+      <button class="tab${activeTab === 'analisis' ? ' on' : ''}" onclick="activeTab='analisis';render()">En análisis<span class="tc">${ana.length}</span></button>
+      <button class="tab${activeTab === 'finalizados' ? ' on' : ''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
+      <button class="tab${activeTab === 'reabiertos' ? ' on' : ''}" onclick="activeTab='reabiertos';render()">Re abiertos<span class="tc">${reo.length}</span></button>
+    </div>
+    ${renderFiltros(tipos, empresas)}
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Empresa</th>${thSort('monto','Monto')}<th>Estado</th><th>Vencimiento</th></tr></thead>
+        <tbody>
+          ${tab.length === 0
+            ? '<tr><td colspan="7" class="empty">No hay tickets en esta sección</td></tr>'
+            : tab.map(function(t) {
+                var venc = vencimientoInfo(t);
+                var rowBg = venc && venc.estado === 'vencido' ? 'background:rgba(239,68,68,.04)' : venc && venc.estado === 'riesgo' ? 'background:rgba(245,158,11,.04)' : '';
+                return `<tr style="${rowBg}" onclick="openPanel('${esc(t.ID)}')">
+                  <td><span class="tid">${t.ID || '—'}</span></td>
+                  <td>${fmtDate(t.creado)}</td>
+                  <td>${esc(t.tipo_reclamo || '—')}</td>
+                  <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa || '—')}</span></td>
+                  <td style="font-size:12px;font-weight:500;color:var(--g900)">${t.monto ? '$' + Number(String(t.monto).replace(/[^0-9.-]/g,'')).toLocaleString('es-AR') : '—'}</td>
+                  <td><span class="badge ${bc(t.estado)}">${t.estado || '—'}</span></td>
+                  <td>${badgeVencimiento(venc)}</td>
+                </tr>`;
+              }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+window.openPanel = function(id) {
+  selTicket = tickets.find(function(x){ return x.ID === id; });
+  if (!selTicket) return;
+  renderPanel();
+};
+
+function renderPanel() {
+  var t = selTicket;
+  var hist = []; try { hist = Array.isArray(t.historial) ? t.historial : JSON.parse(t.historial || '[]'); } catch(e) {}
+  var coms = []; try { coms = Array.isArray(t.comentarios) ? t.comentarios : JSON.parse(t.comentarios || '[]'); } catch(e) {}
+  var adjs = []; try { adjs = Array.isArray(t.adjuntos) ? t.adjuntos : JSON.parse(t.adjuntos || '[]'); } catch(e) {}
+  var d = calcDias(t);
+  var existing = document.querySelector('.overlay'); if (existing) existing.remove();
+  var v = vencimientoInfo(t);
+
+  document.body.insertAdjacentHTML('beforeend', `
+  <div class="overlay" onclick="if(event.target.className==='overlay')closePanel()">
+    <div class="panel">
+      <div class="ph">
+        <div class="ph-info">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+            <span class="tid">${t.ID}</span>
+            <span class="badge ${bc(t.estado)}">${t.estado || '—'}</span>
+            <span class="db ${diasClass(d)}">${d} hs en análisis</span>
+            <span style="background:var(--au50);color:var(--au700);font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;border:1px solid var(--au100)">🔍 Solo lectura</span>
+          </div>
+          <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.empresa || t.titular || '—')}</div>
+          <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo || '—')}</div>
+        </div>
+        <button class="close" onclick="closePanel()">✕</button>
+      </div>
+      <div class="pb">
+
+        <!-- DATOS DEL RECLAMO -->
+        <div class="sec">
+          <div class="sec-t">Datos del reclamo</div>
+          <div class="dgrid">
+            <div class="df"><div class="dl">Cliente</div><div class="dv">${esc(t.empresa || t.titular || '—')}</div></div>
+            <div class="df"><div class="dl">Tipo</div><div class="dv">${esc(t.tipo_reclamo || '—')}</div></div>
+            <div class="df"><div class="dl">Fecha ingreso</div><div class="dv">${fmtDate(t.creado)}</div></div>
+            <div class="df"><div class="dl">Estado</div><div class="dv"><span class="badge ${bc(t.estado)}">${t.estado || '—'}</span></div></div>
+            ${v ? '<div class="df" style="grid-column:span 2;background:' + (v.estado==='vencido'?'var(--r50)':v.estado==='riesgo'?'var(--a50)':'var(--gr50)') + ';border-color:' + (v.estado==='vencido'?'var(--r100)':v.estado==='riesgo'?'#fcd34d':'var(--gr100)') + '"><div class="dl">Vencimiento (10 días hábiles)</div><div class="dv">' + badgeVencimiento(v) + '</div></div>' : ''}
+            ${t.monto ? `<div class="df" style="grid-column:span 2"><div class="dl">Monto reclamado</div><div class="dv">${esc(String(t.monto))}</div></div>` : ''}
+            ${t.detalle ? `<div class="df" style="grid-column:span 2"><div class="dl">Observaciones</div><div class="dv">${esc(t.detalle)}</div></div>` : ''}
+            ${t.titular ? `<div class="df"><div class="dl">Titular</div><div class="dv">${esc(t.titular)}</div></div>` : ''}
+            ${t.email_cliente ? `<div class="df"><div class="dl">Email cliente</div><div class="dv" style="font-size:11px">${esc(t.email_cliente)}</div></div>` : ''}
+            ${t.fecha_inicio_analisis ? `<div class="df"><div class="dl">Inicio análisis</div><div class="dv">${fmtDate(t.fecha_inicio_analisis)}</div></div>` : ''}
+            ${t.modalidad ? `<div class="df"><div class="dl">Modalidad</div><div class="dv">${esc(t.modalidad)}</div></div>` : ''}
+            ${t.sucursal ? `<div class="df"><div class="dl">Sucursal</div><div class="dv">${esc(t.sucursal)}</div></div>` : ''}
+            ${t.num_tarjeta ? `<div class="df"><div class="dl">N° Tarjeta</div><div class="dv">${esc(t.num_tarjeta)}</div></div>` : ''}
+            ${t.num_secuencia ? `<div class="df"><div class="dl">N° Secuencia</div><div class="dv">${esc(t.num_secuencia)}</div></div>` : ''}
+          </div>
+        </div>
+
+        <!-- ARCHIVOS ADJUNTOS -->
+        <div class="sec">
+          <div class="sec-t">Archivos adjuntos</div>
+          ${renderAdjuntos(t, adjs)}
+        </div>
+
+        <!-- COMENTARIOS (todos: comercial + operaciones) -->
+        <div class="sec">
+          <div class="sec-t">Comentarios</div>
+          ${coms.length === 0 ? '<p style="font-size:12px;color:var(--g400)">Sin comentarios</p>' :
+            coms.map(function(c) {
+              var esCom = c.de === 'comercial';
+              var adjFileId = null;
+              if (c.archivo) {
+                var match = adjs.find(function(a){ return a.nombre === c.archivo; });
+                if (match) adjFileId = match.fileId || null;
+              }
+              return `<div style="border-left:2px solid ${esCom ? 'var(--b500)' : 'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom ? 'var(--b50)' : 'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
+                <div style="font-size:10px;font-weight:600;color:${esCom ? 'var(--b700)' : 'var(--p600)'};margin-bottom:3px">${esCom ? '💼 Comercial' : '⚙️ Operaciones'} · ${esc(c.usuario || '')} · ${esc(c.ts || '')}</div>
+                <div style="font-size:12px;color:var(--g700)">${esc(c.texto || '')}</div>
+                ${c.archivo ? `<div style="font-size:11px;color:var(--g500);margin-top:3px">
+                  ${adjFileId
+                    ? `<a href="#" onclick="abrirAdjunto(event,'${adjFileId}','${encodeURIComponent(c.archivo || '')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
+                    : `📎 ${esc(c.archivo)}`}
+                </div>` : ''}
+              </div>`;
+            }).join('')}
+        </div>
+
+        <!-- HISTORIAL -->
+        <div class="sec">
+          <div class="sec-t">Historial de estados</div>
+          ${hist.length === 0 ? '<p style="font-size:12px;color:var(--g400)">Sin historial</p>' :
+            hist.map(function(h){ return `<div style="border-left:2px solid var(--g200);padding:4px 9px;margin-bottom:5px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${esc(h.accion)}</div>`; }).join('')}
+        </div>
+
+      </div>
+    </div>
+  </div>`);
+}
+
+function renderAdjuntos(t, adjs) {
+  var extra = adjs && adjs.length ? adjs : [];
+  var adj = [];
+  if (extra.length) {
+    extra.forEach(function(a){ adj.push({ nombre: a.nombre, origen: a.origen || (a.de === 'operaciones' ? 'Operaciones' : 'Comercial'), fileId: a.fileId || a.id || null, url: a.url || null }); });
+  } else {
+    if (t.excel_nombre) adj.push({ nombre: t.excel_nombre, origen: 'Comercial (planilla)', fileId: t.excel_fileId || null, url: null });
+    if (t.carrier_nombre) adj.push({ nombre: t.carrier_nombre, origen: 'Comercial (acuse/mail)', fileId: t.carrier_fileId || null, url: null });
+  }
+  if (!adj.length) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
+  return adj.map(function(a) {
+    var fid = a.fileId || '';
+    var u = a.url || '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:5px;font-size:12px">
+      <span>📎</span>
+      ${(fid || u)
+        ? `<a href="#" onclick="abrirAdjunto(event,'${fid}','${encodeURIComponent(a.nombre || '')}','${u}')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>`
+        : `<span style="flex:1;color:var(--g900)">${esc(a.nombre)} <span style="color:var(--g400);font-weight:400">(sin vista previa disponible)</span></span>`}
+      <span style="font-size:10px;color:var(--g400)">${esc(a.origen || '')}</span>
+    </div>`;
+  }).join('');
+}
+
+window.closePanel = function(){ var o = document.querySelector('.overlay'); if(o) o.remove(); selTicket = null; };
+
+if (_u) { loadData(); }
+</script>
+</body>
+</html>
