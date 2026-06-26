@@ -36,6 +36,7 @@ body{background:var(--g50);min-height:100vh;display:flex;align-items:center;just
 .p-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .p-icon.comercial{background:#f0fdf4}
 .p-icon.operaciones{background:#f5f3ff}
+.p-icon.auditoria{background:#fffbeb}
 .p-name{font-size:14px;font-weight:600;color:var(--g900)}
 .p-desc{font-size:12px;color:var(--g500);margin-top:2px}
 .p-domain{font-size:10px;color:var(--g400);margin-top:3px;font-style:italic}
@@ -49,6 +50,7 @@ body{background:var(--g50);min-height:100vh;display:flex;align-items:center;just
 .profile-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-bottom:20px}
 .chip-comercial{background:var(--gr50);color:var(--gr700);border:1px solid var(--gr100)}
 .chip-operaciones{background:var(--p50);color:var(--p600);border:1px solid #e9d5ff}
+.chip-auditoria{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
 .login-title{font-size:15px;font-weight:600;color:var(--g900);margin-bottom:4px}
 .login-sub{font-size:13px;color:var(--g500);margin-bottom:22px}
 .google-btn-wrap{display:flex;justify-content:center;margin-bottom:12px}
@@ -96,6 +98,7 @@ var ALLOWED_DOMAIN   = 'ocasa.com';
 var BASE_URL = window.location.href.replace(/\/[^\/]*$/, '/');
 var URL_COMERCIAL    = BASE_URL + 'comercial.html';
 var URL_OPERACIONES  = BASE_URL + 'operaciones.html';
+var URL_AUDITORIA    = BASE_URL + 'auditoria.html';
 // ─────────────────────────────────────────────
 
 var selectedProfile = null; // 'comercial' | 'operaciones'
@@ -139,6 +142,16 @@ var profiles = [
     domain: 'Requiere @' + ALLOWED_DOMAIN,
     chip: 'chip-operaciones',
     url: URL_OPERACIONES
+  },
+  {
+    id: 'auditoria',
+    icon: '🔍',
+    iconClass: 'auditoria',
+    name: 'Auditoría',
+    desc: 'Vista completa de todos los tickets, adjuntos y comentarios (solo lectura)',
+    domain: 'Requiere @' + ALLOWED_DOMAIN,
+    chip: 'chip-auditoria',
+    url: URL_AUDITORIA
   }
 ];
 
@@ -197,6 +210,7 @@ function goToLogin() {
     cfMode = 'email';
     cfErrors = {};
   } else {
+    // operaciones y auditoria usan Google OAuth
     screen = 'login';
   }
   render();
