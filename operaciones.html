@@ -105,7 +105,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhx3xxTt8Je4CiqqsPczQBKXku-DlD0mwhsvrJr5kJ-XVCDkFC6A1f-V4vjjFAS3ufIA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1oW7snTqiZIY_YqQVxIX5aYS2uLy5mfYAUVGo-YqXVSQeevkoDCUMNxmQtBzwmQnC/exec';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
@@ -117,6 +117,7 @@ var _u=(function(){
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
 var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='';
 var mailPara='', mailAsunto='', mailCuerpo='', adjuntoFile=null;
+var detailComentario='', detailArchivo=null, saving=false;
 var activeNav='tickets'; // tickets | clientes
 var clientes=[], comerciales=[];
 
@@ -131,6 +132,37 @@ function fmtDate(s){
 }
 function bc(e){return{'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e]||'bn';}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function fileToBase64(file) {
+  return new Promise(function(res, rej) {
+    var r = new FileReader();
+    r.onload = function(){ res(r.result.split(',')[1]); };
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// Muchos navegadores (sobre todo en celulares) no informan bien el tipo de
+// archivo real (file.type llega vacío o como "application/octet-stream"),
+// y eso hace que Drive guarde el archivo con un tipo incorrecto. Por eso
+// forzamos el mimeType correcto según la extensión del nombre, igual que
+// en el perfil Comercial.
+function getMimeType(nombre) {
+  var ext = (nombre.split('.').pop() || '').toLowerCase();
+  var tipos = {
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    xls:  'application/vnd.ms-excel',
+    csv:  'text/csv',
+    pdf:  'application/pdf',
+    png:  'image/png',
+    jpg:  'image/jpeg',
+    jpeg: 'image/jpeg',
+    heic: 'image/heic',
+    eml:  'message/rfc822',
+    msg:  'application/vnd.ms-outlook'
+  };
+  return tipos[ext] || 'application/octet-stream';
+}
 function diasClass(d){return d<=72?'dok':d<=168?'dwarn':'ddanger';}
 
 async function api(body){
@@ -542,10 +574,11 @@ function renderPanel(){
           ${renderAdjuntosOp(t, adjs)}
         </div>
 
-        <!-- COMENTARIOS DE COMERCIAL -->
+        <!-- COMENTARIOS (Comercial <-> Operaciones) -->
         <div class="sec">
-          <div class="sec-t">Comentarios de Comercial</div>
-          ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Sin comentarios de Comercial</p>':
+          <div class="sec-t">Comentarios y archivos</div>
+          <p style="font-size:11px;color:var(--g400);margin-bottom:8px">Acá ves los comentarios de Comercial y podés responder o sumar información/archivos. Comercial ve tus respuestas y los archivos que adjuntes.</p>
+          ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Todavía no hay comentarios</p>':
             coms.map(function(c){
               var esCom=c.de==='comercial';
               // Buscar el fileId del adjunto del comentario en el array adjs
@@ -564,6 +597,16 @@ function renderPanel(){
                 </div>`:''}
               </div>`;
             }).join('')}
+          <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:10px;margin-top:8px">
+            <textarea class="cinp" id="detail-comentario" rows="3" placeholder="Responder a Comercial o sumar información..." oninput="detailComentario=this.value">${esc(detailComentario)}</textarea>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+              <div style="flex:1;border:1.5px dashed var(--g300);border-radius:var(--rad);padding:9px 10px;text-align:center;cursor:pointer;background:#fff;font-size:11px;color:var(--g500)" onclick="document.getElementById('detail-archivo-inp').click()">
+                <input id="detail-archivo-inp" type="file" style="display:none" onchange="syncDetailComentario();if(this.files[0]){detailArchivo=this.files[0];renderPanel()}">
+                <span>${detailArchivo ? '📎 ' + esc(detailArchivo.name) : '📎 Clic para adjuntar un archivo (opcional)'}</span>
+              </div>
+              <button class="btn btn-p" style="font-size:11px" onclick="agregarComentarioTicket('${t.ID}')" ${saving?'disabled':''}>${saving?'Enviando...':'Enviar'}</button>
+            </div>
+          </div>
         </div>
 
         <!-- NOTAS INTERNAS DE OPERACIONES -->
@@ -678,6 +721,53 @@ window.agregarNotaOp = async function(id) {
     toast('Nota agregada', 'ok');
     renderPanel();
   } catch(e) { toast('Error: '+e.message, 'err'); }
+};
+
+function syncDetailComentario() {
+  var ta = document.getElementById('detail-comentario');
+  if (ta) detailComentario = ta.value;
+}
+
+window.agregarComentarioTicket = async function(id) {
+  syncDetailComentario();
+  var texto = detailComentario.trim();
+  if (!texto && !detailArchivo) { toast('Escribí un comentario o adjuntá un archivo', 'err'); return; }
+
+  saving = true; renderPanel();
+  try {
+    var ahora = new Date();
+    var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
+    var comentario = { de: 'operaciones', usuario: _u.name||_u.email, ts: tsStr, texto: texto, archivo: detailArchivo ? detailArchivo.name : '' };
+
+    var fileId = null;
+    if (detailArchivo) {
+      var b64 = await fileToBase64(detailArchivo);
+      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:getMimeType(detailArchivo.name), ticketId:id });
+      if (ur.ok) fileId = ur.fileId;
+      if (ur.url) comentario.archivoUrl = ur.url;
+    }
+
+    var res = await api({ action:'agregarComentario', id:id, comentario:comentario, fileId:fileId });
+    if (!res.ok) throw new Error(res.error || 'No se pudo guardar el comentario');
+
+    var t = tickets.find(function(x){ return x.ID===id; });
+    if (t) {
+      var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
+      coms.push(comentario);
+      t.comentarios = coms;
+      if (fileId) {
+        var adjs2 = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try{return JSON.parse(t.adjuntos||'[]')}catch(e){return[]} })();
+        adjs2.push({ nombre: detailArchivo.name, fileId: fileId, url: comentario.archivoUrl||'', origen:'Operaciones', de:'operaciones' });
+        t.adjuntos = adjs2;
+      }
+      selTicket = t;
+    }
+    detailComentario = ''; detailArchivo = null;
+    toast('Comentario agregado', 'ok');
+  } catch (e) {
+    toast('Error al agregar comentario: ' + e.message, 'err');
+  }
+  saving = false; renderPanel();
 };
 
 window.closePanel=function(){var o=document.querySelector('.overlay');if(o)o.remove();selTicket=null;};
