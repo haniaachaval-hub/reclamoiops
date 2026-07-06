@@ -792,7 +792,14 @@ function validarColumnasPlanilla(file, hojas) {
         resolve({ ok: false, msg: 'No se pudo leer la planilla: ' + err.message });
       }
     };
-    reader.readAsArrayBuffer(file);
+    reader.onerror = function() {
+      resolve({ ok: false, msg: 'No se pudo leer el archivo "' + file.name + '".' });
+    };
+    try {
+      reader.readAsArrayBuffer(file);
+    } catch(err) {
+      resolve({ ok: false, msg: 'No se pudo leer la planilla: ' + err.message });
+    }
   });
 }
 
@@ -830,11 +837,16 @@ window.rfValidarInformacion = async function() {
   if (hojasAValidar) {
     rfValidando = true; render();
     var errores = [];
-    for (var i = 0; i < rfExcelFiles.length; i++) {
-      var res = await validarColumnasPlanilla(rfExcelFiles[i], hojasAValidar);
-      if (!res.ok) errores.push('Archivo "' + rfExcelFiles[i].name + '":\n' + res.msg);
+    try {
+      for (var i = 0; i < rfExcelFiles.length; i++) {
+        var res = await validarColumnasPlanilla(rfExcelFiles[i], hojasAValidar);
+        if (!res.ok) errores.push('Archivo "' + rfExcelFiles[i].name + '":\n' + res.msg);
+      }
+    } catch(err) {
+      errores.push('Ocurrió un error inesperado al validar la(s) planilla(s): ' + err.message);
+    } finally {
+      rfValidando = false;
     }
-    rfValidando = false;
     if (errores.length > 0) {
       rfErrors.validacion = errores.join('\n\n');
       rfValidated = false;
