@@ -78,6 +78,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 .btn-ghost:hover{background:var(--g50)}
 .btn:disabled{opacity:.4;cursor:default}
 .spinner{width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+.page-spin{width:32px;height:32px;border:3px solid var(--g200);border-top-color:var(--b600);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .cinp{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;resize:vertical;min-height:80px}
 .cinp:focus{border-color:var(--b400)}
@@ -178,8 +179,6 @@ var filtroFechaHasta = '';
 var ordenFecha = 'desc'; // 'desc' = más reciente primero, 'asc' = más viejo primero
 var ordenMonto = ''; // '' = sin orden, 'desc' = mayor primero, 'asc' = menor primero
 var saving = false;
-var showReopen = false;
-var reopenMsg = '';
 var loading = true;
 // Texto nuevo / archivo nuevo en el panel de detalle, agregado por comercial
 var detailComentario = '';
@@ -406,7 +405,7 @@ async function loadData() {
 function render() {
   if (!currentUser) { renderLogin(); return; }
   if (loading) {
-    document.getElementById('root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--g400);font-size:12px">Cargando...</div>';
+    document.getElementById('root').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100vh;color:var(--g400);font-size:12px"><div class="page-spin"></div><span>Cargando...</span></div>';
     return;
   }
   renderApp();
@@ -1064,17 +1063,6 @@ function renderPanel() {
             </div>
           </div>
 
-          ${t.estado==='Finalizado' ? `
-          <div class="dsec">
-            <div class="dsec-title">Reabrir ticket</div>
-            <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad-lg);padding:14px">
-              <p style="font-size:12px;color:var(--g600);margin-bottom:10px">Podés reabrir este ticket con un mensaje para el equipo de operaciones.</p>
-              <textarea class="cinp" id="reopen-msg" placeholder="Describí el motivo del reclamo..." rows="3"></textarea>
-              <div style="margin-top:10px">
-                <button class="btn btn-danger" onclick="reabrirTicket('${t.ID}')">🔄 Reabrir ticket</button>
-              </div>
-            </div>
-          </div>` : ''}
         </div>
       </div>
     </div>`;
@@ -1171,28 +1159,6 @@ async function agregarComentarioTicket(id) {
     toast('Error al agregar comentario: ' + e.message, 'err');
   }
   saving = false; renderPanel();
-}
-
-async function reabrirTicket(id) {
-  var msg = document.getElementById('reopen-msg').value.trim();
-  if (!msg) { toast('Escribí un mensaje para el operario', 'err'); return; }
-
-  var ahora = new Date();
-  var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
-
-  var t = tickets.find(function(x){ return x.ID===id; });
-  var hist = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
-  hist.push({ ts: tsStr, accion: 'Re abierto por comercial — ' + msg, usuario: currentUser.email });
-
-  try {
-    var res = await api({ action:'updateTicket', id:id, campos:{ estado:'Re abierto', historial:hist } });
-    if (!res.ok) throw new Error(res.error);
-    t.estado = 'Re abierto';
-    t.historial = hist;
-    toast('Ticket re abierto', 'ok');
-    selectedTicket = null;
-    render();
-  } catch(e) { toast('Error: ' + e.message, 'err'); }
 }
 
 document.querySelector('script[src*="gsi"]')?.addEventListener('load', function() {
