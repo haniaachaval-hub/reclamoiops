@@ -360,8 +360,8 @@ function render(){
     app.innerHTML='<div class="app"><div style="flex:1" class="loading"><div class="spin"></div><span>Cargando tickets...</span></div></div>';
     return;
   }
-  var rec=getTab('recibidos'),ana=getTab('analisis'),fin=getTab('finalizados'),reo=getTab('reabiertos');
-  var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:activeTab==='finalizados'?fin:reo;
+  var rec=getTab('recibidos'),ana=getTab('analisis'),fin=getTab('finalizados');
+  var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:fin;
   var finConDatos=fin.filter(function(t){return parseFloat(t.analisis_segundos_acum)>0;});
   var promDias=finConDatos.length?Math.round(finConDatos.reduce(function(s,t){return s+calcDias(t);},0)/finConDatos.length):0;
   var enRiesgo=tickets.filter(function(t){var v=vencimientoInfo(t);return v&&(v.estado==='riesgo'||v.estado==='vencido');}).length;
@@ -385,7 +385,7 @@ function render(){
     <div class="main">
       <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Clientes':'Ticketera'}</h2></div>
       <div class="content">
-        ${activeNav==='clientes'?renderClientesSection():renderTicketsSection(rec,ana,fin,reo,tab,promDias,enRiesgo,vencidos)}
+        ${activeNav==='clientes'?renderClientesSection():renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos)}
       </div>
     </div>
   </div>`;
@@ -488,7 +488,7 @@ function renderFiltros(tipos,empresas){
   html+='</div>';
   return html;
 }
-function renderTicketsSection(rec,ana,fin,reo,tab,promDias,enRiesgo,vencidos){
+function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
   var tipos=getOptipos();
   var empresas=getOpEmpresas();
   return`
@@ -497,7 +497,6 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias,enRiesgo,vencidos){
           <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
           <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
           <div class="kpi purple"><div class="kl">Prom. horas</div><div class="kv">${promDias}</div></div>
-          <div class="kpi danger"><div class="kl">Re abiertos</div><div class="kv">${reo.length}</div></div>
           <div class="kpi" style="border:1px solid ${vencidos>0?'var(--r200, #fecaca)':enRiesgo>0?'#fcd34d':'var(--g200)'}; background:${vencidos>0?'var(--r50)':enRiesgo>0?'var(--a50)':'var(--w)'}">
             <div class="kl" style="color:${vencidos>0?'var(--r600)':enRiesgo>0?'var(--a600)':'var(--g700)'}">🚨 En riesgo</div>
             <div class="kv" style="color:${vencidos>0?'var(--r600)':enRiesgo>0?'var(--a500)':'var(--g400)'}">${enRiesgo}</div>
@@ -508,7 +507,6 @@ function renderTicketsSection(rec,ana,fin,reo,tab,promDias,enRiesgo,vencidos){
           <button class="tab${activeTab==='recibidos'?' on':''}" onclick="activeTab='recibidos';render()">Recibidos<span class="tc">${rec.length}</span></button>
           <button class="tab${activeTab==='analisis'?' on':''}" onclick="activeTab='analisis';render()">En análisis<span class="tc">${ana.length}</span></button>
           <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
-          <button class="tab${activeTab==='reabiertos'?' on':''}" onclick="activeTab='reabiertos';render()">Re abiertos<span class="tc">${reo.length}</span></button>
         </div>
         ${renderFiltros(tipos,empresas)}
         <div class="tw">
@@ -892,7 +890,7 @@ window.asignar=async function(emailCliente){
   }catch(e){toast("Error: "+e.message,"err");}
 };
 
-if(_u){loadData();}
+if(_u){render();loadData();}
 </script>
 </body>
 </html>
