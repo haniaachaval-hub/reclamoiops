@@ -81,10 +81,24 @@ tbody tr:hover td{background:var(--au50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsCy9tDmENkgz8lJXiINbSUoFWkes76va9HEg_JoLJYIx9W5b8AKgJ5oYZcrxY9KyF/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5BjbAaX_LpEZff3Ef_JWrBojTLUj0nnVIEK9iCRBOGGc3Wk2M7aXxmbSDBlb2i5wzrA/exec';
 
 // ── Auth ──────────────────────────────────────────────────────
 var currentUser = (function(){
+  // Acceso directo desde el mail de notificación de nuevo reclamo: si la
+  // URL trae token/email/profile (link "Ver detalle del reclamo"), los
+  // guardamos en la sesión para no pedir el login de Google de nuevo.
+  try{
+    var qp=new URLSearchParams(window.location.search);
+    var qToken=qp.get('token'), qEmail=qp.get('email'), qProfile=qp.get('profile');
+    if(qToken && qEmail && qProfile==='auditoria'){
+      sessionStorage.setItem('ro_token',qToken);
+      sessionStorage.setItem('ro_email',qEmail);
+      sessionStorage.setItem('ro_name',qp.get('name')||qEmail.split('@')[0]);
+      sessionStorage.setItem('ro_profile','auditoria');
+    }
+  }catch(e){}
+
   var token = sessionStorage.getItem('ro_token');
   var email = sessionStorage.getItem('ro_email');
   var name  = sessionStorage.getItem('ro_name');
@@ -171,6 +185,12 @@ async function loadData() {
     });
   } catch(e){ console.error(e); }
   render();
+  // Deep link: si la URL trae ?id=REC-XXXXXX (por ej. desde el mail de
+  // notificación de nuevo reclamo), abrimos directo el panel de detalle.
+  try{
+    var idParam=new URLSearchParams(window.location.search).get('id');
+    if(idParam) openPanel(idParam);
+  }catch(e){}
 }
 
 // ── Filtrado ──────────────────────────────────────────────────
