@@ -105,10 +105,24 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsCy9tDmENkgz8lJXiINbSUoFWkes76va9HEg_JoLJYIx9W5b8AKgJ5oYZcrxY9KyF/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5BjbAaX_LpEZff3Ef_JWrBojTLUj0nnVIEK9iCRBOGGc3Wk2M7aXxmbSDBlb2i5wzrA/exec';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
+  // Acceso directo desde el mail de notificación de nuevo reclamo: si la
+  // URL trae token/email/profile (link "Ver detalle del reclamo"), los
+  // guardamos en la sesión para no pedir el login de Google de nuevo.
+  try{
+    var qp=new URLSearchParams(window.location.search);
+    var qToken=qp.get('token'), qEmail=qp.get('email'), qProfile=qp.get('profile');
+    if(qToken && qEmail && qProfile==='operaciones'){
+      sessionStorage.setItem('ro_token',qToken);
+      sessionStorage.setItem('ro_email',qEmail);
+      sessionStorage.setItem('ro_name',qp.get('name')||qEmail.split('@')[0]);
+      sessionStorage.setItem('ro_profile','operaciones');
+    }
+  }catch(e){}
+
   var t=sessionStorage.getItem('ro_token'),e=sessionStorage.getItem('ro_email'),n=sessionStorage.getItem('ro_name');
   if(!t||!e){window.location.href='index.html';return null;}
   return{token:t,email:e,name:n};
