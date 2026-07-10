@@ -74,6 +74,9 @@ tbody tr:hover td{background:var(--au50);cursor:pointer}
 .btn-ghost{background:transparent;color:var(--g600);border:1px solid var(--g200)}
 .btn-ghost:hover{background:var(--g50)}
 .readonly-banner{background:var(--au50);border:1px solid var(--au100);border-radius:var(--rad);padding:7px 11px;font-size:11px;color:var(--au700);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:var(--g400);font-size:13px;gap:10px}
+.spin{width:32px;height:32px;border:3px solid var(--g200);border-top-color:var(--b600);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -108,6 +111,7 @@ var currentUser = (function(){
 })();
 
 var tickets = [];
+var loading = true;
 var selectedTicket = null;
 var searchInput = '';
 var searchQ = '';
@@ -184,6 +188,7 @@ async function loadData() {
       if (typeof t.adjuntos === 'string') try{ t.adjuntos=JSON.parse(t.adjuntos); }catch(e){ t.adjuntos=[]; }
     });
   } catch(e){ console.error(e); }
+  loading = false;
   render();
   // Deep link: si la URL trae ?id=REC-XXXXXX (por ej. desde el mail de
   // notificación de nuevo reclamo), abrimos directo el panel de detalle.
@@ -231,6 +236,10 @@ function ejecutarBusqueda() {
 // ── Render principal ──────────────────────────────────────────
 function render() {
   var root = document.getElementById('root');
+  if (loading) {
+    root.innerHTML = '<div class="loading"><div class="spin"></div><span>Cargando tickets...</span></div>';
+    return;
+  }
   var filtered = getFiltered();
   var clientesDisponibles = Array.from(new Set(tickets.map(function(t){ return t.empresa||t.titular||t.email_cliente||''; }).filter(Boolean)));
   var estadosDisponibles = ['Recibido','En análisis','Finalizado','Re abierto'];
@@ -437,7 +446,7 @@ function renderComentarios(t, coms, adjs) {
 
 window.closePanel = function(){ var o=document.querySelector('.overlay'); if(o)o.remove(); selectedTicket=null; };
 
-if (currentUser) { loadData(); }
+if (currentUser) { render(); loadData(); }
 </script>
 </body>
 </html>
