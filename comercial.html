@@ -151,7 +151,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5BjbAaX_LpEZff3Ef_JWrBojTLUj0nnVIEK9iCRBOGGc3Wk2M7aXxmbSDBlb2i5wzrA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvtXHtCxZLrtboNR80KQ6p1V4ty9LClAPpgNAUod9q6joPyEPB181e65mAZMbudNx9GQ/exec';
 var GOOGLE_CLIENT_ID = '337424697739-d3mbqis7mpcao9r95imnfdq95uhboeur.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -169,6 +169,11 @@ var currentUser = (function(){
       sessionStorage.setItem('ro_email',qEmail);
       sessionStorage.setItem('ro_name',qp.get('name')||qEmail.split('@')[0]);
       sessionStorage.setItem('ro_profile','comercial');
+      // El link puede traer la empresa del ticket puntual que originó el
+      // mail (por ej. el informe final); se la asignamos a esta sesión
+      // temporal para que el panel filtre y muestre ese ticket.
+      var qEmpresa=qp.get('empresa');
+      if(qEmpresa) sessionStorage.setItem('ro_clientes',JSON.stringify([qEmpresa]));
     }
   }catch(e){}
 
@@ -1093,7 +1098,7 @@ function renderAdjuntosTicket(t) {
   var extra = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try { return JSON.parse(t.adjuntos||'[]'); } catch(e){ return []; } })();
   var adj = [];
   if (extra.length) {
-    extra.forEach(function(a){ adj.push({ nombre: a.nombre, origen: a.origen || (a.de==='operaciones'?'Operaciones':'Comercial'), fileId: a.fileId || a.id || null, url: a.url || null }); });
+    extra.forEach(function(a){ adj.push({ nombre: a.nombre, origen: a.origen || (a.de==='operaciones'?'Operaciones':'Comercial'), fileId: a.fileId || a.id || null, url: a.url || null, tipo: a.tipo || null }); });
   } else {
     if (t.excel_nombre) adj.push({ nombre: t.excel_nombre, origen: 'Comercial (planilla)', fileId: t.excel_fileId || null, url: null });
     if (t.carrier_nombre) adj.push({ nombre: t.carrier_nombre, origen: 'Comercial (acuse/mail)', fileId: t.carrier_fileId || null, url: null });
@@ -1103,12 +1108,15 @@ function renderAdjuntosTicket(t) {
   return adj.map(function(a){
     var fid = a.fileId||'';
     var u = a.url||'';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">
-      <span>📎</span>
+    var esInforme = a.tipo === 'informe_final';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${esInforme?'var(--gr50)':'transparent'};border:1px solid ${esInforme?'var(--gr500)':'var(--g100)'};border-radius:var(--rad);margin-bottom:6px;font-size:12px">
+      <span>${esInforme?'📄':'📎'}</span>
       ${(fid||u)
         ? `<a href="#" onclick="abrirAdjunto(event,'${fid}','${encodeURIComponent(a.nombre||'')}','${u}')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>`
         : `<span style="flex:1;color:var(--g900)">${esc(a.nombre)} <span style="color:var(--g400);font-weight:400">(sin vista previa disponible)</span></span>`}
-      <span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>
+      ${esInforme
+        ? `<span style="font-size:9px;font-weight:700;color:var(--gr700);background:var(--gr100);padding:2px 7px;border-radius:10px;letter-spacing:.03em">✅ INFORME FINAL</span>`
+        : `<span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>`}
     </div>`;
   }).join('');
 }
