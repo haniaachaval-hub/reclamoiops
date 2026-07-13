@@ -408,9 +408,23 @@ function renderClientesSection(){
   // Todo comercial registrado aparece en la lista, tenga o no clientes asignados todavía.
   comerciales.forEach(function(co){ if (!porComercial[co.email]) porComercial[co.email] = []; });
 
+  // Cada comercial puede tener clientes de dos orígenes distintos que hoy
+  // no se cruzan en ningún otro lado: los asignados "a mano" desde acá
+  // (solapa clientes → comercial_asignado) y los que la persona declaró
+  // ella misma al crear su cuenta (solapa comerciales → clientes_asignados).
+  // Los combinamos y sacamos duplicados para mostrar el panorama completo.
   var filasComerciales = Object.keys(porComercial).map(function(email){
     var com = comerciales.find(function(co){ return co.email===email; });
-    return { email: email, nombre: com ? com.nombre : email.split('@')[0], clientesAsig: porComercial[email] };
+    var formal = porComercial[email].map(function(c){ return c.empresa || c.titular || ''; }).filter(Boolean);
+    var declarados = com && com.clientesAsignados ? com.clientesAsignados : [];
+    var vistos = {};
+    var clientesAsig = formal.concat(declarados).filter(function(nombre){
+      var k = nombre.toLowerCase();
+      if (vistos[k]) return false;
+      vistos[k] = true;
+      return true;
+    });
+    return { email: email, nombre: com ? com.nombre : email.split('@')[0], clientesAsig: clientesAsig };
   }).sort(function(a,b){ return b.clientesAsig.length - a.clientesAsig.length; });
 
   return`
@@ -456,7 +470,7 @@ function renderClientesSection(){
             <td style="font-weight:500">${esc(f.nombre)}</td>
             <td style="font-size:11px">${esc(f.email)}</td>
             <td>${f.clientesAsig.length
-              ? f.clientesAsig.map(function(c){return`<span style="display:inline-block;background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px 4px 2px 0">${esc(c.empresa||'—')}</span>`;}).join('')
+              ? f.clientesAsig.map(function(nombre){return`<span style="display:inline-block;background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px 4px 2px 0">${esc(nombre)}</span>`;}).join('')
               : '<span style="color:var(--g400);font-size:11px">Sin clientes asignados</span>'}</td>
           </tr>`;}).join('') : `<tr><td colspan="3" style="text-align:center;color:var(--g400);padding:14px;font-size:12px">No hay comerciales registrados en la solapa "comerciales"</td></tr>`}
         </tbody>
