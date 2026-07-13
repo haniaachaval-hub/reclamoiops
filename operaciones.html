@@ -83,6 +83,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 .dl{font-size:9px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
 .dv{font-size:12px;color:var(--g900);font-weight:500}
 .sel-e{padding:6px 9px;border:1px solid var(--g200);border-radius:var(--rad);font-size:12px;font-family:inherit;color:var(--g700);background:var(--w);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px}
+.sel-e-lg{padding:10px 40px 10px 14px;border:1px solid var(--g300);border-radius:var(--rad-lg,10px);font-size:14px;font-weight:500;font-family:inherit;color:var(--g900);background:var(--w);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--rad);font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .1s}
 .btn-p{background:var(--b600);color:#fff}
 .btn-p:hover:not(:disabled){background:var(--b700)}
@@ -570,13 +571,16 @@ function renderPanel(){
           </div>
           <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.empresa||t.titular||'—')}</div>
           <div style="font-size:11px;color:var(--g500);margin-top:2px">${esc(t.tipo_reclamo||'—')}</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:9px">
-            <select class="sel-e" id="sel-estado" style="font-size:11px;padding:5px 8px">
-              <option value="Recibido" ${t.estado==='Recibido'?'selected':''}>Recibido</option>
-              <option value="En análisis" ${t.estado==='En análisis'?'selected':''}>En análisis</option>
-              <option value="Finalizado" ${t.estado==='Finalizado'?'selected':''}>Finalizado</option>
-            </select>
-            <button class="btn btn-p" style="padding:5px 11px;font-size:11px" onclick="guardarEstado('${t.ID}')">Guardar</button>
+          <div style="margin-top:11px">
+            <div style="font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Cambiar estado</div>
+            <div style="display:flex;align-items:center;gap:9px">
+              <select class="sel-e-lg" id="sel-estado">
+                <option value="Recibido" ${t.estado==='Recibido'?'selected':''}>Recibido</option>
+                <option value="En análisis" ${t.estado==='En análisis'?'selected':''}>En análisis</option>
+                <option value="Finalizado" ${t.estado==='Finalizado'?'selected':''}>Finalizado</option>
+              </select>
+              <button class="btn btn-p" style="padding:10px 16px;font-size:13px" onclick="guardarEstado('${t.ID}')">Guardar</button>
+            </div>
           </div>
         </div>
         <button class="close" onclick="closePanel()">✕</button>
