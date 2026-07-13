@@ -158,6 +158,20 @@ var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
 // =====================================================================
 
 var currentUser = (function(){
+  // Acceso directo desde el mail de notificación (informe final, etc.): si
+  // la URL trae token/email/profile, guardamos la sesión para no pedir
+  // login de nuevo.
+  try{
+    var qp=new URLSearchParams(window.location.search);
+    var qToken=qp.get('token'), qEmail=qp.get('email'), qProfile=qp.get('profile');
+    if(qToken && qEmail && qProfile==='comercial'){
+      sessionStorage.setItem('ro_token',qToken);
+      sessionStorage.setItem('ro_email',qEmail);
+      sessionStorage.setItem('ro_name',qp.get('name')||qEmail.split('@')[0]);
+      sessionStorage.setItem('ro_profile','comercial');
+    }
+  }catch(e){}
+
   var token = sessionStorage.getItem("ro_token");
   var email = sessionStorage.getItem("ro_email");
   var name  = sessionStorage.getItem("ro_name");
@@ -1174,6 +1188,15 @@ if (currentUser) {
     await loadData();
     loading = false;
     render();
+    // Deep link: si la URL trae ?id=REC-XXXXXX (por ej. desde el mail de
+    // informe final), abrimos directo el detalle de ese ticket.
+    try{
+      var idParam=new URLSearchParams(window.location.search).get('id');
+      if(idParam){
+        var t=tickets.find(function(x){return x.ID===idParam;});
+        if(t){selectedTicket=t;detailComentario='';detailArchivo=null;renderPanel();}
+      }
+    }catch(e){}
   })();
 } else {
   render();
