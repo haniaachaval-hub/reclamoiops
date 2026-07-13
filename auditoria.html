@@ -84,7 +84,7 @@ tbody tr:hover td{background:var(--au50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5BjbAaX_LpEZff3Ef_JWrBojTLUj0nnVIEK9iCRBOGGc3Wk2M7aXxmbSDBlb2i5wzrA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzvtXHtCxZLrtboNR80KQ6p1V4ty9LClAPpgNAUod9q6joPyEPB181e65mAZMbudNx9GQ/exec';
 
 // ── Auth ──────────────────────────────────────────────────────
 var currentUser = (function(){
@@ -403,7 +403,7 @@ function renderPanel() {
 function renderAdjuntos(t, adjs) {
   var adj = [];
   if (adjs.length) {
-    adjs.forEach(function(a){ adj.push({ nombre:a.nombre, origen:a.origen||(a.de==='operaciones'?'Operaciones':'Comercial'), fileId:a.fileId||a.id||null, url:a.url||null }); });
+    adjs.forEach(function(a){ adj.push({ nombre:a.nombre, origen:a.origen||(a.de==='operaciones'?'Operaciones':'Comercial'), fileId:a.fileId||a.id||null, url:a.url||null, tipo:a.tipo||null }); });
   } else {
     if (t.excel_nombre) adj.push({ nombre:t.excel_nombre, origen:'Comercial (planilla)', fileId:t.excel_fileId||null, url:null });
     if (t.carrier_nombre) adj.push({ nombre:t.carrier_nombre, origen:'Comercial (acuse/mail)', fileId:t.carrier_fileId||null, url:null });
@@ -411,12 +411,15 @@ function renderAdjuntos(t, adjs) {
   if (!adj.length) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
   return adj.map(function(a){
     var fid=a.fileId||'', u=a.url||'';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">'
-      + '<span>📎</span>'
+    var esInforme = a.tipo === 'informe_final';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid '+(esInforme?'var(--gr500)':'var(--g100)')+';background:'+(esInforme?'var(--gr50)':'transparent')+';border-radius:var(--rad);margin-bottom:6px;font-size:12px">'
+      + '<span>'+(esInforme?'📄':'📎')+'</span>'
       + ((fid||u)
           ? '<a href="#" onclick="abrirAdjunto(event,\''+fid+'\',\''+encodeURIComponent(a.nombre||'')+'\',\''+u+'\')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">'+esc(a.nombre)+'</a>'
           : '<span style="flex:1;color:var(--g900)">'+esc(a.nombre)+' <span style="color:var(--g400);font-weight:400">(sin vista previa disponible)</span></span>')
-      + '<span style="font-size:10px;color:var(--g400)">'+esc(a.origen)+'</span>'
+      + (esInforme
+          ? '<span style="font-size:9px;font-weight:700;color:var(--gr700);background:var(--gr100);padding:2px 7px;border-radius:10px;letter-spacing:.03em">✅ INFORME FINAL</span>'
+          : '<span style="font-size:10px;color:var(--g400)">'+esc(a.origen)+'</span>')
       + '</div>';
   }).join('');
 }
