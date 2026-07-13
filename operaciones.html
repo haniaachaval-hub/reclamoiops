@@ -375,7 +375,7 @@ function render(){
       <div class="sb-nav">
         <div class="sb-sec">Panel</div>
         <div class="ni${activeNav==='tickets'?' on':''}" onclick="activeNav='tickets';render()">🎫 Ticketera</div>
-        <div class="ni${activeNav==='clientes'?' on':''}" onclick="activeNav='clientes';render()">👥 Clientes <span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r100)':'var(--g100)'};color:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r600)':'var(--g500)'}">${clientes.filter(function(c){return!c.comercial_asignado;}).length||''}</span></div>
+        <div class="ni${activeNav==='clientes'?' on':''}" onclick="activeNav='clientes';render()">💼 Comerciales <span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r100)':'var(--g100)'};color:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r600)':'var(--g500)'}">${clientes.filter(function(c){return!c.comercial_asignado;}).length||''}</span></div>
       </div>
       <div class="sb-foot">
         <div style="font-size:20px">👤</div>
@@ -384,7 +384,7 @@ function render(){
       </div>
     </div>
     <div class="main">
-      <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Clientes':'Ticketera'}</h2></div>
+      <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Comerciales':'Ticketera'}</h2></div>
       <div class="content">
         ${activeNav==='clientes'?renderClientesSection():renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos)}
       </div>
@@ -394,22 +394,38 @@ function render(){
 
 function renderClientesSection(){
   var sinAsignar=clientes.filter(function(c){return!c.comercial_asignado;});
-  var asignados=clientes.filter(function(c){return c.comercial_asignado;});
   var optsComercial=comerciales.map(function(c){return`<option value="${esc(c.email)}">${esc(c.nombre)} (${esc(c.email)})</option>`;}).join('');
+
+  // Agrupamos los clientes asignados por comercial (no por cliente): acá
+  // el foco es "qué comerciales están registrados y qué clientes tiene
+  // asignados cada uno", no al revés.
+  var porComercial = {};
+  clientes.forEach(function(c){
+    if (!c.comercial_asignado) return;
+    if (!porComercial[c.comercial_asignado]) porComercial[c.comercial_asignado] = [];
+    porComercial[c.comercial_asignado].push(c);
+  });
+  // Todo comercial registrado aparece en la lista, tenga o no clientes asignados todavía.
+  comerciales.forEach(function(co){ if (!porComercial[co.email]) porComercial[co.email] = []; });
+
+  var filasComerciales = Object.keys(porComercial).map(function(email){
+    var com = comerciales.find(function(co){ return co.email===email; });
+    return { email: email, nombre: com ? com.nombre : email.split('@')[0], clientesAsig: porComercial[email] };
+  }).sort(function(a,b){ return b.clientesAsig.length - a.clientesAsig.length; });
 
   return`
   <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
     <div>
-      <div style="font-size:13px;font-weight:600;color:var(--g900)">Clientes registrados (${clientes.length})</div>
-      ${sinAsignar.length?`<div style="font-size:11px;color:var(--r500);margin-top:2px">⚠ ${sinAsignar.length} sin comercial asignado</div>`:'<div style="font-size:11px;color:var(--gr600);margin-top:2px">✅ Todos los clientes tienen comercial asignado</div>'}
+      <div style="font-size:13px;font-weight:600;color:var(--g900)">Comerciales registrados (${comerciales.length})</div>
+      ${sinAsignar.length?`<div style="font-size:11px;color:var(--r500);margin-top:2px">⚠ ${sinAsignar.length} cliente${sinAsignar.length!==1?'s':''} sin comercial asignado</div>`:'<div style="font-size:11px;color:var(--gr600);margin-top:2px">✅ Todos los clientes tienen comercial asignado</div>'}
     </div>
   </div>
   ${sinAsignar.length?`
   <div style="margin-bottom:18px">
-    <div style="font-size:11px;font-weight:600;color:var(--r600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Sin asignar</div>
+    <div style="font-size:11px;font-weight:600;color:var(--r600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Clientes sin asignar</div>
     <div class="tw">
       <table>
-        <thead><tr><th>Email</th><th>Nombre</th><th>Empresa</th><th>Registrado</th><th>Asignar comercial</th></tr></thead>
+        <thead><tr><th>Email cliente</th><th>Nombre</th><th>Empresa</th><th>Registrado</th><th>Asignar comercial</th></tr></thead>
         <tbody>
           ${sinAsignar.map(function(c){return`<tr>
             <td style="font-size:11px">${esc(c.email)}</td>
@@ -430,24 +446,23 @@ function renderClientesSection(){
       </table>
     </div>
   </div>`:''}
-  ${asignados.length?`
   <div>
-    <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Asignados</div>
+    <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Comerciales y sus clientes asignados</div>
     <div class="tw">
       <table>
-        <thead><tr><th>Email</th><th>Nombre</th><th>Empresa</th><th>Comercial asignado</th><th>Registrado</th></tr></thead>
+        <thead><tr><th>Comercial</th><th>Email</th><th>Clientes asignados</th></tr></thead>
         <tbody>
-          ${asignados.map(function(c){return`<tr>
-            <td style="font-size:11px">${esc(c.email)}</td>
-            <td>${esc(c.nombre||'—')}</td>
-            <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px">${esc(c.empresa||'—')}</span></td>
-            <td style="font-size:11px;color:var(--gr700)">✅ ${esc(c.comercial_asignado)}</td>
-            <td style="font-size:11px">${esc(c.creado||'—')}</td>
-          </tr>`;}).join('')}
+          ${filasComerciales.length ? filasComerciales.map(function(f){return`<tr>
+            <td style="font-weight:500">${esc(f.nombre)}</td>
+            <td style="font-size:11px">${esc(f.email)}</td>
+            <td>${f.clientesAsig.length
+              ? f.clientesAsig.map(function(c){return`<span style="display:inline-block;background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;margin:2px 4px 2px 0">${esc(c.empresa||'—')}</span>`;}).join('')
+              : '<span style="color:var(--g400);font-size:11px">Sin clientes asignados</span>'}</td>
+          </tr>`;}).join('') : `<tr><td colspan="3" style="text-align:center;color:var(--g400);padding:14px;font-size:12px">No hay comerciales registrados en la solapa "comerciales"</td></tr>`}
         </tbody>
       </table>
     </div>
-  </div>`:''}`;
+  </div>`;
 }
 
 function getOptipos(){
