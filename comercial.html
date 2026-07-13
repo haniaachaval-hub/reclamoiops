@@ -412,12 +412,24 @@ function initGoogleLogin() {
 async function loadData() {
   try {
     var pr = await api({ action:'getPerfilComercial' });
+    if (!pr.ok) { manejarSesionInvalida(); return; }
     perfil = pr.perfil;
     var tr = await api({ action:'getTickets', esOperario:false });
+    if (!tr.ok) { manejarSesionInvalida(); return; }
     tickets = tr.tickets || [];
     // Actualizar polling cada 60s
     setTimeout(async function(){ if(currentUser){ var r=await api({action:'getTickets',esOperario:false}); tickets=r.tickets||[]; if(activeView==='tickets') render(); } }, 60000);
   } catch(e) { console.error(e); }
+}
+
+// Se llama cuando el backend rechaza la sesión (por ej. porque tu mail ya
+// no figura en la solapa "comerciales"). En vez de dejar la pantalla en
+// blanco o con "No hay tickets" sin explicación, avisamos y mandamos de
+// vuelta al login.
+function manejarSesionInvalida() {
+  sessionStorage.clear();
+  toast('Tu acceso como Comercial ya no está habilitado. Volvé a ingresar.', 'err');
+  setTimeout(function(){ window.location.href = 'index.html'; }, 2500);
 }
 
 // ── RENDER PRINCIPAL ──────────────────────────────────────────
