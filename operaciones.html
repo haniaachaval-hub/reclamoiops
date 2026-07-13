@@ -130,7 +130,7 @@ var _u=(function(){
 
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
 var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='';
-var mailPara='', mailAsunto='', mailCuerpo='', adjuntoFile=null;
+var informeFinalFiles=[], enviandoInforme=false;
 var detailComentario='', detailArchivo=null, saving=false;
 var activeNav='tickets'; // tickets | clientes
 var clientes=[], comerciales=[];
@@ -627,17 +627,6 @@ function renderPanel(){
           </div>
         </div>
 
-        <!-- NOTAS INTERNAS DE OPERACIONES -->
-        <div class="sec">
-          <div class="sec-t">Notas internas de análisis</div>
-          <p style="font-size:11px;color:var(--g400);margin-bottom:8px">Registrá avances y cambios del análisis. Estas notas <strong>solo las ve Operaciones</strong>.</p>
-          ${renderNotasOp(t)}
-          <div style="background:var(--g50);border:1px solid var(--g200);border-radius:var(--rad);padding:10px;margin-top:8px">
-            <textarea class="cinp" id="op-nota-txt" rows="3" placeholder="Agregar nota de avance..."></textarea>
-            <button class="btn btn-p" style="margin-top:8px;font-size:11px" onclick="agregarNotaOp('${t.ID}')">Agregar nota</button>
-          </div>
-        </div>
-
         <!-- HISTORIAL -->
         <div class="sec">
           <div class="sec-t">Historial</div>
@@ -658,24 +647,20 @@ function renderPanel(){
           </div>
         </div>
 
-        <!-- ENVÍO DE MAIL -->
+        <!-- INFORME FINAL -->
         <div class="sec">
-          <div class="sec-t" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;background:var(--g100);padding:8px 10px;border-radius:var(--rad);border:1px solid var(--g200)" onclick="var s=document.getElementById('mail-body');var a=document.getElementById('mail-arrow');s.style.display=s.style.display==='none'?'flex':'none';a.textContent=s.style.display==='none'?'▼':'▲'">
-            <span style="font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.06em">📤 Envío de informe comercial</span>
-            <span id="mail-arrow" style="font-size:10px;color:var(--g400)">▼</span>
+          <div class="sec-t" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;background:var(--g100);padding:8px 10px;border-radius:var(--rad);border:1px solid var(--g200)" onclick="var s=document.getElementById('informe-body');var a=document.getElementById('informe-arrow');s.style.display=s.style.display==='none'?'flex':'none';a.textContent=s.style.display==='none'?'▼':'▲'">
+            <span style="font-size:11px;font-weight:600;color:var(--g600);text-transform:uppercase;letter-spacing:.06em">📄 Informe final</span>
+            <span id="informe-arrow" style="font-size:10px;color:var(--g400)">▼</span>
           </div>
-          <div id="mail-body" style="display:none;flex-direction:column;gap:7px">
-            <input type="text" class="cinp" style="min-height:unset;resize:none" id="mp" placeholder="Para: email@dominio.com" value="${esc(mailPara)}" oninput="mailPara=this.value">
-            <input type="text" class="cinp" style="min-height:unset;resize:none" id="ma" placeholder="Asunto" value="${esc(mailAsunto)}" oninput="mailAsunto=this.value">
-            <textarea class="cinp" id="mc" rows="4" placeholder="Cuerpo del mail..." oninput="mailCuerpo=this.value">${esc(mailCuerpo)}</textarea>
-            <div>
-              <label style="font-size:11px;font-weight:500;color:var(--g600);display:block;margin-bottom:4px">Adjuntar archivo (Excel, PDF, etc.) — Opcional</label>
-              <div id="adj-box" style="border:1.5px dashed var(--g300);border-radius:var(--rad);padding:12px;text-align:center;cursor:pointer;background:var(--g50);font-size:12px;color:var(--g500)" onclick="document.getElementById('adj-inp').click()">
-                <input id="adj-inp" type="file" style="display:none" onchange="setAdjunto(this)">
-                <span id="adj-label">📎 Clic para adjuntar archivo</span>
-              </div>
+          <div id="informe-body" style="display:none;flex-direction:column;gap:7px">
+            <p style="font-size:11px;color:var(--g400)">Subí uno o más archivos con el informe final. Al confirmar, se les avisa automáticamente por mail a Comercial y a Auditoría, con el detalle del reclamo.</p>
+            <div id="informe-adj-box" style="border:1.5px dashed var(--g300);border-radius:var(--rad);padding:12px;text-align:center;cursor:pointer;background:var(--g50);font-size:12px;color:var(--g500)" onclick="document.getElementById('informe-adj-inp').click()">
+              <input id="informe-adj-inp" type="file" multiple style="display:none" onchange="setInformeArchivos(this)">
+              <span id="informe-adj-label">📎 Clic para adjuntar uno o más archivos</span>
             </div>
-            <button class="btn btn-g" style="align-self:flex-start;border-color:var(--b400);color:var(--b600)" onclick="enviarMail()">📤 Enviar informe</button>
+            ${informeFinalFiles.length ? '<div style="display:flex;flex-direction:column;gap:4px">' + informeFinalFiles.map(function(f,i){return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--g700);background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);padding:5px 8px"><span>📎 '+esc(f.name)+'</span><span style="cursor:pointer;color:var(--r500);font-weight:600" onclick="quitarInformeArchivo('+i+')">✕</span></div>';}).join('') + '</div>' : ''}
+            <button class="btn btn-g" style="align-self:flex-start;border-color:var(--b400);color:var(--b600)" onclick="enviarInformeFinal('${t.ID}')" ${enviandoInforme?'disabled':''}>${enviandoInforme?'Enviando...':'📤 Enviar informe final'}</button>
           </div>
         </div>
 
@@ -707,39 +692,6 @@ function renderAdjuntosOp(t, adjs) {
     </div>`;
   }).join('');
 }
-
-function renderNotasOp(t) {
-  var notas = [];
-  try { notas = Array.isArray(t.notas_op) ? t.notas_op : JSON.parse(t.notas_op||'[]'); } catch(e) { notas = []; }
-  if (!notas.length) return '<p style="font-size:12px;color:var(--g400)">Sin notas cargadas</p>';
-  return notas.map(function(n){
-    return `<div style="border-left:2px solid var(--a500);padding:6px 10px;margin-bottom:5px;background:var(--a50);border-radius:0 var(--rad) var(--rad) 0">
-      <div style="font-size:10px;font-weight:600;color:var(--a600);margin-bottom:2px">⚙️ ${esc(n.usuario||'')} · ${esc(n.ts||'')}</div>
-      <div style="font-size:12px;color:var(--g700)">${esc(n.texto||'')}</div>
-    </div>`;
-  }).join('');
-}
-
-window.agregarNotaOp = async function(id) {
-  var ta = document.getElementById('op-nota-txt');
-  var texto = ta ? ta.value.trim() : '';
-  if (!texto) { toast('Escribí una nota antes de agregar', 'err'); return; }
-  var ahora = new Date();
-  var ts = ahora.getDate().toString().padStart(2,'0')+'/'+(ahora.getMonth()+1).toString().padStart(2,'0')+'/'+ahora.getFullYear()+' '+ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
-  var nota = { usuario: _u.name||_u.email, ts: ts, texto: texto };
-  var t = tickets.find(function(x){ return x.ID===id; });
-  var notas = [];
-  try { notas = Array.isArray(t.notas_op) ? t.notas_op : JSON.parse(t.notas_op||'[]'); } catch(e) { notas = []; }
-  notas.push(nota);
-  try {
-    var res = await api({ action:'updateTicket', id:id, campos:{ notas_op: JSON.stringify(notas) } });
-    if (!res.ok) throw new Error(res.error);
-    t.notas_op = notas;
-    selTicket = t;
-    toast('Nota agregada', 'ok');
-    renderPanel();
-  } catch(e) { toast('Error: '+e.message, 'err'); }
-};
 
 function syncDetailComentario() {
   var ta = document.getElementById('detail-comentario');
@@ -831,48 +783,46 @@ window.guardarEstado=async function(id){
   }catch(e){toast('Error: '+e.message,'err');}
 };
 
-window.setAdjunto=function(input){
-  if(!input.files[0])return;
-  adjuntoFile=input.files[0];
-  var lbl=document.getElementById('adj-label');
-  var box=document.getElementById('adj-box');
-  if(lbl){lbl.textContent='✅ '+adjuntoFile.name;}
-  if(box){box.style.borderColor='var(--gr500)';box.style.background='var(--gr50)';}
+window.setInformeArchivos=function(input){
+  if(!input.files||!input.files.length)return;
+  informeFinalFiles=informeFinalFiles.concat(Array.from(input.files));
+  renderPanel();
 };
 
-window.enviarMail=async function(){
-  var para=(document.getElementById('mp')||{}).value||'';
-  var asunto=(document.getElementById('ma')||{}).value||'';
-  var cuerpo=(document.getElementById('mc')||{}).value||'';
-  if(!para||!asunto||!cuerpo){toast('Completá Para, Asunto y Cuerpo','err');return;}
+window.quitarInformeArchivo=function(i){
+  informeFinalFiles.splice(i,1);
+  renderPanel();
+};
 
-  var btn=document.querySelector('.btn-p[onclick="enviarMail()"]');
-  if(btn){btn.disabled=true;btn.innerHTML='<span style="width:11px;height:11px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:inline-block"></span> Enviando...';}
-
+window.enviarInformeFinal=async function(id){
+  if(!informeFinalFiles.length){toast('Adjuntá al menos un archivo','err');return;}
+  enviandoInforme=true;renderPanel();
   try{
-    var payload={action:'enviarMail',para:para,asunto:asunto,cuerpo:cuerpo};
-
-    // Si hay adjunto, convertirlo a base64
-    if(adjuntoFile){
+    var archivosSubidos=[];
+    for(var i=0;i<informeFinalFiles.length;i++){
+      var f=informeFinalFiles[i];
       var b64=await new Promise(function(res,rej){
         var r=new FileReader();
         r.onload=function(){res(r.result.split(',')[1]);};
         r.onerror=rej;
-        r.readAsDataURL(adjuntoFile);
+        r.readAsDataURL(f);
       });
-      payload.adjuntoBase64=b64;
-      payload.adjuntoNombre=adjuntoFile.name;
-      payload.adjuntoMime=adjuntoFile.type||'application/octet-stream';
+      var up=await api({action:'uploadArchivo',ticketId:id,base64:b64,nombre:f.name,mimeType:f.type||'application/octet-stream'});
+      if(!up.ok)throw new Error(up.error||('Error al subir '+f.name));
+      archivosSubidos.push({nombre:f.name,fileId:up.fileId});
     }
-
-    var res=await api(payload);
+    var res=await api({action:'enviarInformeFinal',id:id,archivos:archivosSubidos});
     if(!res.ok)throw new Error(res.error||'Error desconocido');
-    toast('Mail enviado correctamente ✓','ok');
-    mailPara='';mailAsunto='';mailCuerpo='';adjuntoFile=null;
+    toast('Informe final enviado ✓','ok');
+    informeFinalFiles=[];
+    enviandoInforme=false;
     window.closePanel();
+    try{var r2=await api({action:'getTickets',esOperario:true});tickets=r2.tickets||[];}catch(e){}
+    render();
   }catch(e){
+    enviandoInforme=false;
     if(!e.message.includes('Token')){toast('Error: '+e.message,'err');}
-    if(btn){btn.disabled=false;btn.innerHTML='📤 Enviar';}
+    renderPanel();
   }
 };
 
