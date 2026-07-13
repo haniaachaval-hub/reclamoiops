@@ -1087,8 +1087,11 @@ function renderPanel() {
     </div>`;
 
   var existing = document.querySelector('.overlay');
-  if (existing) existing.remove();
+  var scrollY = 0;
+  if (existing) { var pOld = existing.querySelector('.panel'); if (pOld) scrollY = pOld.scrollTop; existing.remove(); }
   document.body.insertAdjacentHTML('beforeend', panelHtml);
+  var pNew = document.querySelector('.overlay .panel');
+  if (pNew && scrollY) pNew.scrollTop = scrollY;
 }
 
 // Lista los archivos adjuntados al ticket por comercial y por operaciones
