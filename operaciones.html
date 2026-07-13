@@ -554,7 +554,9 @@ function renderPanel(){
   var coms=[];try{coms=Array.isArray(t.comentarios)?t.comentarios:JSON.parse(t.comentarios||'[]');}catch(e){}
   var adjs=[];try{adjs=Array.isArray(t.adjuntos)?t.adjuntos:JSON.parse(t.adjuntos||'[]');}catch(e){}
   var d=calcDias(t);
-  var existing=document.querySelector('.overlay');if(existing)existing.remove();
+  var existing=document.querySelector('.overlay');
+  var scrollY=0;
+  if(existing){var pOld=existing.querySelector('.panel');if(pOld)scrollY=pOld.scrollTop;existing.remove();}
 
   document.body.insertAdjacentHTML('beforeend',`
   <div class="overlay" onclick="if(event.target.className==='overlay')closePanel()">
@@ -669,6 +671,8 @@ function renderPanel(){
       </div>
     </div>
   </div>`);
+  var pNew=document.querySelector('.overlay .panel');
+  if(pNew && scrollY)pNew.scrollTop=scrollY;
 }
 
 function renderAdjuntosOp(t, adjs) {
