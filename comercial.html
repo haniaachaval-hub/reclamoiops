@@ -33,7 +33,8 @@ body{background:var(--g50);min-height:100vh}
 .nav-item.active{background:var(--gr50);color:var(--gr700);font-weight:500}
 .sb-footer{padding:9px 12px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
 .sf-name{font-size:11px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-out{padding:3px 7px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g400);font-size:10px;cursor:pointer;font-family:inherit}
+.btn-out{padding:7px 14px;border:1px solid var(--r200,#fecaca);border-radius:7px;background:var(--r50);color:var(--r600);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-out:hover{background:var(--r100)}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:48px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 18px;gap:10px}
 .topbar h2{font-size:14px;font-weight:600;color:var(--g900)}
@@ -134,7 +135,8 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 .rf-confirm-row:last-child{border-bottom:none}
 .rf-ck{font-size:11px;font-weight:600;color:var(--g400);width:140px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
 .rf-cv{font-size:12px;color:var(--g900);flex:1;line-height:1.5}
-.rf-edit-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--g400);padding:0 4px;flex-shrink:0}
+.rf-edit-btn{background:var(--b50);border:1px solid var(--b400);cursor:pointer;font-size:16px;color:var(--b600);padding:6px 10px;border-radius:7px;flex-shrink:0}
+.rf-edit-btn:hover{background:var(--b100)}
 .rf-edit-btn:hover{color:var(--b500)}
 .rf-success{text-align:center;padding:12px 0 4px}
 .rf-success-icon{font-size:46px;margin-bottom:13px}
@@ -153,7 +155,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4lY1lM2msDFU7LPTI9dwLMHID2NFs1SbbHgEawB7NQjgljQvkO-elpIKz7RxYJjiCkA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrMxq8kLiHJfgrL6R9lcqUxbk2I5d2vxF44WwfFRv-uV1Jc6PCYkG4l8ANylydXcX_5g/exec';
 var GOOGLE_CLIENT_ID = '337424697739-d3mbqis7mpcao9r95imnfdq95uhboeur.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -234,7 +236,7 @@ function toast(msg, type) {
 }
 
 function getFilteredTickets() {
-  var list = tickets.slice();
+  var list = tickets.slice().filter(function(t){ return t.archivado !== 'SI'; });
 
   if (filtroCliente) {
     list = list.filter(function(t){ return (t.empresa||t.cliente||t.email_cliente||'') === filtroCliente; });
@@ -258,6 +260,13 @@ function getFilteredTickets() {
     return ordenFecha === 'asc' ? (da < db ? -1 : da > db ? 1 : 0) : (da > db ? -1 : da < db ? 1 : 0);
   });
   return list;
+}
+
+// Tickets archivados por este comercial (o visibles según sus clientes
+// asignados), para la sección "Archivados" — no aparecen en "Mis tickets".
+function getArchivedTickets() {
+  return tickets.filter(function(t){ return t.archivado === 'SI'; })
+    .sort(function(a,b){ return ticketDateValue(b) > ticketDateValue(a) ? 1 : -1; });
 }
 
 // Devuelve la fecha del ticket en formato comparable YYYY-MM-DD
@@ -435,6 +444,7 @@ function render() {
 
 function renderApp() {
   var filtered = getFilteredTickets();
+  var archivados = getArchivedTickets();
 
   document.getElementById('root').innerHTML = `
     <div class="app">
@@ -446,6 +456,7 @@ function renderApp() {
         <div class="sb-nav">
           <div class="nav-item${activeView==='tickets'?' active':''}" onclick="goToTickets()">🎫 Mis tickets</div>
           <div class="nav-item${activeView==='nuevo'?' active':''}" onclick="goToNuevoReclamo()">➕ Cargar reclamo</div>
+          <div class="nav-item${activeView==='archivados'?' active':''}" onclick="goToArchivados()">📦 Archivados${archivados.length?' <span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--g100);color:var(--g500)">'+archivados.length+'</span>':''}</div>
         </div>
         <div class="sb-footer">
           <div style="font-size:22px">👤</div>
@@ -454,9 +465,9 @@ function renderApp() {
         </div>
       </div>
       <div class="main">
-        ${activeView === 'nuevo' ? renderTopbarNuevo() : renderTopbarTickets()}
+        ${activeView === 'nuevo' ? renderTopbarNuevo() : activeView === 'archivados' ? renderTopbarArchivados() : renderTopbarTickets()}
         <div class="content">
-          ${activeView === 'nuevo' ? renderNuevoReclamoView() : renderTicketsView(filtered)}
+          ${activeView === 'nuevo' ? renderNuevoReclamoView() : activeView === 'archivados' ? renderArchivadosView(archivados) : renderTicketsView(filtered)}
         </div>
       </div>
     </div>`;
@@ -467,6 +478,12 @@ function renderApp() {
 function renderTopbarTickets() {
   return `<div class="topbar">
     <h2>Mis tickets</h2>
+  </div>`;
+}
+
+function renderTopbarArchivados() {
+  return `<div class="topbar">
+    <h2>Archivados</h2>
   </div>`;
 }
 
@@ -529,6 +546,39 @@ function renderTicketsView(filtered) {
     </div>`;
 }
 
+// Vista de tickets archivados: no aparecen en "Mis tickets" ni los ve
+// Operaciones, pero acá queda el registro completo de quién pidió
+// archivarlos y cuándo.
+function renderArchivadosView(archivados) {
+  return `
+    <div class="shdr">
+      <h2>Reclamos archivados (${archivados.length})</h2>
+    </div>
+    <p style="font-size:11px;color:var(--g400);margin-bottom:12px">Estos reclamos ya no aparecen en "Mis tickets" ni los ve Operaciones, pero quedan acá como registro.</p>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Cliente</th><th>Tipo</th><th>Archivado por</th><th>Fecha de archivado</th>
+        </tr></thead>
+        <tbody>
+          ${archivados.length === 0
+            ? '<tr><td colspan="5" class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px">📦</div><p>No hay reclamos archivados</p></td></tr>'
+            : archivados.map(function(t) {
+              var info = {};
+              try { info = typeof t.archivado_info === 'object' ? t.archivado_info : JSON.parse(t.archivado_info || '{}'); } catch(e) { info = {}; }
+              return `<tr onclick="selectedTicket=${JSON.stringify(t).replace(/"/g,'&quot;')};detailComentario='';detailArchivo=null;renderPanel()">
+                <td><span class="tid">${t.ID||'—'}</span></td>
+                <td style="font-size:11px">${esc(t.empresa||t.cliente||(t.email_cliente||'').split('@')[0]||'—')}</td>
+                <td>${t.tipo_reclamo||'—'}</td>
+                <td style="font-size:11px">${esc(info.solicitanteNombre||'—')}${info.solicitanteEmail?' ('+esc(info.solicitanteEmail)+')':''}</td>
+                <td style="font-size:11px">${esc(info.fecha||'—')}</td>
+              </tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
 function goToTickets() {
   activeView = 'tickets';
   render();
@@ -537,6 +587,11 @@ function goToTickets() {
 function goToNuevoReclamo() {
   resetRfForm();
   activeView = 'nuevo';
+  render();
+}
+
+function goToArchivados() {
+  activeView = 'archivados';
   render();
 }
 
@@ -681,7 +736,7 @@ function renderRfFileList(tipo) {
     ${files.map(function(f, idx){
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g100);border-radius:var(--rad);font-size:11.5px;background:var(--g50)">
         <span>📎</span><span style="flex:1;color:var(--g700)">${esc(f.name)}</span>
-        <button type="button" style="background:none;border:none;color:var(--r500);cursor:pointer;font-size:13px" onclick="rfRemoveFile('${tipo}',${idx})">✕</button>
+        <button type="button" title="Quitar archivo" style="background:var(--r50);border:1px solid var(--r100);color:var(--r600);cursor:pointer;font-size:14px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;flex-shrink:0" onclick="rfRemoveFile('${tipo}',${idx})">✕</button>
       </div>`;
     }).join('')}
   </div>`;
@@ -1027,7 +1082,9 @@ function renderPanel() {
               </div>
               <div style="font-size:14px;font-weight:600;color:var(--g900)">${t.titular||'—'}</div>
               <div style="font-size:11px;color:var(--g500);margin-top:3px">${t.tipo_reclamo||'—'}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
-              <button onclick="eliminarTicket('${t.ID}')" style="margin-top:8px;background:none;border:none;padding:0;font-size:11px;color:var(--r500,#ef4444);cursor:pointer;font-family:inherit;text-decoration:underline">🗑 Eliminar reclamo</button>
+              ${t.archivado==='SI'
+                ? '<div style="margin-top:8px;font-size:11px;color:var(--g400)">📦 Este reclamo está archivado</div>'
+                : `<button onclick="abrirModalArchivar('${t.ID}')" style="margin-top:8px;background:none;border:none;padding:0;font-size:11px;color:var(--g500);cursor:pointer;font-family:inherit;text-decoration:underline">📦 Archivar reclamo</button>`}
             </div>
             <button class="close" onclick="selectedTicket=null;render()">✕</button>
           </div>
@@ -1068,7 +1125,12 @@ function renderPanel() {
               <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
                 <div class="rf-upload" style="flex:1;padding:9px" onclick="document.getElementById('detail-archivo-inp').click()">
                   <input id="detail-archivo-inp" type="file" style="display:none" onchange="syncDetailComentario();if(this.files[0]){detailArchivo=this.files[0];renderPanel()}">
-                  <p style="font-size:11px">${detailArchivo ? '📎 ' + esc(detailArchivo.name) : 'Clic para adjuntar un archivo (opcional)'}</p>
+                  ${detailArchivo
+                    ? `<div style="display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+                        <p style="font-size:11px;flex:1;margin:0">📎 ${esc(detailArchivo.name)}</p>
+                        <button type="button" title="Quitar archivo" style="background:var(--r50);border:1px solid var(--r100);color:var(--r600);cursor:pointer;font-size:14px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;flex-shrink:0" onclick="detailArchivo=null;document.getElementById('detail-archivo-inp').value='';renderPanel()">✕</button>
+                      </div>`
+                    : '<p style="font-size:11px">Clic para adjuntar un archivo (opcional)</p>'}
                 </div>
                 <button class="btn btn-primary" onclick="agregarComentarioTicket('${t.ID}')" ${saving?'disabled':''}>${saving?'<span class="spinner"></span>':''}Enviar</button>
               </div>
@@ -1201,21 +1263,80 @@ function confirmarAccion(mensaje, textoOk, textoCancelar) {
   });
 }
 
-// Elimina un reclamo cargado por este mismo comercial, con confirmación
-// previa. El backend además valida que quien pide borrarlo sea quien lo
-// creó (no cualquier comercial que vea el mismo cliente).
-window.eliminarTicket = async function(id) {
-  var ok = await confirmarAccion('¿Estás seguro de que querés eliminar este reclamo? Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
-  if (!ok) return;
+// Modal para archivar un reclamo: pide mail, nombre y apellido de quién
+// solicita el archivado (no necesariamente el comercial logueado — puede
+// ser el cliente, un supervisor, etc.). Devuelve esos datos o null si
+// cancela.
+function pedirDatosArchivado() {
+  return new Promise(function(resolve) {
+    var div = document.createElement('div');
+    div.className = 'confirm-overlay';
+    div.innerHTML = `
+      <div class="confirm-card">
+        <div style="font-size:14px;font-weight:600;color:var(--g900);margin-bottom:6px">Archivar reclamo</div>
+        <div style="font-size:12px;color:var(--g500);margin-bottom:16px;line-height:1.4">Este reclamo va a dejar de verse en "Mis tickets" y en el panel de Operaciones, pero va a quedar registrado en "Archivados". Completá quién pide esta acción.</div>
+        <div class="cf-group" style="margin-bottom:10px">
+          <label style="font-size:11px;color:var(--g500);display:block;margin-bottom:3px">Mail de quien lo solicita</label>
+          <input id="arch-mail" type="email" placeholder="nombre@dominio.com" style="width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-family:inherit;font-size:13px;box-sizing:border-box">
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <div class="cf-group" style="flex:1">
+            <label style="font-size:11px;color:var(--g500);display:block;margin-bottom:3px">Nombre</label>
+            <input id="arch-nombre" type="text" style="width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-family:inherit;font-size:13px;box-sizing:border-box">
+          </div>
+          <div class="cf-group" style="flex:1">
+            <label style="font-size:11px;color:var(--g500);display:block;margin-bottom:3px">Apellido</label>
+            <input id="arch-apellido" type="text" style="width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--rad);font-family:inherit;font-size:13px;box-sizing:border-box">
+          </div>
+        </div>
+        <div id="arch-err" style="display:none;color:var(--r600);font-size:11px;margin-bottom:10px"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button id="arch-cancel-btn" style="background:var(--g100);color:var(--g700);border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px">Cancelar</button>
+          <button id="arch-ok-btn" style="background:var(--b600);color:#fff;border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">Archivar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+
+    function cerrar(valor) { div.remove(); resolve(valor); }
+
+    document.getElementById('arch-ok-btn').onclick = function(){
+      var mail = document.getElementById('arch-mail').value.trim();
+      var nombre = document.getElementById('arch-nombre').value.trim();
+      var apellido = document.getElementById('arch-apellido').value.trim();
+      var err = document.getElementById('arch-err');
+      if (!mail || !nombre || !apellido) {
+        err.textContent = 'Completá los tres campos para poder archivar el reclamo.';
+        err.style.display = 'block';
+        return;
+      }
+      cerrar({ mail: mail, nombre: nombre, apellido: apellido });
+    };
+    document.getElementById('arch-cancel-btn').onclick = function(){ cerrar(null); };
+    div.onclick = function(e){ if (e.target === div) cerrar(null); };
+  });
+}
+
+// Archiva un reclamo cargado por este mismo comercial. El backend valida
+// que quien pide archivarlo sea quien lo creó (no cualquier comercial
+// que vea el mismo cliente).
+window.abrirModalArchivar = async function(id) {
+  var datos = await pedirDatosArchivado();
+  if (!datos) return;
   try {
-    var res = await api({ action: 'eliminarTicket', id: id });
+    var res = await api({
+      action: 'archivarTicket',
+      id: id,
+      solicitanteEmail: datos.mail,
+      solicitanteNombre: datos.nombre + ' ' + datos.apellido
+    });
     if (!res.ok) throw new Error(res.error || 'Error desconocido');
-    tickets = tickets.filter(function(t){ return t.ID !== id; });
+    var t = tickets.find(function(x){ return x.ID === id; });
+    if (t) t.archivado = 'SI';
     selectedTicket = null;
-    toast('Reclamo eliminado', 'ok');
+    toast('Reclamo archivado', 'ok');
     render();
   } catch(e) {
-    toast('Error al eliminar: ' + e.message, 'err');
+    toast('Error al archivar: ' + e.message, 'err');
   }
 };
 
