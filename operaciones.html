@@ -32,7 +32,8 @@ body{background:var(--g50);min-height:100vh}
 .ni.on{background:var(--b50);color:var(--b700);font-weight:500}
 .sb-foot{padding:12px 14px;border-top:1px solid var(--g100);display:flex;align-items:center;gap:8px}
 .sf-name{font-size:14px;font-weight:500;color:var(--g800);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-out{padding:6px 12px;border:1px solid var(--g200);border-radius:5px;background:transparent;color:var(--g500);font-size:13px;cursor:pointer;font-family:inherit}
+.btn-out{padding:7px 14px;border:1px solid var(--r200,#fecaca);border-radius:7px;background:var(--r50);color:var(--r600);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-out:hover{background:var(--r100)}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .topbar{height:46px;background:var(--w);border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px}
 .topbar h2{font-size:16px;font-weight:600;color:var(--g900)}
@@ -132,7 +133,7 @@ var _u=(function(){
 })();
 
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
-var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='';
+var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='', opFiltroEstado='', opFiltroDesde='', opFiltroHasta='';
 var informeFinalFiles=[], enviandoInforme=false;
 var detailComentario='', detailArchivo=null, saving=false;
 var activeNav='tickets'; // tickets | clientes
@@ -146,6 +147,13 @@ function toast(msg,tipo){
 function fmtDate(s){
   if(!s)return'—';if(s.includes('/'))return s;
   var d=s.slice(0,10).split('-');return d.length<3?s:d[2]+'/'+d[1]+'/'+d[0];
+}
+// Devuelve la fecha del ticket en formato comparable YYYY-MM-DD (para los filtros Desde/Hasta)
+function ticketDateValue(t){
+  var str=t.creado||'';
+  if(!str)return'';
+  if(str.includes('/')){var p=str.split(' ')[0].split('/');return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):str;}
+  return str.slice(0,10);
 }
 function bc(e){return{'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e]||'bn';}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -257,6 +265,8 @@ function getTab(tab){
     if(t.estado !== estadoMap[tab]) return false;
     if(opFiltroTipo && t.tipo_reclamo !== opFiltroTipo) return false;
     if(opFiltroEmpresa && (t.empresa||t.titular||'') !== opFiltroEmpresa) return false;
+    if(opFiltroDesde && ticketDateValue(t) < opFiltroDesde) return false;
+    if(opFiltroHasta && ticketDateValue(t) > opFiltroHasta) return false;
     if(opSearchQ){
       var q=opSearchQ.toLowerCase();
       var haystack=(t.ID||'')+(t.tipo_reclamo||'')+(t.empresa||'')+(t.titular||'')+(t.monto||'');
@@ -497,7 +507,7 @@ function thSort(field,label){
   var col=active?'var(--b600)':'var(--g400)';
   return '<th style="cursor:pointer;user-select:none" onclick="sortBy(\''+field+'\')">'+label+' <span style="color:'+col+'">'+arrow+'</span></th>';
 }
-function limpiarFiltros(){opSearchQ='';opFiltroTipo='';opFiltroEmpresa='';render();}
+function limpiarFiltros(){opSearchQ='';opFiltroTipo='';opFiltroEmpresa='';opFiltroEstado='';opFiltroDesde='';opFiltroHasta='';render();}
 function sortBy(field){
   if(opSortField===field){ opSortDir=opSortDir==='desc'?'asc':'desc'; }
   else { opSortField=field; opSortDir='desc'; }
@@ -511,11 +521,19 @@ function renderFiltros(tipos,empresas){
   tipos.forEach(function(t){html+='<option value="'+t+'"'+(opFiltroTipo===t?' selected':'')+'>'+t+'</option>';});
   html+='</select>';
   html+='<select onchange="opFiltroEmpresa=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
-  html+='<option value="">Todas las empresas</option>';
+  html+='<option value="">Todos los clientes</option>';
   empresas.forEach(function(e){html+='<option value="'+e+'"'+(opFiltroEmpresa===e?' selected':'')+'>'+e+'</option>';});
   html+='</select>';
-  if(opSearchQ||opFiltroTipo||opFiltroEmpresa){
-    html+='<button onclick="limpiarFiltros()" style="padding:7px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:12px;font-family:inherit;color:#6b7280;background:#fff;cursor:pointer">✕ Limpiar</button>';
+  html+='<select onchange="opFiltroEstado=this.value;if(opFiltroEstado){activeTab=({\'Recibido\':\'recibidos\',\'En análisis\':\'analisis\',\'Finalizado\':\'finalizados\'})[opFiltroEstado]||activeTab;}render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
+  html+='<option value="">Todos los estados</option>';
+  ['Recibido','En análisis','Finalizado'].forEach(function(e){html+='<option value="'+e+'"'+(opFiltroEstado===e?' selected':'')+'>'+e+'</option>';});
+  html+='</select>';
+  html+='<span style="font-size:11px;color:var(--g400)">Desde</span>';
+  html+='<input type="date" value="'+opFiltroDesde+'" onchange="opFiltroDesde=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:135px">';
+  html+='<span style="font-size:11px;color:var(--g400)">Hasta</span>';
+  html+='<input type="date" value="'+opFiltroHasta+'" onchange="opFiltroHasta=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:135px">';
+  if(opSearchQ||opFiltroTipo||opFiltroEmpresa||opFiltroEstado||opFiltroDesde||opFiltroHasta){
+    html+='<button onclick="limpiarFiltros()" style="padding:7px 13px;border:1px solid var(--a500);border-radius:7px;font-size:12px;font-weight:600;font-family:inherit;color:var(--a600);background:var(--a50);cursor:pointer">✕ Limpiar filtros</button>';
   }
   html+='</div>';
   return html;
@@ -587,7 +605,12 @@ function renderPanel(){
   var coms=[];try{coms=Array.isArray(t.comentarios)?t.comentarios:JSON.parse(t.comentarios||'[]');}catch(e){}
   var adjs=[];try{adjs=Array.isArray(t.adjuntos)?t.adjuntos:JSON.parse(t.adjuntos||'[]');}catch(e){}
   var adjsInformeFinal=adjs.filter(function(a){return a.tipo==='informe_final';});
-  var adjsIniciales=adjs.filter(function(a){return a.tipo!=='informe_final';});
+  // Los adjuntos "de verdad" del formulario de carga siempre tienen un
+  // origen descriptivo (ej. "Comercial (planilla)"). Los que quedaron
+  // duplicados de comentarios viejos (de antes de la corrección) tienen
+  // origen "Comercial"/"Operaciones" a secas, sin sufijo — los tapamos acá
+  // aunque ya estén guardados así en el Sheet.
+  var adjsIniciales=adjs.filter(function(a){return a.tipo!=='informe_final' && a.origen!=='Comercial' && a.origen!=='Operaciones';});
   var d=calcDias(t);
   var existing=document.querySelector('.overlay');
   var scrollY=0;
@@ -665,12 +688,20 @@ function renderPanel(){
           ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Todavía no hay comentarios</p>':
             coms.map(function(c){
               var esCom=c.de==='comercial';
+              // Los comentarios nuevos ya traen su propio fileId. Los viejos
+              // (de antes de la corrección) lo tenían duplicado en
+              // "adjuntos" del ticket — buscamos ahí solo como respaldo.
+              var cFileId = c.fileId || null;
+              if (!cFileId && c.archivo) {
+                var match = adjs.find(function(a){ return a.nombre===c.archivo; });
+                if (match) cFileId = match.fileId||null;
+              }
               return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
                 <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
                 <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
                 ${c.archivo?`<div style="font-size:11px;color:var(--g500);margin-top:3px">
-                  ${c.fileId
-                    ? `<a href="#" onclick="abrirAdjunto(event,'${c.fileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
+                  ${cFileId
+                    ? `<a href="#" onclick="abrirAdjunto(event,'${cFileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
                     : `📎 ${esc(c.archivo)}`}
                 </div>`:''}
               </div>`;
