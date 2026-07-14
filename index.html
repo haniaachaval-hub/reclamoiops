@@ -96,7 +96,7 @@ var GOOGLE_CLIENT_ID = '337424697739-d3mbqis7mpcao9r95imnfdq95uhboeur.apps.googl
 var ALLOWED_DOMAIN   = 'ocasa.com';
 // Mismo backend que usa comercial.html — acá lo necesitamos para dar de
 // alta al comercial en la solapa "comerciales" antes de dejarlo entrar.
-var APPS_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbx4lY1lM2msDFU7LPTI9dwLMHID2NFs1SbbHgEawB7NQjgljQvkO-elpIKz7RxYJjiCkA/exec';
+var APPS_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbyrMxq8kLiHJfgrL6R9lcqUxbk2I5d2vxF44WwfFRv-uV1Jc6PCYkG4l8ANylydXcX_5g/exec';
 // URLs de cada interfaz (ajustar si cambia el nombre del repo)
 var BASE_URL = window.location.href.replace(/\/[^\/]*$/, '/');
 var URL_COMERCIAL    = BASE_URL + 'comercial.html';
@@ -263,7 +263,7 @@ function renderComercialForm(card) {
     </div>
     <div class="err" id="cf-err" style="${cfErrors.general?'display:block':''}">${cfErrors.general||''}</div>
     <button class="btn-continue" ${cfSubmitting?'disabled':''} onclick="ingresarConCuentaExistente()">${cfSubmitting?'Ingresando...':'Ingresar →'}</button>
-    <button class="btn-continue" style="margin-top:8px;background:var(--w);color:var(--b600);border:1.5px solid var(--b500)" onclick="abrirCrearCuenta()">＋ Crear cuenta nueva</button>
+    <button class="btn-continue" style="margin-top:8px;background:var(--gr500);color:#fff;border:1.5px solid var(--gr600)" onclick="abrirCrearCuenta()">Crear cuenta nueva</button>
   `;
 }
 
