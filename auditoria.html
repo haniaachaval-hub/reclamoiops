@@ -406,7 +406,14 @@ function renderPanel() {
 function renderAdjuntos(t, adjs) {
   var adj = [];
   if (adjs.length) {
-    adjs.forEach(function(a){ adj.push({ nombre:a.nombre, origen:a.origen||(a.de==='operaciones'?'Operaciones':'Comercial'), fileId:a.fileId||a.id||null, url:a.url||null, tipo:a.tipo||null }); });
+    adjs.forEach(function(a){
+      var origen = a.origen||(a.de==='operaciones'?'Operaciones':'Comercial');
+      // Los adjuntos duplicados de comentarios viejos (de antes de la
+      // corrección) tienen origen "Comercial"/"Operaciones" a secas, sin
+      // sufijo descriptivo — los tapamos acá aunque ya estén así guardados.
+      if (a.tipo !== 'informe_final' && (origen === 'Comercial' || origen === 'Operaciones')) return;
+      adj.push({ nombre:a.nombre, origen:origen, fileId:a.fileId||a.id||null, url:a.url||null, tipo:a.tipo||null });
+    });
   } else {
     if (t.excel_nombre) adj.push({ nombre:t.excel_nombre, origen:'Comercial (planilla)', fileId:t.excel_fileId||null, url:null });
     if (t.carrier_nombre) adj.push({ nombre:t.carrier_nombre, origen:'Comercial (acuse/mail)', fileId:t.carrier_fileId||null, url:null });
@@ -431,8 +438,11 @@ function renderComentarios(t, coms, adjs) {
   if (!coms.length) return '<p style="font-size:12px;color:var(--g400)">Sin comentarios</p>';
   return coms.map(function(c){
     var esOp = c.de==='operaciones';
-    var adjFileId = null;
-    if (c.archivo) {
+    // Los comentarios nuevos ya traen su propio fileId. Los viejos (de
+    // antes de la corrección) lo tenían duplicado en "adjuntos" del
+    // ticket — buscamos ahí solo como respaldo para esos casos.
+    var adjFileId = c.fileId || null;
+    if (!adjFileId && c.archivo) {
       var match = adjs.find(function(a){ return a.nombre===c.archivo; });
       if (match) adjFileId = match.fileId||null;
     }
