@@ -191,8 +191,6 @@ var currentUser = (function(){
 var tickets = [];
 var perfil = null;
 var selectedTicket = null;
-var searchQ = '';
-var searchInput = ''; // valor del input antes de ejecutar la búsqueda con Enter/botón
 var filtroCliente = '';
 var filtroEstado = '';
 var filtroFechaDesde = '';
@@ -238,18 +236,6 @@ function toast(msg, type) {
 function getFilteredTickets() {
   var list = tickets.slice();
 
-  if (searchQ) {
-    var q = searchQ.toLowerCase();
-    list = list.filter(function(t) {
-      return (t.ID||'').toLowerCase().includes(q)
-        || (t.titular||'').toLowerCase().includes(q)
-        || (t.email_cliente||'').toLowerCase().includes(q)
-        || (t.empresa||t.cliente||'').toLowerCase().includes(q)
-        || (t.tipo_reclamo||'').toLowerCase().includes(q)
-        || (t.detalle||'').toLowerCase().includes(q)
-        || fmtDate(t.creado).includes(q);
-    });
-  }
   if (filtroCliente) {
     list = list.filter(function(t){ return (t.empresa||t.cliente||t.email_cliente||'') === filtroCliente; });
   }
@@ -280,11 +266,6 @@ function ticketDateValue(t) {
   if (!str) return '';
   if (str.includes('/')) { var p = str.split(' ')[0].split('/'); return p.length===3 ? (p[2]+'-'+p[1]+'-'+p[0]) : str; }
   return str.slice(0,10);
-}
-
-function ejecutarBusqueda() {
-  searchQ = searchInput.trim();
-  render();
 }
 
 function fmtDate(str) {
@@ -505,10 +486,7 @@ function renderTicketsView(filtered) {
     <div class="shdr">
       <h2>Total de tickets (${filtered.length})</h2>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <input class="search" id="search-inp" placeholder=" Buscar ticket..." style="width:200px" value="${esc(searchInput)}"
-        oninput="searchInput=this.value;ejecutarBusqueda()"
-        onkeydown="if(event.key==='Enter'){ejecutarBusqueda()}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:12px">
       <select class="search" style="width:160px" onchange="filtroCliente=this.value;render()">
         <option value="">Todos los clientes</option>
         ${clientesDisponibles.map(function(c){ return '<option value="'+esc(c)+'" '+(filtroCliente===c?'selected':'')+'>'+esc(c)+'</option>'; }).join('')}
@@ -521,8 +499,8 @@ function renderTicketsView(filtered) {
       <input class="search" type="date" style="width:135px" value="${filtroFechaDesde}" onchange="filtroFechaDesde=this.value;render()">
       <span style="font-size:11px;color:var(--g400)">Hasta</span>
       <input class="search" type="date" style="width:135px" value="${filtroFechaHasta}" onchange="filtroFechaHasta=this.value;render()">
-      ${(filtroCliente||filtroEstado||filtroFechaDesde||filtroFechaHasta||searchQ) ? '<button class="btn btn-ghost" onclick="filtroCliente=\'\';filtroEstado=\'\';filtroFechaDesde=\'\';filtroFechaHasta=\'\';searchQ=\'\';searchInput=\'\';render()">✕ Limpiar</button>' : ''}
-      <button class="btn" style="margin-left:auto;background:#3b6fd4;color:#fff;font-size:14px;padding:9px 18px;font-weight:600" onclick="goToNuevoReclamo()">+ Cargar reclamo</button>
+      ${(filtroCliente||filtroEstado||filtroFechaDesde||filtroFechaHasta) ? '<button class="btn" style="background:var(--a50);color:var(--a600);border:1px solid var(--a500)" onclick="filtroCliente=\'\';filtroEstado=\'\';filtroFechaDesde=\'\';filtroFechaHasta=\'\';render()">✕ Limpiar filtros</button>' : ''}
+      <button class="btn" style="background:#3b6fd4;color:#fff;font-size:14px;padding:9px 18px;font-weight:600" onclick="goToNuevoReclamo()">+ Cargar reclamo</button>
     </div>
     <div class="tw">
       <table>
@@ -625,7 +603,7 @@ function renderRfPaso1() {
     </div></div>
 
     ${esConsumo || esAmbos ? `
-    <div class="al al-amber">⚠ Descargá la planilla${esAmbos?' (tarjetas y consumos, 2 hojas)':' de consumos'}, completá los campos en <strong>negrita</strong> (obligatorios)${esAmbos?' en ambas hojas':''} y adjuntala completa.</div>
+    <div class="al al-amber">⚠ Descargá la planilla${esAmbos?' (tarjetas y consumos, 2 hojas)':' de consumos'}, completá los campos marcados en negrita (son obligatorios)${esAmbos?' en ambas hojas':''} y adjuntala completa.</div>
     <div class="rf-fgroup" style="margin-bottom:12px">
       <label>${esAmbos?'Planilla de tarjetas y consumos':'Planilla de consumos'}</label>
       <a href="#" onclick="${esAmbos?'descargarPlanillaAmbos()':'descargarPlanillaConsumos()'};return false;" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ ${esAmbos?'Descargar planilla de tarjetas y consumos':'Descargar planilla de consumos'}</a>
@@ -647,7 +625,7 @@ function renderRfPaso1() {
     </div></div>` : ''}
 
     ${esNoRecepcion ? `
-    <div class="al al-amber">⚠ Descargá la planilla de no recepción, completá los campos en <strong>negrita</strong> (obligatorios) y adjuntala completa.</div>
+    <div class="al al-amber">⚠ Descargá la planilla de no recepción, completá los campos marcados en negrita (son obligatorios) y adjuntala completa.</div>
     <div class="rf-fgroup" style="margin-bottom:12px">
       <label>Planilla de no recepción</label>
       <a href="#" onclick="descargarPlanillaTarjetas();return false;" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--b600);font-weight:500;text-decoration:none;border:1px solid var(--b100);padding:6px 12px;border-radius:var(--rad);background:var(--b50)">⬇ Descargar planilla de no recepción</a>
