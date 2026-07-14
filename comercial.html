@@ -1117,6 +1117,8 @@ function renderPanel() {
               hist.map(function(h){ return `<div style="border-left:2px solid var(--g200);padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${h.accion}</div>`; }).join('')}
           </div>
 
+          ${renderInformeFinalDestacado(t)}
+
           <div class="dsec">
             <div class="dsec-title">Adjuntos del ticket</div>
             ${renderAdjuntosTicket(t)}
@@ -1156,38 +1158,61 @@ function renderPanel() {
 }
 
 // Lista los archivos adjuntados al ticket por comercial y por operaciones
-function renderAdjuntosTicket(t) {
-  // Si hay adjuntos guardados con fileId (tickets nuevos), solo mostramos esos.
-  // Si no (tickets viejos), mostramos excel_nombre y carrier_nombre sin link.
+// Separa los adjuntos del ticket en dos grupos: los del informe final
+// (ya enviado por Operaciones) y los "iniciales" (del formulario de
+// carga / comentarios legítimos).
+function getAdjuntosSeparados(t) {
   var extra = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try { return JSON.parse(t.adjuntos||'[]'); } catch(e){ return []; } })();
   var adj = [];
-  if (extra.length) {
-    extra.forEach(function(a){
-      var origen = a.origen || (a.de==='operaciones'?'Operaciones':'Comercial');
-      // Los que quedaron duplicados de comentarios viejos (de antes de la
-      // corrección) tienen origen "Comercial"/"Operaciones" a secas, sin
-      // sufijo descriptivo — los tapamos acá aunque ya estén así guardados.
-      if (a.tipo !== 'informe_final' && (origen === 'Comercial' || origen === 'Operaciones')) return;
-      adj.push({ nombre: a.nombre, origen: origen, fileId: a.fileId || a.id || null, url: a.url || null, tipo: a.tipo || null });
-    });
-  } else {
+  extra.forEach(function(a){
+    var origen = a.origen || (a.de==='operaciones'?'Operaciones':'Comercial');
+    // Los que quedaron duplicados de comentarios viejos (de antes de la
+    // corrección) tienen origen "Comercial"/"Operaciones" a secas, sin
+    // sufijo descriptivo — los tapamos acá aunque ya estén así guardados.
+    if (a.tipo !== 'informe_final' && (origen === 'Comercial' || origen === 'Operaciones')) return;
+    adj.push({ nombre: a.nombre, origen: origen, fileId: a.fileId || a.id || null, url: a.url || null, tipo: a.tipo || null });
+  });
+  if (!adj.length) {
     if (t.excel_nombre) adj.push({ nombre: t.excel_nombre, origen: 'Comercial (planilla)', fileId: t.excel_fileId || null, url: null });
     if (t.carrier_nombre) adj.push({ nombre: t.carrier_nombre, origen: 'Comercial (acuse/mail)', fileId: t.carrier_fileId || null, url: null });
   }
+  return {
+    informeFinal: adj.filter(function(a){ return a.tipo === 'informe_final'; }),
+    iniciales: adj.filter(function(a){ return a.tipo !== 'informe_final'; })
+  };
+}
 
+// Bloque destacado en verde con el informe final, si el ticket ya tiene uno.
+function renderInformeFinalDestacado(t) {
+  var files = getAdjuntosSeparados(t).informeFinal;
+  if (!files.length) return '';
+  return `<div class="dsec">
+    <div class="dsec-title" style="color:var(--gr700)">✅ Informe final</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${files.map(function(a){
+        var fid=a.fileId||'', u=a.url||'';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--gr50);border:1px solid var(--gr500);border-radius:var(--rad)">
+          <span>📄</span>
+          <a href="#" onclick="abrirAdjunto(event,'${fid}','${encodeURIComponent(a.nombre||'')}','${u}')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>
+          <span style="font-size:9px;font-weight:700;color:var(--gr700);background:var(--gr100);padding:2px 7px;border-radius:10px;letter-spacing:.03em">✅ ENVIADO</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderAdjuntosTicket(t) {
+  var adj = getAdjuntosSeparados(t).iniciales;
   if (adj.length === 0) return '<p style="font-size:12px;color:var(--g400)">Sin archivos adjuntos</p>';
   return adj.map(function(a){
     var fid = a.fileId||'';
     var u = a.url||'';
-    var esInforme = a.tipo === 'informe_final';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${esInforme?'var(--gr50)':'transparent'};border:1px solid ${esInforme?'var(--gr500)':'var(--g100)'};border-radius:var(--rad);margin-bottom:6px;font-size:12px">
-      <span>${esInforme?'📄':'📎'}</span>
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--g100);border-radius:var(--rad);margin-bottom:6px;font-size:12px">
+      <span>📎</span>
       ${(fid||u)
         ? `<a href="#" onclick="abrirAdjunto(event,'${fid}','${encodeURIComponent(a.nombre||'')}','${u}')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>`
         : `<span style="flex:1;color:var(--g900)">${esc(a.nombre)} <span style="color:var(--g400);font-weight:400">(sin vista previa disponible)</span></span>`}
-      ${esInforme
-        ? `<span style="font-size:9px;font-weight:700;color:var(--gr700);background:var(--gr100);padding:2px 7px;border-radius:10px;letter-spacing:.03em">✅ INFORME FINAL</span>`
-        : `<span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>`}
+      <span style="font-size:10px;color:var(--g400)">${esc(a.origen)}</span>
     </div>`;
   }).join('');
 }
