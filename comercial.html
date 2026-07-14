@@ -155,7 +155,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrMxq8kLiHJfgrL6R9lcqUxbk2I5d2vxF44WwfFRv-uV1Jc6PCYkG4l8ANylydXcX_5g/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJPJYg6MUjeoCTfoetuyppFAuXJ6P3HlKPOsqq9WKxEi_aJ2K8xXj4tYwup9Z478C9CA/exec';
 var GOOGLE_CLIENT_ID = '337424697739-d3mbqis7mpcao9r95imnfdq95uhboeur.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -558,11 +558,11 @@ function renderArchivadosView(archivados) {
     <div class="tw">
       <table>
         <thead><tr>
-          <th>ID</th><th>Cliente</th><th>Tipo</th><th>Archivado por</th><th>Fecha de archivado</th>
+          <th>ID</th><th>Cliente</th><th>Tipo</th><th>Archivado por</th><th>Fecha de archivado</th><th></th>
         </tr></thead>
         <tbody>
           ${archivados.length === 0
-            ? '<tr><td colspan="5" class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px">📦</div><p>No hay reclamos archivados</p></td></tr>'
+            ? '<tr><td colspan="6" class="empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px">📦</div><p>No hay reclamos archivados</p></td></tr>'
             : archivados.map(function(t) {
               var info = {};
               try { info = typeof t.archivado_info === 'object' ? t.archivado_info : JSON.parse(t.archivado_info || '{}'); } catch(e) { info = {}; }
@@ -572,6 +572,9 @@ function renderArchivadosView(archivados) {
                 <td>${t.tipo_reclamo||'—'}</td>
                 <td style="font-size:11px">${esc(info.solicitanteNombre||'—')}${info.solicitanteEmail?' ('+esc(info.solicitanteEmail)+')':''}</td>
                 <td style="font-size:11px">${esc(info.fecha||'—')}</td>
+                <td style="text-align:right" onclick="event.stopPropagation()">
+                  <button onclick="reabrirTicketArchivado('${t.ID}')" style="background:var(--gr50);border:1px solid var(--gr500);color:var(--gr700);font-size:11px;font-weight:600;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit">↺ Reabrir</button>
+                </td>
               </tr>`;
             }).join('')}
         </tbody>
@@ -1083,7 +1086,10 @@ function renderPanel() {
               <div style="font-size:14px;font-weight:600;color:var(--g900)">${t.titular||'—'}</div>
               <div style="font-size:11px;color:var(--g500);margin-top:3px">${t.tipo_reclamo||'—'}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
               ${t.archivado==='SI'
-                ? '<div style="margin-top:8px;font-size:11px;color:var(--g400)">📦 Este reclamo está archivado</div>'
+                ? `<div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+                    <span style="font-size:11px;color:var(--g400)">📦 Este reclamo está archivado</span>
+                    <button onclick="reabrirTicketArchivado('${t.ID}')" style="background:var(--gr50);border:1px solid var(--gr500);color:var(--gr700);font-size:11px;font-weight:600;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit">↺ Reabrir ticket</button>
+                  </div>`
                 : `<button onclick="abrirModalArchivar('${t.ID}')" style="margin-top:10px;background:var(--r50);border:1px solid var(--r500,#ef4444);padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--r600);cursor:pointer;font-family:inherit;border-radius:7px">📦 Archivar reclamo</button>`}
             </div>
             <button class="close" onclick="selectedTicket=null;render()">✕</button>
@@ -1337,6 +1343,25 @@ window.abrirModalArchivar = async function(id) {
     render();
   } catch(e) {
     toast('Error al archivar: ' + e.message, 'err');
+  }
+};
+
+// Reabre un ticket archivado: vuelve a aparecer en "Mis tickets" y
+// Operaciones lo vuelve a ver. Pide confirmación antes, para evitar un
+// click accidental.
+window.reabrirTicketArchivado = async function(id) {
+  var ok = await confirmarAccion('¿Estás seguro de que querés volver a reabrir este ticket? Va a volver a aparecer en "Mis tickets" y Operaciones lo va a ver de nuevo.', 'Reabrir', 'Cancelar');
+  if (!ok) return;
+  try {
+    var res = await api({ action: 'reabrirTicketArchivado', id: id });
+    if (!res.ok) throw new Error(res.error || 'Error desconocido');
+    var t = tickets.find(function(x){ return x.ID === id; });
+    if (t) t.archivado = '';
+    selectedTicket = null;
+    toast('Ticket reabierto', 'ok');
+    goToTickets();
+  } catch(e) {
+    toast('Error al reabrir: ' + e.message, 'err');
   }
 };
 
