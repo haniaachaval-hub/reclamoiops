@@ -133,7 +133,7 @@ var _u=(function(){
 })();
 
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
-var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='', opFiltroEstado='', opFiltroDesde='', opFiltroHasta='';
+var opSortField='creado', opSortDir='desc', opFiltroTipo='', opFiltroEmpresa='', opFiltroEstado='', opFiltroDesde='', opFiltroHasta='';
 var informeFinalFiles=[], enviandoInforme=false;
 var detailComentario='', detailArchivo=null, saving=false;
 var activeNav='tickets'; // tickets | clientes
@@ -267,11 +267,6 @@ function getTab(tab){
     if(opFiltroEmpresa && (t.empresa||t.titular||'') !== opFiltroEmpresa) return false;
     if(opFiltroDesde && ticketDateValue(t) < opFiltroDesde) return false;
     if(opFiltroHasta && ticketDateValue(t) > opFiltroHasta) return false;
-    if(opSearchQ){
-      var q=opSearchQ.toLowerCase();
-      var haystack=(t.ID||'')+(t.tipo_reclamo||'')+(t.empresa||'')+(t.titular||'')+(t.monto||'');
-      if(haystack.toLowerCase().indexOf(q)===-1) return false;
-    }
     return true;
   }).sort(function(a,b){
     if(opSortField==='creado'){
@@ -507,7 +502,7 @@ function thSort(field,label){
   var col=active?'var(--b600)':'var(--g400)';
   return '<th style="cursor:pointer;user-select:none" onclick="sortBy(\''+field+'\')">'+label+' <span style="color:'+col+'">'+arrow+'</span></th>';
 }
-function limpiarFiltros(){opSearchQ='';opFiltroTipo='';opFiltroEmpresa='';opFiltroEstado='';opFiltroDesde='';opFiltroHasta='';render();}
+function limpiarFiltros(){opFiltroTipo='';opFiltroEmpresa='';opFiltroEstado='';opFiltroDesde='';opFiltroHasta='';render();}
 function sortBy(field){
   if(opSortField===field){ opSortDir=opSortDir==='desc'?'asc':'desc'; }
   else { opSortField=field; opSortDir='desc'; }
@@ -515,7 +510,6 @@ function sortBy(field){
 }
 function renderFiltros(tipos,empresas){
   var html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
-  html+='<input type="text" placeholder="🔍 Buscar ticket..." value="'+opSearchQ+'" oninput="opSearchQ=this.value;render()" style="padding:7px 11px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:220px">';
   html+='<select onchange="opFiltroTipo=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
   html+='<option value="">Todos los tipos</option>';
   tipos.forEach(function(t){html+='<option value="'+t+'"'+(opFiltroTipo===t?' selected':'')+'>'+t+'</option>';});
@@ -532,7 +526,7 @@ function renderFiltros(tipos,empresas){
   html+='<input type="date" value="'+opFiltroDesde+'" onchange="opFiltroDesde=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:135px">';
   html+='<span style="font-size:11px;color:var(--g400)">Hasta</span>';
   html+='<input type="date" value="'+opFiltroHasta+'" onchange="opFiltroHasta=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:135px">';
-  if(opSearchQ||opFiltroTipo||opFiltroEmpresa||opFiltroEstado||opFiltroDesde||opFiltroHasta){
+  if(opFiltroTipo||opFiltroEmpresa||opFiltroEstado||opFiltroDesde||opFiltroHasta){
     html+='<button onclick="limpiarFiltros()" style="padding:7px 13px;border:1px solid var(--a500);border-radius:7px;font-size:12px;font-weight:600;font-family:inherit;color:var(--a600);background:var(--a50);cursor:pointer">✕ Limpiar filtros</button>';
   }
   html+='</div>';
@@ -554,12 +548,12 @@ function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
             ${vencidos>0?'<div style="font-size:10px;color:var(--r500);margin-top:4px;font-weight:500">'+vencidos+' vencido'+(vencidos!==1?'s':'')+'</div>':''}
           </div>
         </div>
+        ${renderFiltros(tipos,empresas)}
         <div class="tabs">
           <button class="tab${activeTab==='recibidos'?' on':''}" onclick="activeTab='recibidos';render()">Recibidos<span class="tc">${rec.length}</span></button>
           <button class="tab${activeTab==='analisis'?' on':''}" onclick="activeTab='analisis';render()">En análisis<span class="tc">${ana.length}</span></button>
           <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
         </div>
-        ${renderFiltros(tipos,empresas)}
         <div class="tw">
           <table>
             <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Cliente</th>${thSort('monto','Monto')}<th>Vencimiento</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
