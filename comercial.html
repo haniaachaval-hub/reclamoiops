@@ -151,7 +151,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyOzcVqvkxdB9ijimDUeVmqhE7w13JhH6zpPikcicjKRuZJTsJjEqrHP1EjfCHFUGFHUQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4lY1lM2msDFU7LPTI9dwLMHID2NFs1SbbHgEawB7NQjgljQvkO-elpIKz7RxYJjiCkA/exec';
 var GOOGLE_CLIENT_ID = '337424697739-d3mbqis7mpcao9r95imnfdq95uhboeur.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -1047,6 +1047,7 @@ function renderPanel() {
               </div>
               <div style="font-size:14px;font-weight:600;color:var(--g900)">${t.titular||'—'}</div>
               <div style="font-size:11px;color:var(--g500);margin-top:3px">${t.tipo_reclamo||'—'}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
+              <button onclick="eliminarTicket('${t.ID}')" style="margin-top:8px;background:none;border:none;padding:0;font-size:11px;color:var(--r500,#ef4444);cursor:pointer;font-family:inherit;text-decoration:underline">🗑 Eliminar reclamo</button>
             </div>
             <button class="close" onclick="selectedTicket=null;render()">✕</button>
           </div>
@@ -1197,6 +1198,24 @@ async function agregarComentarioTicket(id) {
   }
   saving = false; renderPanel();
 }
+
+// Elimina un reclamo cargado por este mismo comercial, con confirmación
+// previa. El backend además valida que quien pide borrarlo sea quien lo
+// creó (no cualquier comercial que vea el mismo cliente).
+window.eliminarTicket = async function(id) {
+  var ok = confirm('¿Estás seguro de que querés eliminar este reclamo? Esta acción no se puede deshacer.');
+  if (!ok) return;
+  try {
+    var res = await api({ action: 'eliminarTicket', id: id });
+    if (!res.ok) throw new Error(res.error || 'Error desconocido');
+    tickets = tickets.filter(function(t){ return t.ID !== id; });
+    selectedTicket = null;
+    toast('Reclamo eliminado', 'ok');
+    render();
+  } catch(e) {
+    toast('Error al eliminar: ' + e.message, 'err');
+  }
+};
 
 document.querySelector('script[src*="gsi"]')?.addEventListener('load', function() {
   if (!currentUser) renderLogin();
