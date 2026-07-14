@@ -71,6 +71,8 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 .ddanger{background:var(--r50);color:var(--r600)}
 .empty{text-align:center;padding:36px;color:var(--g400);font-size:12px}
 .overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
+.confirm-overlay{position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-card{background:var(--w);max-width:380px;width:100%;border-radius:var(--rad-lg,12px);padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
 .panel{background:var(--w);width:540px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200)}
 .ph{padding:14px 16px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5;display:flex;align-items:flex-start;gap:8px}
 .ph-info{flex:1}
@@ -106,7 +108,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJPJYg6MUjeoCTfoetuyppFAuXJ6P3HlKPOsqq9WKxEi_aJ2K8xXj4tYwup9Z478C9CA/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQNHLGb7qVjXpj_gpAOvSKfKgZbtHV86RNd5cjwuh98fwsbLuPN1HcQ27ugu0s8JFyBQ/exec';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
@@ -131,7 +133,7 @@ var _u=(function(){
 
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
 var opSortField='creado', opSortDir='desc', opSearchQ='', opFiltroTipo='', opFiltroEmpresa='';
-var informeFinalFiles=[], enviandoInforme=false, informeAbierto=false;
+var informeFinalFiles=[], enviandoInforme=false;
 var detailComentario='', detailArchivo=null, saving=false;
 var activeNav='tickets'; // tickets | clientes
 var clientes=[], comerciales=[];
@@ -522,8 +524,9 @@ function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
   var tipos=getOptipos();
   var empresas=getOpEmpresas();
   return`
+        <h2 style="font-size:15px;font-weight:600;color:var(--g900);margin-bottom:12px">Total de tickets (${tickets.length})</h2>
         <div class="kpis">
-          <div class="kpi info"><div class="kl">Total</div><div class="kv">${tickets.length}</div></div>
+          <div class="kpi info"><div class="kl">Recibidos</div><div class="kv">${rec.length}</div></div>
           <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
           <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
           <div class="kpi purple"><div class="kl">Prom. horas</div><div class="kv">${promDias}</div></div>
@@ -541,7 +544,7 @@ function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
         ${renderFiltros(tipos,empresas)}
         <div class="tw">
           <table>
-            <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Empresa</th>${thSort('monto','Monto')}<th>Vencimiento</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
+            <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Cliente</th>${thSort('monto','Monto')}<th>Vencimiento</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
             <tbody>
               ${tab.length===0
                 ?'<tr><td colspan="6" class="empty">No hay tickets en esta sección</td></tr>'
@@ -568,8 +571,8 @@ function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
 window.openPanel=function(id){
   selTicket=tickets.find(function(x){return x.ID===id;});
   if(!selTicket)return;
-  informeAbierto=false;
   informeFinalFiles=[];
+  detailComentario=''; detailArchivo=null;
   if(selTicket.leido!=='SI'){
     selTicket.leido='SI';
     api({action:'updateTicket',id:selTicket.ID,campos:{leido:'SI'}});
@@ -589,7 +592,7 @@ function renderPanel(){
   if(existing){var pOld=existing.querySelector('.panel');if(pOld)scrollY=pOld.scrollTop;existing.remove();}
 
   document.body.insertAdjacentHTML('beforeend',`
-  <div class="overlay" onclick="if(event.target.className==='overlay')closePanel()">
+  <div class="overlay" onclick="if(event.target.className==='overlay')intentarCerrarPanel()">
     <div class="panel">
       <div class="ph">
         <div class="ph-info">
@@ -612,9 +615,23 @@ function renderPanel(){
             </div>
           </div>
         </div>
-        <button class="close" onclick="closePanel()">✕</button>
+        <button class="close" onclick="intentarCerrarPanel()">✕</button>
       </div>
       <div class="pb">
+
+        <!-- INFORME FINAL -->
+        <div class="sec">
+          <div class="sec-t" style="font-size:12.5px;font-weight:700;color:var(--b700);text-transform:uppercase;letter-spacing:.04em">📄 Informe final</div>
+          <p style="font-size:11px;color:var(--g400)">Subí uno o más archivos con el informe final. Al confirmar, se les avisa automáticamente por mail a Comercial y a Auditoría, con el detalle del reclamo, y el ticket pasa a "Finalizado".</p>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="informe-adj-box" style="flex:1;border:1.5px dashed var(--g300);border-radius:var(--rad);padding:9px 10px;text-align:center;cursor:pointer;background:var(--g50);font-size:11px;color:var(--g500)" onclick="document.getElementById('informe-adj-inp').click()">
+              <input id="informe-adj-inp" type="file" multiple style="display:none" onchange="setInformeArchivos(this)">
+              <span id="informe-adj-label">📎 Clic para adjuntar uno o más archivos</span>
+            </div>
+            <button class="btn btn-p" style="font-size:11px" onclick="enviarInformeFinal('${t.ID}')" ${enviandoInforme?'disabled':''}>${enviandoInforme?'Enviando...':'Enviar'}</button>
+          </div>
+          ${informeFinalFiles.length ? '<div style="display:flex;flex-direction:column;gap:4px;margin-top:7px">' + informeFinalFiles.map(function(f,i){return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--g700);background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);padding:5px 8px"><span>📎 '+esc(f.name)+'</span><span style="cursor:pointer;color:var(--r500);font-weight:600" onclick="quitarInformeArchivo('+i+')">✕</span></div>';}).join('') + '</div>' : ''}
+        </div>
 
         <!-- DATOS DEL RECLAMO -->
         <div class="sec">
@@ -644,18 +661,12 @@ function renderPanel(){
           ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Todavía no hay comentarios</p>':
             coms.map(function(c){
               var esCom=c.de==='comercial';
-              // Buscar el fileId del adjunto del comentario en el array adjs
-              var adjFileId = null;
-              if (c.archivo) {
-                var match = adjs.find(function(a){ return a.nombre===c.archivo; });
-                if (match) adjFileId = match.fileId||null;
-              }
               return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
                 <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
                 <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
                 ${c.archivo?`<div style="font-size:11px;color:var(--g500);margin-top:3px">
-                  ${adjFileId
-                    ? `<a href="#" onclick="abrirAdjunto(event,'${adjFileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
+                  ${c.fileId
+                    ? `<a href="#" onclick="abrirAdjunto(event,'${c.fileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
                     : `📎 ${esc(c.archivo)}`}
                 </div>`:''}
               </div>`;
@@ -677,23 +688,6 @@ function renderPanel(){
           <div class="sec-t">Historial</div>
           ${hist.length===0?'<p style="font-size:12px;color:var(--g400)">Sin historial</p>':
             hist.map(function(h){return`<div style="border-left:2px solid var(--g200);padding:4px 9px;margin-bottom:5px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${esc(h.accion)}</div>`;}).join('')}
-        </div>
-
-        <!-- INFORME FINAL -->
-        <div class="sec">
-          <div class="sec-t" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;background:var(--b50);padding:11px 14px;border-radius:var(--rad-lg,10px);border:1.5px solid var(--b200,#bfdbfe)" onclick="informeAbierto=!informeAbierto;renderPanel()">
-            <span style="font-size:12.5px;font-weight:700;color:var(--b700);text-transform:uppercase;letter-spacing:.04em">📄 Informe final</span>
-            <span style="font-size:11px;color:var(--b500);font-weight:700">${informeAbierto?'▲':'▼'}</span>
-          </div>
-          <div id="informe-body" style="display:${informeAbierto?'flex':'none'};flex-direction:column;gap:7px">
-            <p style="font-size:11px;color:var(--g400)">Subí uno o más archivos con el informe final. Al confirmar, se les avisa automáticamente por mail a Comercial y a Auditoría, con el detalle del reclamo.</p>
-            <div id="informe-adj-box" style="border:1.5px dashed var(--g300);border-radius:var(--rad);padding:12px;text-align:center;cursor:pointer;background:var(--g50);font-size:12px;color:var(--g500)" onclick="document.getElementById('informe-adj-inp').click()">
-              <input id="informe-adj-inp" type="file" multiple style="display:none" onchange="setInformeArchivos(this)">
-              <span id="informe-adj-label">📎 Clic para adjuntar uno o más archivos</span>
-            </div>
-            ${informeFinalFiles.length ? '<div style="display:flex;flex-direction:column;gap:4px">' + informeFinalFiles.map(function(f,i){return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--g700);background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);padding:5px 8px"><span>📎 '+esc(f.name)+'</span><span style="cursor:pointer;color:var(--r500);font-weight:600" onclick="quitarInformeArchivo('+i+')">✕</span></div>';}).join('') + '</div>' : ''}
-            <button class="btn btn-g" style="align-self:flex-start;border-color:var(--b400);color:var(--b600)" onclick="enviarInformeFinal('${t.ID}')" ${enviandoInforme?'disabled':''}>${enviandoInforme?'Enviando...':'📤 Enviar informe final'}</button>
-          </div>
         </div>
 
       </div>
@@ -774,6 +768,56 @@ window.agregarComentarioTicket = async function(id) {
     toast('Error al agregar comentario: ' + e.message, 'err');
   }
   saving = false; renderPanel();
+};
+
+// Modal de confirmación propio (no el confirm() nativo del navegador).
+// Devuelve una Promise<boolean>.
+function confirmarAccion(mensaje, textoOk, textoCancelar) {
+  return new Promise(function(resolve) {
+    var div = document.createElement('div');
+    div.className = 'confirm-overlay';
+    div.innerHTML = `
+      <div class="confirm-card">
+        <div style="font-size:14px;color:var(--g900);line-height:1.5;margin-bottom:20px">${mensaje}</div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button id="confirm-cancel-btn" style="background:var(--g100);color:var(--g700);border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px">${textoCancelar||'Cancelar'}</button>
+          <button id="confirm-ok-btn" style="background:var(--b600);color:#fff;border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">${textoOk||'Confirmar'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+    document.getElementById('confirm-ok-btn').onclick = function(){ div.remove(); resolve(true); };
+    document.getElementById('confirm-cancel-btn').onclick = function(){ div.remove(); resolve(false); };
+    div.onclick = function(e){ if (e.target === div) { div.remove(); resolve(false); } };
+  });
+}
+
+// Hay contenido cargado (comentario/archivo/informe) que todavía no se
+// envió. Se usa para avisar antes de cerrar el detalle sin querer.
+function hayContenidoSinEnviar() {
+  return !!(detailComentario || detailArchivo || informeFinalFiles.length);
+}
+
+// Intenta cerrar el panel de detalle. Si hay contenido cargado sin
+// enviar (comentario, archivo del comentario, o archivos del informe
+// final), pregunta antes de perderlo.
+window.intentarCerrarPanel = async function(){
+  if (!hayContenidoSinEnviar()) { window.closePanel(); return; }
+  var id = selTicket ? selTicket.ID : null;
+  var salir = await confirmarAccion(
+    '¿Querés cerrar sin cargar los archivos o el texto que subiste? Se va a perder lo que no enviaste.',
+    'Cerrar sin guardar', 'Volver y enviar'
+  );
+  if (salir) {
+    detailComentario=''; detailArchivo=null; informeFinalFiles=[];
+    window.closePanel();
+    return;
+  }
+  // "Volver y enviar": mandamos lo que haya cargado (comentario y/o informe)
+  // y recién ahí cerramos.
+  try {
+    if ((detailComentario || detailArchivo) && id) { await agregarComentarioTicket(id); }
+    if (informeFinalFiles.length && id) { await enviarInformeFinal(id); }
+  } catch(e) { /* los propios handlers ya muestran el toast de error */ }
 };
 
 window.closePanel=function(){var o=document.querySelector('.overlay');if(o)o.remove();selTicket=null;};
