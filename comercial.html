@@ -1084,7 +1084,7 @@ function renderPanel() {
               <div style="font-size:11px;color:var(--g500);margin-top:3px">${t.tipo_reclamo||'—'}${t.tipo_tarjeta?' · '+t.tipo_tarjeta:''}</div>
               ${t.archivado==='SI'
                 ? '<div style="margin-top:8px;font-size:11px;color:var(--g400)">📦 Este reclamo está archivado</div>'
-                : `<button onclick="abrirModalArchivar('${t.ID}')" style="margin-top:8px;background:none;border:none;padding:0;font-size:11px;color:var(--g500);cursor:pointer;font-family:inherit;text-decoration:underline">📦 Archivar reclamo</button>`}
+                : `<button onclick="abrirModalArchivar('${t.ID}')" style="margin-top:10px;background:var(--r50);border:1px solid var(--r500,#ef4444);padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--r600);cursor:pointer;font-family:inherit;border-radius:7px">📦 Archivar reclamo</button>`}
             </div>
             <button class="close" onclick="selectedTicket=null;render()">✕</button>
           </div>
@@ -1292,7 +1292,7 @@ function pedirDatosArchivado() {
         <div id="arch-err" style="display:none;color:var(--r600);font-size:11px;margin-bottom:10px"></div>
         <div style="display:flex;justify-content:flex-end;gap:8px">
           <button id="arch-cancel-btn" style="background:var(--g100);color:var(--g700);border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px">Cancelar</button>
-          <button id="arch-ok-btn" style="background:var(--b600);color:#fff;border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">Archivar</button>
+          <button id="arch-ok-btn" style="background:var(--r500,#ef4444);color:#fff;border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">Archivar</button>
         </div>
       </div>`;
     document.body.appendChild(div);
