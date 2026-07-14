@@ -56,6 +56,8 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 .breo{background:var(--r50);color:var(--r600)}
 .empty{text-align:center;padding:40px;color:var(--g400)}
 .overlay{position:fixed;inset:0;background:rgba(17,24,39,.3);z-index:50;display:flex;align-items:flex-start;justify-content:flex-end}
+.confirm-overlay{position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-card{background:var(--w);max-width:380px;width:100%;border-radius:var(--rad-lg,12px);padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
 .panel{background:var(--w);width:540px;height:100vh;overflow-y:auto;border-left:1px solid var(--g200)}
 .ph{padding:15px 18px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:var(--w);z-index:5}
 .close{padding:4px;border:none;background:none;color:var(--g400);cursor:pointer;font-size:15px}
@@ -1199,11 +1201,33 @@ async function agregarComentarioTicket(id) {
   saving = false; renderPanel();
 }
 
+// Modal de confirmación propio (en vez del confirm() nativo del
+// navegador, que muestra el dominio del sitio como título y no se puede
+// sacar). Devuelve una Promise<boolean>.
+function confirmarAccion(mensaje, textoOk, textoCancelar) {
+  return new Promise(function(resolve) {
+    var div = document.createElement('div');
+    div.className = 'confirm-overlay';
+    div.innerHTML = `
+      <div class="confirm-card">
+        <div style="font-size:14px;color:var(--g900);line-height:1.5;margin-bottom:20px">${mensaje}</div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button id="confirm-cancel-btn" style="background:var(--g100);color:var(--g700);border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px">${textoCancelar||'Cancelar'}</button>
+          <button id="confirm-ok-btn" style="background:var(--r500,#ef4444);color:#fff;border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">${textoOk||'Confirmar'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+    document.getElementById('confirm-ok-btn').onclick = function(){ div.remove(); resolve(true); };
+    document.getElementById('confirm-cancel-btn').onclick = function(){ div.remove(); resolve(false); };
+    div.onclick = function(e){ if (e.target === div) { div.remove(); resolve(false); } };
+  });
+}
+
 // Elimina un reclamo cargado por este mismo comercial, con confirmación
 // previa. El backend además valida que quien pide borrarlo sea quien lo
 // creó (no cualquier comercial que vea el mismo cliente).
 window.eliminarTicket = async function(id) {
-  var ok = confirm('¿Estás seguro de que querés eliminar este reclamo? Esta acción no se puede deshacer.');
+  var ok = await confirmarAccion('¿Estás seguro de que querés eliminar este reclamo? Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
   if (!ok) return;
   try {
     var res = await api({ action: 'eliminarTicket', id: id });
