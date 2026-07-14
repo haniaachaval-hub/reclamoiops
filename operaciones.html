@@ -586,6 +586,8 @@ function renderPanel(){
   var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
   var coms=[];try{coms=Array.isArray(t.comentarios)?t.comentarios:JSON.parse(t.comentarios||'[]');}catch(e){}
   var adjs=[];try{adjs=Array.isArray(t.adjuntos)?t.adjuntos:JSON.parse(t.adjuntos||'[]');}catch(e){}
+  var adjsInformeFinal=adjs.filter(function(a){return a.tipo==='informe_final';});
+  var adjsIniciales=adjs.filter(function(a){return a.tipo!=='informe_final';});
   var d=calcDias(t);
   var existing=document.querySelector('.overlay');
   var scrollY=0;
@@ -619,20 +621,6 @@ function renderPanel(){
       </div>
       <div class="pb">
 
-        <!-- INFORME FINAL -->
-        <div class="sec">
-          <div class="sec-t" style="font-size:12.5px;font-weight:700;color:var(--b700);text-transform:uppercase;letter-spacing:.04em">📄 Informe final</div>
-          <p style="font-size:11px;color:var(--g400)">Subí uno o más archivos con el informe final. Al confirmar, se les avisa automáticamente por mail a Comercial y a Auditoría, con el detalle del reclamo, y el ticket pasa a "Finalizado".</p>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div id="informe-adj-box" style="flex:1;border:1.5px dashed var(--g300);border-radius:var(--rad);padding:9px 10px;text-align:center;cursor:pointer;background:var(--g50);font-size:11px;color:var(--g500)" onclick="document.getElementById('informe-adj-inp').click()">
-              <input id="informe-adj-inp" type="file" multiple style="display:none" onchange="setInformeArchivos(this)">
-              <span id="informe-adj-label">📎 Clic para adjuntar uno o más archivos</span>
-            </div>
-            <button class="btn btn-p" style="font-size:11px" onclick="enviarInformeFinal('${t.ID}')" ${enviandoInforme?'disabled':''}>${enviandoInforme?'Enviando...':'Enviar'}</button>
-          </div>
-          ${informeFinalFiles.length ? '<div style="display:flex;flex-direction:column;gap:4px;margin-top:7px">' + informeFinalFiles.map(function(f,i){return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--g700);background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);padding:5px 8px"><span>📎 '+esc(f.name)+'</span><span style="cursor:pointer;color:var(--r500);font-weight:600" onclick="quitarInformeArchivo('+i+')">✕</span></div>';}).join('') + '</div>' : ''}
-        </div>
-
         <!-- DATOS DEL RECLAMO -->
         <div class="sec">
           <div class="sec-t">Datos del reclamo</div>
@@ -648,10 +636,26 @@ function renderPanel(){
           </div>
         </div>
 
-        <!-- ADJUNTOS -->
+        <!-- INFORME FINAL YA ENVIADO (si existe) -->
+        ${adjsInformeFinal.length ? `
+        <div class="sec">
+          <div class="sec-t" style="color:var(--gr700)">✅ Informe final</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${adjsInformeFinal.map(function(a){
+              var fid=a.fileId||'';
+              return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--gr50);border:1px solid var(--gr500);border-radius:var(--rad)">
+                <span>📄</span>
+                <a href="#" onclick="abrirAdjunto(event,'${fid}','${encodeURIComponent(a.nombre||'')}','')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">${esc(a.nombre)}</a>
+                <span style="font-size:9px;font-weight:700;color:var(--gr700);background:var(--gr100);padding:2px 7px;border-radius:10px;letter-spacing:.03em">✅ ENVIADO</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- ADJUNTOS (solo los del formulario de carga, no informe final) -->
         <div class="sec">
           <div class="sec-t">Archivos adjuntos</div>
-          ${renderAdjuntosOp(t, adjs)}
+          ${renderAdjuntosOp(t, adjsIniciales)}
         </div>
 
         <!-- COMENTARIOS (Comercial <-> Operaciones) -->
@@ -688,6 +692,20 @@ function renderPanel(){
           <div class="sec-t">Historial</div>
           ${hist.length===0?'<p style="font-size:12px;color:var(--g400)">Sin historial</p>':
             hist.map(function(h){return`<div style="border-left:2px solid var(--g200);padding:4px 9px;margin-bottom:5px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">${h.ts}</strong> — ${esc(h.accion)}</div>`;}).join('')}
+        </div>
+
+        <!-- INFORME FINAL (formulario de carga) -->
+        <div class="sec">
+          <div class="sec-t" style="font-size:12.5px;font-weight:700;color:var(--b700);text-transform:uppercase;letter-spacing:.04em">📄 Informe final</div>
+          <p style="font-size:11px;color:var(--g400)">Subí uno o más archivos con el informe final. Al confirmar, se les avisa automáticamente por mail a Comercial y a Auditoría, con el detalle del reclamo, y el ticket pasa a "Finalizado".</p>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="informe-adj-box" style="flex:1;border:1.5px dashed var(--g300);border-radius:var(--rad);padding:9px 10px;text-align:center;cursor:pointer;background:var(--g50);font-size:11px;color:var(--g500)" onclick="document.getElementById('informe-adj-inp').click()">
+              <input id="informe-adj-inp" type="file" multiple style="display:none" onchange="setInformeArchivos(this)">
+              <span id="informe-adj-label">📎 Clic para adjuntar uno o más archivos</span>
+            </div>
+            <button class="btn btn-p" style="font-size:11px" onclick="enviarInformeFinal('${t.ID}')" ${enviandoInforme?'disabled':''}>${enviandoInforme?'Enviando...':'Enviar'}</button>
+          </div>
+          ${informeFinalFiles.length ? '<div style="display:flex;flex-direction:column;gap:4px;margin-top:7px">' + informeFinalFiles.map(function(f,i){return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--g700);background:var(--g50);border:1px solid var(--g100);border-radius:var(--rad);padding:5px 8px"><span>📎 '+esc(f.name)+'</span><span style="cursor:pointer;color:var(--r500);font-weight:600" onclick="quitarInformeArchivo('+i+')">✕</span></div>';}).join('') + '</div>' : ''}
         </div>
 
       </div>
