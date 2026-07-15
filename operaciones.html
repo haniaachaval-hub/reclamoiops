@@ -109,7 +109,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 <div class="toast-wrap" id="toasts"></div>
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQNHLGb7qVjXpj_gpAOvSKfKgZbtHV86RNd5cjwuh98fwsbLuPN1HcQ27ugu0s8JFyBQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/library/d/1K_9uelXqhjkjXcxXOBd0KPPUvjqftspUNPPAYyZ9MqlLiIkOpsu_yXYk/58';
 // ─────────────────────────────────────────────────────────────
 
 var _u=(function(){
@@ -129,6 +129,17 @@ var _u=(function(){
 
   var t=sessionStorage.getItem('ro_token'),e=sessionStorage.getItem('ro_email'),n=sessionStorage.getItem('ro_name');
   if(!t||!e){window.location.href='index.html';return null;}
+  // Este panel queda restringido a un único mail. Cualquier otra cuenta
+  // de Google @ocasa.com que llegue hasta acá se rechaza (el backend
+  // también lo valida por su cuenta, esto es solo para no dejarla entrar
+  // a la interfaz).
+  var OPERACIONES_EMAIL_PERMITIDO='controldegestionoperaciones@ocasa.com';
+  if(e.toLowerCase()!==OPERACIONES_EMAIL_PERMITIDO){
+    sessionStorage.clear();
+    alert('Este panel de Operaciones está restringido a una cuenta autorizada. La cuenta con la que entraste no tiene acceso.');
+    window.location.href='index.html';
+    return null;
+  }
   return{token:t,email:e,name:n};
 })();
 
@@ -156,6 +167,10 @@ function ticketDateValue(t){
   return str.slice(0,10);
 }
 function bc(e){return{'Recibido':'bn','En análisis':'ba','Finalizado':'bfin','Re abierto':'breo'}[e]||'bn';}
+// Nombre para MOSTRAR de cada estado (el dato interno sigue siendo
+// "Recibido" en el Sheet y en toda la lógica; esto es solo de cara al
+// usuario, para no romper nada de lo ya construido).
+function estadoLabel(e){return e==='Recibido'?'Pendiente':(e||'—');}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function fileToBase64(file) {
@@ -262,6 +277,7 @@ async function loadData(){
 function getTab(tab){
   var estadoMap={'recibidos':'Recibido','analisis':'En análisis','finalizados':'Finalizado','reabiertos':'Re abierto'};
   return tickets.filter(function(t){
+    if(t.archivado==='SI') return false;
     if(t.estado !== estadoMap[tab]) return false;
     if(opFiltroTipo && t.tipo_reclamo !== opFiltroTipo) return false;
     if(opFiltroEmpresa && (t.empresa||t.titular||'') !== opFiltroEmpresa) return false;
@@ -269,6 +285,10 @@ function getTab(tab){
     if(opFiltroHasta && ticketDateValue(t) > opFiltroHasta) return false;
     return true;
   }).sort(function(a,b){
+    if(opSortField==='analisis_inicio_ts'){
+      var pa=parseFloat(a.analisis_inicio_ts)||0, pb=parseFloat(b.analisis_inicio_ts)||0;
+      return opSortDir==='asc'?pa-pb:pb-pa;
+    }
     if(opSortField==='creado'){
       var da=new Date(a.creado.split('/').reverse().join('-'));
       var db=new Date(b.creado.split('/').reverse().join('-'));
@@ -281,6 +301,50 @@ function getTab(tab){
     }
     return 0;
   });
+}
+
+// Tickets en riesgo o vencidos (activos, no archivados), para la vista
+// que se abre al tocar la tarjeta "En riesgo". Los vencidos van primero
+// (los más viejos primero), después los que están por vencer (los más
+// urgentes primero).
+function getEnRiesgoTickets(){
+  return tickets.filter(function(t){
+    if(t.archivado==='SI') return false;
+    var v=vencimientoInfo(t);
+    return v&&(v.estado==='riesgo'||v.estado==='vencido');
+  }).filter(function(t){
+    if(opFiltroTipo && t.tipo_reclamo !== opFiltroTipo) return false;
+    if(opFiltroEmpresa && (t.empresa||t.titular||'') !== opFiltroEmpresa) return false;
+    if(opFiltroDesde && ticketDateValue(t) < opFiltroDesde) return false;
+    if(opFiltroHasta && ticketDateValue(t) > opFiltroHasta) return false;
+    return true;
+  }).sort(function(a,b){
+    var va=vencimientoInfo(a), vb=vencimientoInfo(b);
+    var pa=va.estado==='vencido'?(-1000-va.dias):va.dias;
+    var pb=vb.estado==='vencido'?(-1000-vb.dias):vb.dias;
+    return pa-pb;
+  });
+}
+
+// Tickets archivados por Comercial (solo lectura acá, sin poder reabrirlos).
+function getArchivadosOp(){
+  return tickets.filter(function(t){return t.archivado==='SI';})
+    .sort(function(a,b){
+      var ia={},ib={};
+      try{ia=typeof a.archivado_info==='object'?a.archivado_info:JSON.parse(a.archivado_info||'{}');}catch(e){}
+      try{ib=typeof b.archivado_info==='object'?b.archivado_info:JSON.parse(b.archivado_info||'{}');}catch(e){}
+      return (ib.fecha||'')>(ia.fecha||'')?1:-1;
+    });
+}
+
+// Formatea un timestamp en ms (string) a "dd/mm/aaaa hh:mm"
+function fmtDateTimeMs(ms){
+  var n=parseFloat(ms);
+  if(!n) return '—';
+  var d=new Date(n);
+  var dd=String(d.getDate()).padStart(2,'0'), mm=String(d.getMonth()+1).padStart(2,'0'), yy=d.getFullYear();
+  var hh=String(d.getHours()).padStart(2,'0'), mi=String(d.getMinutes()).padStart(2,'0');
+  return dd+'/'+mm+'/'+yy+' '+hh+':'+mi;
 }
 
 function calcDias(t){
@@ -369,11 +433,17 @@ function render(){
     return;
   }
   var rec=getTab('recibidos'),ana=getTab('analisis'),fin=getTab('finalizados');
-  var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:fin;
-  var finConDatos=fin.filter(function(t){return parseFloat(t.analisis_segundos_acum)>0;});
+  var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:activeTab==='riesgo'?getEnRiesgoTickets():fin;
+  var archivadosList=getArchivadosOp();
+  // Prom. horas se calcula sobre TODOS los finalizados, incluidos los que
+  // Comercial ya archivó — el trabajo de Operaciones sobre esos tickets
+  // pasó igual, archivarlos no lo borra de la estadística.
+  var finTodos=tickets.filter(function(t){return t.estado==='Finalizado';});
+  var finConDatos=finTodos.filter(function(t){return parseFloat(t.analisis_segundos_acum)>0;});
   var promDias=finConDatos.length?Math.round(finConDatos.reduce(function(s,t){return s+calcDias(t);},0)/finConDatos.length):0;
-  var enRiesgo=tickets.filter(function(t){var v=vencimientoInfo(t);return v&&(v.estado==='riesgo'||v.estado==='vencido');}).length;
-  var vencidos=tickets.filter(function(t){var v=vencimientoInfo(t);return v&&v.estado==='vencido';}).length;
+  var activos=tickets.filter(function(t){return t.archivado!=='SI';});
+  var enRiesgo=activos.filter(function(t){var v=vencimientoInfo(t);return v&&(v.estado==='riesgo'||v.estado==='vencido');}).length;
+  var vencidos=activos.filter(function(t){var v=vencimientoInfo(t);return v&&v.estado==='vencido';}).length;
 
   app.innerHTML=`
   <div class="app">
@@ -383,6 +453,7 @@ function render(){
         <div class="sb-sec">Panel</div>
         <div class="ni${activeNav==='tickets'?' on':''}" onclick="activeNav='tickets';render()">🎫 Ticketera</div>
         <div class="ni${activeNav==='clientes'?' on':''}" onclick="activeNav='clientes';render()">💼 Comerciales <span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r100)':'var(--g100)'};color:${clientes.filter(function(c){return!c.comercial_asignado;}).length?'var(--r600)':'var(--g500)'}">${clientes.filter(function(c){return!c.comercial_asignado;}).length||''}</span></div>
+        <div class="ni${activeNav==='archivados'?' on':''}" onclick="activeNav='archivados';render()">📦 Archivados <span style="margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;background:var(--g100);color:var(--g500)">${archivadosList.length||''}</span></div>
       </div>
       <div class="sb-foot">
         <div style="font-size:20px">👤</div>
@@ -391,12 +462,41 @@ function render(){
       </div>
     </div>
     <div class="main">
-      <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Comerciales':'Ticketera'}</h2></div>
+      <div class="topbar"><h2>${activeNav==='clientes'?'Gestión de Comerciales':activeNav==='archivados'?'Archivados':'Ticketera'}</h2></div>
       <div class="content">
-        ${activeNav==='clientes'?renderClientesSection():renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos)}
+        ${activeNav==='clientes'?renderClientesSection():activeNav==='archivados'?renderArchivadosOpSection(archivadosList):renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos)}
       </div>
     </div>
   </div>`;
+}
+
+// Vista de solo lectura para Operaciones: todos los tickets que Comercial
+// archivó. No hay botón de reabrir acá — esa decisión es de Comercial.
+function renderArchivadosOpSection(archivadosList){
+  return`
+        <h2 style="font-size:15px;font-weight:600;color:var(--g900);margin-bottom:4px">Tickets archivados (${archivadosList.length})</h2>
+        <p style="font-size:11px;color:var(--g400);margin-bottom:14px">Comercial los archivó — ya no están en las pestañas activas. El tiempo que se les dedicó sigue contando en "Prom. horas".</p>
+        <div class="tw">
+          <table>
+            <thead><tr><th>ID</th><th>Tipo</th><th>Cliente</th><th>Estado</th><th>Archivado por</th><th>Fecha de archivado</th></tr></thead>
+            <tbody>
+              ${archivadosList.length===0
+                ?'<tr><td colspan="6" class="empty">No hay tickets archivados</td></tr>'
+                :archivadosList.map(function(t){
+                  var info={};
+                  try{info=typeof t.archivado_info==='object'?t.archivado_info:JSON.parse(t.archivado_info||'{}');}catch(e){}
+                  return`<tr onclick="openPanel('${esc(t.ID)}')">
+                    <td><span class="tid">${t.ID||'—'}</span></td>
+                    <td>${esc(t.tipo_reclamo||'—')}</td>
+                    <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
+                    <td><span class="badge ${bc(t.estado)}">${estadoLabel(t.estado)}</span></td>
+                    <td style="font-size:11px">${esc(info.solicitanteNombre||'—')}</td>
+                    <td style="font-size:11px">${esc(info.fecha||'—')}</td>
+                  </tr>`;
+                }).join('')}
+            </tbody>
+          </table>
+        </div>`;
 }
 
 function renderClientesSection(){
@@ -520,7 +620,7 @@ function renderFiltros(tipos,empresas){
   html+='</select>';
   html+='<select onchange="opFiltroEstado=this.value;if(opFiltroEstado){activeTab=({\'Recibido\':\'recibidos\',\'En análisis\':\'analisis\',\'Finalizado\':\'finalizados\'})[opFiltroEstado]||activeTab;}render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none">';
   html+='<option value="">Todos los estados</option>';
-  ['Recibido','En análisis','Finalizado'].forEach(function(e){html+='<option value="'+e+'"'+(opFiltroEstado===e?' selected':'')+'>'+e+'</option>';});
+  ['Recibido','En análisis','Finalizado'].forEach(function(e){html+='<option value="'+e+'"'+(opFiltroEstado===e?' selected':'')+'>'+estadoLabel(e)+'</option>';});
   html+='</select>';
   html+='<span style="font-size:11px;color:var(--g400)">Desde</span>';
   html+='<input type="date" value="'+opFiltroDesde+'" onchange="opFiltroDesde=this.value;render()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;font-family:inherit;color:#374151;background:#fff;outline:none;width:135px">';
@@ -535,31 +635,37 @@ function renderFiltros(tipos,empresas){
 function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
   var tipos=getOptipos();
   var empresas=getOpEmpresas();
+  var totalActivos=rec.length+ana.length+fin.length;
   return`
-        <h2 style="font-size:15px;font-weight:600;color:var(--g900);margin-bottom:12px">Total de tickets (${tickets.length})</h2>
+        ${renderFiltros(tipos,empresas)}
         <div class="kpis">
-          <div class="kpi info"><div class="kl">Recibidos</div><div class="kv">${rec.length}</div></div>
+          <div class="kpi info"><div class="kl">Tickets totales</div><div class="kv">${totalActivos}</div></div>
+          <div class="kpi info"><div class="kl">Pendientes</div><div class="kv">${rec.length}</div></div>
           <div class="kpi warn"><div class="kl">En análisis</div><div class="kv">${ana.length}</div></div>
           <div class="kpi ok"><div class="kl">Finalizados</div><div class="kv">${fin.length}</div></div>
-          <div class="kpi purple"><div class="kl">Prom. horas</div><div class="kv">${promDias}</div></div>
-          <div class="kpi" style="border:1px solid ${vencidos>0?'var(--r200, #fecaca)':enRiesgo>0?'#fcd34d':'var(--g200)'}; background:${vencidos>0?'var(--r50)':enRiesgo>0?'var(--a50)':'var(--w)'}">
+          <div class="kpi" style="cursor:pointer;border:1px solid ${vencidos>0?'var(--r200, #fecaca)':enRiesgo>0?'#fcd34d':'var(--g200)'}; background:${vencidos>0?'var(--r50)':enRiesgo>0?'var(--a50)':'var(--w)'}" onclick="activeTab='riesgo';opSortField='creado';opSortDir='desc';render()" title="Ver el listado de tickets en riesgo o vencidos">
             <div class="kl" style="color:${vencidos>0?'var(--r600)':enRiesgo>0?'var(--a600)':'var(--g700)'}">🚨 En riesgo</div>
             <div class="kv" style="color:${vencidos>0?'var(--r600)':enRiesgo>0?'var(--a500)':'var(--g400)'}">${enRiesgo}</div>
-            ${vencidos>0?'<div style="font-size:10px;color:var(--r500);margin-top:4px;font-weight:500">'+vencidos+' vencido'+(vencidos!==1?'s':'')+'</div>':''}
+            ${vencidos>0?'<div style="font-size:10px;color:var(--r500);margin-top:4px;font-weight:500">'+vencidos+' vencido'+(vencidos!==1?'s':'')+'</div>':'<div style="font-size:9px;color:var(--g400);margin-top:4px">Ver listado →</div>'}
+          </div>
+          <div class="kpi" style="background:var(--p50,#faf5ff);border:1.5px solid var(--p300,#d8b4fe)">
+            <div class="kl" style="color:var(--p600,#9333ea)">⏱ Prom. horas</div>
+            <div class="kv" style="color:var(--p600,#9333ea)">${promDias}</div>
           </div>
         </div>
-        ${renderFiltros(tipos,empresas)}
         <div class="tabs">
-          <button class="tab${activeTab==='recibidos'?' on':''}" onclick="activeTab='recibidos';render()">Recibidos<span class="tc">${rec.length}</span></button>
-          <button class="tab${activeTab==='analisis'?' on':''}" onclick="activeTab='analisis';render()">En análisis<span class="tc">${ana.length}</span></button>
-          <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';render()">Finalizados<span class="tc">${fin.length}</span></button>
+          <button class="tab${activeTab==='recibidos'?' on':''}" onclick="activeTab='recibidos';opSortField='creado';opSortDir='desc';render()">Pendientes<span class="tc">${rec.length}</span></button>
+          <button class="tab${activeTab==='analisis'?' on':''}" onclick="activeTab='analisis';opSortField='analisis_inicio_ts';opSortDir='desc';render()">En análisis<span class="tc">${ana.length}</span></button>
+          <button class="tab${activeTab==='finalizados'?' on':''}" onclick="activeTab='finalizados';opSortField='creado';opSortDir='desc';render()">Finalizados<span class="tc">${fin.length}</span></button>
+          ${activeTab==='riesgo'?'<button class="tab on">🚨 En riesgo / vencidos<span class="tc">'+tab.length+'</span></button>':''}
         </div>
+        ${activeTab==='analisis'?'<p style="font-size:11px;color:var(--g400);margin-bottom:8px">Ordenados por los que entraron a análisis más recientemente primero.</p>':''}
         <div class="tw">
           <table>
-            <thead><tr><th>ID</th>${thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Cliente</th>${thSort('monto','Monto')}<th>Vencimiento</th>${activeTab==='recibidos'?'':'<th>Días análisis</th>'}</tr></thead>
+            <thead><tr><th>ID</th>${activeTab==='analisis'?thSort('analisis_inicio_ts','Entró a análisis'):thSort('creado','Fecha ingreso')}<th>Tipo</th><th>Cliente</th>${thSort('monto','Monto')}<th>Vencimiento</th>${activeTab==='recibidos'?'':activeTab==='riesgo'?'<th>Estado</th>':'<th>Días análisis</th>'}</tr></thead>
             <tbody>
               ${tab.length===0
-                ?'<tr><td colspan="6" class="empty">No hay tickets en esta sección</td></tr>'
+                ?'<tr><td colspan="7" class="empty">No hay tickets en esta sección</td></tr>'
                 :tab.map(function(t){
                   var leido=t.leido==='SI'||t.leido===true;
                   var d=calcDias(t);
@@ -567,12 +673,12 @@ function renderTicketsSection(rec,ana,fin,tab,promDias,enRiesgo,vencidos){
                   var rowBg=venc&&venc.estado==='vencido'?'background:rgba(239,68,68,.04)':venc&&venc.estado==='riesgo'?'background:rgba(245,158,11,.04)':'';
                   return`<tr class="${leido?'row-read':'row-unread'}" style="${rowBg}" onclick="openPanel('${esc(t.ID)}')">
                     <td><span class="tid">${t.ID||'—'}</span></td>
-                    <td>${fmtDate(t.creado)}</td>
+                    <td>${activeTab==='analisis'?fmtDateTimeMs(t.analisis_inicio_ts):fmtDate(t.creado)}</td>
                     <td>${esc(t.tipo_reclamo||'—')}</td>
                     <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
                     <td style="font-size:12px;font-weight:500;color:var(--g900)">${t.monto ? '$'+Number(String(t.monto).replace(/[^0-9.-]/g,'')).toLocaleString('es-AR') : '—'}</td>
                     <td>${badgeVencimiento(venc)}</td>
-                    ${activeTab==='recibidos'?'':`<td><span class="db ${diasClass(d)}">${d} hs</span></td>`}
+                    ${activeTab==='recibidos'?'':activeTab==='riesgo'?'<td><span class="badge '+bc(t.estado)+'">'+estadoLabel(t.estado)+'</span></td>':`<td><span class="db ${diasClass(d)}">${d} hs</span></td>`}
                   </tr>`;
                 }).join('')}
             </tbody>
@@ -617,7 +723,7 @@ function renderPanel(){
         <div class="ph-info">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
             <span class="tid">${t.ID}</span>
-            <span class="badge ${bc(t.estado)}">${t.estado||'—'}</span>
+            <span class="badge ${bc(t.estado)}">${estadoLabel(t.estado)}</span>
             <span class="db ${diasClass(d)}">${d} hs en análisis</span>
           </div>
           <div style="font-size:14px;font-weight:600;color:var(--g900)">${esc(t.empresa||t.titular||'—')}</div>
@@ -626,7 +732,7 @@ function renderPanel(){
             <div style="font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Cambiar estado</div>
             <div style="display:flex;align-items:center;gap:9px">
               <select class="sel-e-lg" id="sel-estado">
-                <option value="Recibido" ${t.estado==='Recibido'?'selected':''}>Recibido</option>
+                <option value="Recibido" ${t.estado==='Recibido'?'selected':''}>Pendiente</option>
                 <option value="En análisis" ${t.estado==='En análisis'?'selected':''}>En análisis</option>
                 <option value="Finalizado" ${t.estado==='Finalizado'?'selected':''}>Finalizado</option>
               </select>
@@ -645,7 +751,7 @@ function renderPanel(){
             <div class="df"><div class="dl">Cliente</div><div class="dv">${esc(t.empresa||t.titular||'—')}</div></div>
             <div class="df"><div class="dl">Tipo</div><div class="dv">${esc(t.tipo_reclamo||'—')}</div></div>
             <div class="df"><div class="dl">Fecha ingreso</div><div class="dv">${fmtDate(t.creado)}</div></div>
-            <div class="df"><div class="dl">Estado</div><div class="dv"><span class="badge ${bc(t.estado)}">${t.estado||'—'}</span></div></div>
+            <div class="df"><div class="dl">Estado</div><div class="dv"><span class="badge ${bc(t.estado)}">${estadoLabel(t.estado)}</span></div></div>
             ${(function(){var v=vencimientoInfo(t);return v?'<div class="df" style="grid-column:span 2;background:'+(v.estado==='vencido'?'var(--r50)':v.estado==='riesgo'?'var(--a50)':'var(--gr50)')+';border-color:'+(v.estado==='vencido'?'var(--r100)':v.estado==='riesgo'?'#fcd34d':'var(--gr100)')+'"><div class="dl">Vencimiento (10 días hábiles)</div><div class="dv">'+badgeVencimiento(v)+'</div></div>':'';})()}
             ${t.monto?`<div class="df" style="grid-column:span 2"><div class="dl">Monto reclamado</div><div class="dv">${esc(String(t.monto))}</div></div>`:''}
             ${t.detalle?`<div class="df" style="grid-column:span 2"><div class="dl">Observaciones</div><div class="dv">${esc(t.detalle)}</div></div>`:''}
@@ -697,8 +803,12 @@ function renderPanel(){
                 }
                 archivosComentario = [{ nombre: c.archivo, fileId: cFileId }];
               }
+              var puedeBorrar = c.id && c.autorEmail === _u.email;
               return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
-                <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+                  <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+                  ${puedeBorrar?`<button title="Eliminar comentario" onclick="event.stopPropagation();eliminarComentarioTicket('${t.ID}','${c.id}')" style="background:none;border:none;color:var(--r500);cursor:pointer;font-size:12px;padding:0;flex-shrink:0">🗑</button>`:''}
+                </div>
                 <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
                 ${archivosComentario.length?`<div style="display:flex;flex-direction:column;gap:2px;margin-top:4px">
                   ${archivosComentario.map(function(a){
@@ -794,6 +904,27 @@ window.quitarDetailArchivo = function(i){
   renderPanel();
 };
 
+// Borra un comentario propio (solo lo que uno mismo escribió). Pide
+// confirmación antes, para evitar un click accidental.
+window.eliminarComentarioTicket = async function(id, comentarioId) {
+  var ok = await confirmarAccion('¿Estás seguro de que querés eliminar este comentario? Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+  if (!ok) return;
+  try {
+    var res = await api({ action:'eliminarComentario', id:id, comentarioId:comentarioId });
+    if (!res.ok) throw new Error(res.error || 'Error desconocido');
+    var t = tickets.find(function(x){ return x.ID===id; });
+    if (t) {
+      var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
+      t.comentarios = coms.filter(function(c){ return c.id !== comentarioId; });
+      selTicket = t;
+    }
+    toast('Comentario eliminado', 'ok');
+    renderPanel();
+  } catch (e) {
+    toast('Error al eliminar: ' + e.message, 'err');
+  }
+};
+
 window.agregarComentarioTicket = async function(id) {
   syncDetailComentario();
   var texto = detailComentario.trim();
@@ -825,12 +956,18 @@ window.agregarComentarioTicket = async function(id) {
 
     var res = await api({ action:'agregarComentario', id:id, comentario:comentario, archivos:archivosSubidos });
     if (!res.ok) throw new Error(res.error || 'No se pudo guardar el comentario');
+    comentario.id = res.id || null;
+    comentario.autorEmail = _u.email;
 
     var t = tickets.find(function(x){ return x.ID===id; });
     if (t) {
       var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
       coms.push(comentario);
       t.comentarios = coms;
+      var histLocal = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
+      var extracto = texto; if (extracto.length > 60) extracto = extracto.slice(0,60) + '…';
+      histLocal.push({ ts: tsStr, accion: 'Comentario de Operaciones' + (extracto ? ': "' + extracto + '"' : ' (con archivo adjunto)'), usuario: _u.email });
+      t.historial = histLocal;
       selTicket = t;
     }
     detailComentario = ''; detailArchivos = [];
