@@ -435,12 +435,18 @@ function render(){
   var rec=getTab('recibidos'),ana=getTab('analisis'),fin=getTab('finalizados');
   var tab=activeTab==='recibidos'?rec:activeTab==='analisis'?ana:activeTab==='riesgo'?getEnRiesgoTickets():fin;
   var archivadosList=getArchivadosOp();
-  // Prom. horas se calcula sobre TODOS los finalizados, incluidos los que
-  // Comercial ya archivó — el trabajo de Operaciones sobre esos tickets
-  // pasó igual, archivarlos no lo borra de la estadística.
-  var finTodos=tickets.filter(function(t){return t.estado==='Finalizado';});
-  var finConDatos=finTodos.filter(function(t){return parseFloat(t.analisis_segundos_acum)>0;});
-  var promDias=finConDatos.length?Math.round(finConDatos.reduce(function(s,t){return s+calcDias(t);},0)/finConDatos.length):0;
+  // Prom. horas cuenta CUALQUIER ticket que ya acumuló horas trabajadas en
+  // análisis y dejó de estar activo ahí (pasó a pendiente, a finalizado, o
+  // se archivó) — no solo los finalizados. El trabajo que hizo Operaciones
+  // vale igual sea cual sea el destino del ticket. Un ticket que sigue
+  // "En análisis" con el cronómetro corriendo todavía no entra (recién
+  // cuenta cuando se pausa).
+  var conHorasCerradas=tickets.filter(function(t){
+    var tieneHoras=parseFloat(t.analisis_segundos_acum)>0;
+    var cronometroActivo=t.estado==='En análisis' && parseFloat(t.analisis_inicio_ts)>0;
+    return tieneHoras && !cronometroActivo;
+  });
+  var promDias=conHorasCerradas.length?Math.round(conHorasCerradas.reduce(function(s,t){return s+calcDias(t);},0)/conHorasCerradas.length):0;
   var activos=tickets.filter(function(t){return t.archivado!=='SI';});
   var enRiesgo=activos.filter(function(t){var v=vencimientoInfo(t);return v&&(v.estado==='riesgo'||v.estado==='vencido');}).length;
   var vencidos=activos.filter(function(t){var v=vencimientoInfo(t);return v&&v.estado==='vencido';}).length;
@@ -478,10 +484,10 @@ function renderArchivadosOpSection(archivadosList){
         <p style="font-size:11px;color:var(--g400);margin-bottom:14px">Comercial los archivó — ya no están en las pestañas activas. El tiempo que se les dedicó sigue contando en "Prom. horas".</p>
         <div class="tw">
           <table>
-            <thead><tr><th>ID</th><th>Tipo</th><th>Cliente</th><th>Estado</th><th>Archivado por</th><th>Fecha de archivado</th></tr></thead>
+            <thead><tr><th>ID</th><th>Tipo</th><th>Cliente</th><th>Estado</th><th>Hs. en análisis</th><th>Archivado por</th><th>Fecha de archivado</th></tr></thead>
             <tbody>
               ${archivadosList.length===0
-                ?'<tr><td colspan="6" class="empty">No hay tickets archivados</td></tr>'
+                ?'<tr><td colspan="7" class="empty">No hay tickets archivados</td></tr>'
                 :archivadosList.map(function(t){
                   var info={};
                   try{info=typeof t.archivado_info==='object'?t.archivado_info:JSON.parse(t.archivado_info||'{}');}catch(e){}
@@ -490,6 +496,7 @@ function renderArchivadosOpSection(archivadosList){
                     <td>${esc(t.tipo_reclamo||'—')}</td>
                     <td><span style="background:var(--b50);color:var(--b700);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px">${esc(t.empresa||'—')}</span></td>
                     <td><span class="badge ${bc(t.estado)}">${estadoLabel(t.estado)}</span></td>
+                    <td><span class="db ${diasClass(calcDias(t))}">${calcDias(t)} hs</span></td>
                     <td style="font-size:11px">${esc(info.solicitanteNombre||'—')}</td>
                     <td style="font-size:11px">${esc(info.fecha||'—')}</td>
                   </tr>`;
