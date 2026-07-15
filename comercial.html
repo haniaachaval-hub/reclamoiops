@@ -1224,21 +1224,31 @@ function renderComentarios(t) {
   var adjs = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try { return JSON.parse(t.adjuntos||'[]'); } catch(e){ return []; } })();
   return coms.map(function(c){
     var esOperaciones = c.de === 'operaciones';
-    // Los comentarios nuevos ya traen su propio fileId. Los viejos (de
-    // antes de la corrección) lo tenían duplicado en "adjuntos" del
-    // ticket — buscamos ahí solo como respaldo.
-    var cFileId = c.fileId || null;
-    if (!cFileId && c.archivo) {
-      var match = adjs.find(function(a){ return a.nombre===c.archivo; });
-      if (match) cFileId = match.fileId||null;
+    // Comentarios con varios archivos usan c.archivos (array). Los de un
+    // solo archivo usan c.archivo/c.fileId. Los más viejos de todos (antes
+    // de la corrección) no tienen fileId propio — buscamos ahí de respaldo.
+    var archivosComentario = [];
+    if (Array.isArray(c.archivos) && c.archivos.length) {
+      archivosComentario = c.archivos;
+    } else if (c.archivo) {
+      var cFileId = c.fileId || null;
+      if (!cFileId) {
+        var match = adjs.find(function(a){ return a.nombre===c.archivo; });
+        if (match) cFileId = match.fileId||null;
+      }
+      archivosComentario = [{ nombre: c.archivo, fileId: cFileId }];
     }
     return `<div style="border-left:2px solid ${esOperaciones?'var(--p500)':'var(--b500)'};padding:7px 11px;margin-bottom:7px;background:${esOperaciones?'var(--p50)':'var(--b50)'};border-radius:0 var(--rad) var(--rad) 0">
       <div style="font-size:10px;font-weight:600;color:${esOperaciones?'var(--p600)':'var(--b700)'};margin-bottom:2px">${esOperaciones?'⚙️ Operaciones':'💼 Comercial'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
       <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
-      ${c.archivo ? `<div style="font-size:11px;margin-top:3px">
-        ${cFileId
-          ? `<a href="#" onclick="abrirAdjunto(event,'${cFileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
-          : `📎 ${esc(c.archivo)}`}
+      ${archivosComentario.length ? `<div style="display:flex;flex-direction:column;gap:2px;margin-top:3px">
+        ${archivosComentario.map(function(a){
+          return `<div style="font-size:11px">
+            ${a.fileId
+              ? `<a href="#" onclick="abrirAdjunto(event,'${a.fileId}','${encodeURIComponent(a.nombre||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(a.nombre)}</a>`
+              : `📎 ${esc(a.nombre)}`}
+          </div>`;
+        }).join('')}
       </div>` : ''}
     </div>`;
   }).join('');
