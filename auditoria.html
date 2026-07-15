@@ -386,6 +386,8 @@ function renderPanel() {
             : hist.map(function(h){ return '<div style="border-left:2px solid var(--g200);padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--g600)"><strong style="color:var(--g700)">'+h.ts+'</strong> — '+esc(h.accion)+'</div>'; }).join('')}
         </div>
 
+        ${renderInformeFinalDestacado(adjs)}
+
         <div class="dsec">
           <div class="dsec-title">Adjuntos del ticket</div>
           ${renderAdjuntos(t, adjs)}
@@ -403,6 +405,24 @@ function renderPanel() {
   if (pNew && scrollY) pNew.scrollTop = scrollY;
 }
 
+// Bloque destacado en verde con el informe final, si el ticket ya tiene uno.
+function renderInformeFinalDestacado(adjs) {
+  var files = (adjs||[]).filter(function(a){ return a.tipo === 'informe_final'; });
+  if (!files.length) return '';
+  return '<div class="dsec">'
+    + '<div class="dsec-title" style="color:var(--gr700)">✅ Informe final</div>'
+    + '<div style="display:flex;flex-direction:column;gap:6px">'
+    + files.map(function(a){
+        var fid=a.fileId||'', u=a.url||'';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--gr50);border:1px solid var(--gr500);border-radius:var(--rad)">'
+          + '<span>📄</span>'
+          + '<a href="#" onclick="abrirAdjunto(event,\''+fid+'\',\''+encodeURIComponent(a.nombre||'')+'\',\''+u+'\')" style="flex:1;color:var(--b600);text-decoration:underline;font-weight:500">'+esc(a.nombre)+'</a>'
+          + '<span style="font-size:9px;font-weight:700;color:var(--gr700);background:var(--gr100);padding:2px 7px;border-radius:10px;letter-spacing:.03em">✅ ENVIADO</span>'
+          + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+
 function renderAdjuntos(t, adjs) {
   var adj = [];
   if (adjs.length) {
@@ -412,6 +432,8 @@ function renderAdjuntos(t, adjs) {
       // corrección) tienen origen "Comercial"/"Operaciones" a secas, sin
       // sufijo descriptivo — los tapamos acá aunque ya estén así guardados.
       if (a.tipo !== 'informe_final' && (origen === 'Comercial' || origen === 'Operaciones')) return;
+      // El informe final ya se muestra destacado arriba, acá no se repite.
+      if (a.tipo === 'informe_final') return;
       adj.push({ nombre:a.nombre, origen:origen, fileId:a.fileId||a.id||null, url:a.url||null, tipo:a.tipo||null });
     });
   } else {
@@ -438,22 +460,32 @@ function renderComentarios(t, coms, adjs) {
   if (!coms.length) return '<p style="font-size:12px;color:var(--g400)">Sin comentarios</p>';
   return coms.map(function(c){
     var esOp = c.de==='operaciones';
-    // Los comentarios nuevos ya traen su propio fileId. Los viejos (de
-    // antes de la corrección) lo tenían duplicado en "adjuntos" del
-    // ticket — buscamos ahí solo como respaldo para esos casos.
-    var adjFileId = c.fileId || null;
-    if (!adjFileId && c.archivo) {
-      var match = adjs.find(function(a){ return a.nombre===c.archivo; });
-      if (match) adjFileId = match.fileId||null;
+    // Comentarios con varios archivos usan c.archivos (array). Los de un
+    // solo archivo usan c.archivo/c.fileId. Los más viejos de todos (antes
+    // de la corrección) no tienen fileId propio — buscamos ahí de respaldo.
+    var archivosComentario = [];
+    if (Array.isArray(c.archivos) && c.archivos.length) {
+      archivosComentario = c.archivos;
+    } else if (c.archivo) {
+      var adjFileId = c.fileId || null;
+      if (!adjFileId) {
+        var match = adjs.find(function(a){ return a.nombre===c.archivo; });
+        if (match) adjFileId = match.fileId||null;
+      }
+      archivosComentario = [{ nombre: c.archivo, fileId: adjFileId }];
     }
     return '<div style="border-left:2px solid '+(esOp?'var(--p500)':'var(--b500)')+';padding:7px 11px;margin-bottom:7px;background:'+(esOp?'var(--p50)':'var(--b50)')+';border-radius:0 var(--rad) var(--rad) 0">'
       + '<div style="font-size:10px;font-weight:600;color:'+(esOp?'var(--p600)':'var(--b700)')+';margin-bottom:2px">'+(esOp?'⚙️ Operaciones':'💼 Comercial')+' · '+esc(c.usuario||'')+' · '+esc(c.ts||'')+'</div>'
       + '<div style="font-size:12px;color:var(--g700)">'+esc(c.texto||'')+'</div>'
-      + (c.archivo
-          ? '<div style="font-size:11px;margin-top:3px">'
-              + (adjFileId
-                  ? '<a href="#" onclick="abrirAdjunto(event,\''+adjFileId+'\',\''+encodeURIComponent(c.archivo||'')+'\',\'\')" style="color:var(--b600);text-decoration:underline">📎 '+esc(c.archivo)+'</a>'
-                  : '📎 '+esc(c.archivo))
+      + (archivosComentario.length
+          ? '<div style="display:flex;flex-direction:column;gap:2px;margin-top:3px">'
+              + archivosComentario.map(function(a){
+                  return '<div style="font-size:11px">'
+                    + (a.fileId
+                        ? '<a href="#" onclick="abrirAdjunto(event,\''+a.fileId+'\',\''+encodeURIComponent(a.nombre||'')+'\',\'\')" style="color:var(--b600);text-decoration:underline">📎 '+esc(a.nombre)+'</a>'
+                        : '📎 '+esc(a.nombre))
+                    + '</div>';
+                }).join('')
               + '</div>'
           : '')
       + '</div>';
