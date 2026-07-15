@@ -155,7 +155,7 @@ tbody tr:hover td{background:var(--b50);cursor:pointer}
 
 <script>
 // =====================================================================
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQNHLGb7qVjXpj_gpAOvSKfKgZbtHV86RNd5cjwuh98fwsbLuPN1HcQ27ugu0s8JFyBQ/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/library/d/1K_9uelXqhjkjXcxXOBd0KPPUvjqftspUNPPAYyZ9MqlLiIkOpsu_yXYk/58';
 var GOOGLE_CLIENT_ID = '337424697739-d3mbqis7mpcao9r95imnfdq95uhboeur.apps.googleusercontent.com';
 var ALLOWED_DOMAIN = 'ocasa.com';
 var MAIL_OPERACIONES = 'hania.achaval@ocasa.com';
@@ -1238,8 +1238,12 @@ function renderComentarios(t) {
       }
       archivosComentario = [{ nombre: c.archivo, fileId: cFileId }];
     }
+    var puedeBorrar = c.id && c.autorEmail === currentUser.email;
     return `<div style="border-left:2px solid ${esOperaciones?'var(--p500)':'var(--b500)'};padding:7px 11px;margin-bottom:7px;background:${esOperaciones?'var(--p50)':'var(--b50)'};border-radius:0 var(--rad) var(--rad) 0">
-      <div style="font-size:10px;font-weight:600;color:${esOperaciones?'var(--p600)':'var(--b700)'};margin-bottom:2px">${esOperaciones?'⚙️ Operaciones':'💼 Comercial'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+        <div style="font-size:10px;font-weight:600;color:${esOperaciones?'var(--p600)':'var(--b700)'};margin-bottom:2px">${esOperaciones?'⚙️ Operaciones':'💼 Comercial'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
+        ${puedeBorrar?`<button title="Eliminar comentario" onclick="event.stopPropagation();eliminarComentarioTicket('${t.ID}','${c.id}')" style="background:none;border:none;color:var(--r500);cursor:pointer;font-size:12px;padding:0;flex-shrink:0">🗑</button>`:''}
+      </div>
       <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
       ${archivosComentario.length ? `<div style="display:flex;flex-direction:column;gap:2px;margin-top:3px">
         ${archivosComentario.map(function(a){
@@ -1283,12 +1287,18 @@ async function agregarComentarioTicket(id) {
     // hay archivo, lo agregue también a "adjuntos". Ver nota al final del chat.
     var res = await api({ action:'agregarComentario', id:id, comentario:comentario, fileId:fileId });
     if (!res.ok) throw new Error(res.error || 'No se pudo guardar el comentario');
+    comentario.id = res.id || null;
+    comentario.autorEmail = currentUser.email;
 
     var t = tickets.find(function(x){ return x.ID===id; });
     if (t) {
       var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
       coms.push(comentario);
       t.comentarios = coms;
+      var histLocal = Array.isArray(t.historial) ? t.historial : (function(){ try{return JSON.parse(t.historial||'[]')}catch(e){return[]} })();
+      var extracto = texto; if (extracto.length > 60) extracto = extracto.slice(0,60) + '…';
+      histLocal.push({ ts: tsStr, accion: 'Comentario de Comercial' + (extracto ? ': "' + extracto + '"' : ' (con archivo adjunto)'), usuario: currentUser.email });
+      t.historial = histLocal;
       selectedTicket = t;
     }
     detailComentario = ''; detailArchivo = null;
@@ -1378,6 +1388,26 @@ function pedirDatosArchivado() {
 // Archiva un reclamo cargado por este mismo comercial. El backend valida
 // que quien pide archivarlo sea quien lo creó (no cualquier comercial
 // que vea el mismo cliente).
+// Borra un comentario propio. Pide confirmación antes.
+window.eliminarComentarioTicket = async function(id, comentarioId) {
+  var ok = await confirmarAccion('¿Estás seguro de que querés eliminar este comentario? Esta acción no se puede deshacer.', 'Eliminar', 'Cancelar');
+  if (!ok) return;
+  try {
+    var res = await api({ action:'eliminarComentario', id:id, comentarioId:comentarioId });
+    if (!res.ok) throw new Error(res.error || 'Error desconocido');
+    var t = tickets.find(function(x){ return x.ID===id; });
+    if (t) {
+      var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
+      t.comentarios = coms.filter(function(c){ return c.id !== comentarioId; });
+      selectedTicket = t;
+    }
+    toast('Comentario eliminado', 'ok');
+    renderPanel();
+  } catch(e) {
+    toast('Error al eliminar: ' + e.message, 'err');
+  }
+};
+
 window.abrirModalArchivar = async function(id) {
   var datos = await pedirDatosArchivado();
   if (!datos) return;
