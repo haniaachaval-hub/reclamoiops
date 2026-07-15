@@ -135,7 +135,7 @@ var _u=(function(){
 var tickets=[], loading=true, activeTab='recibidos', selTicket=null;
 var opSortField='creado', opSortDir='desc', opFiltroTipo='', opFiltroEmpresa='', opFiltroEstado='', opFiltroDesde='', opFiltroHasta='';
 var informeFinalFiles=[], enviandoInforme=false;
-var detailComentario='', detailArchivo=null, saving=false;
+var detailComentario='', detailArchivos=[], saving=false;
 var activeNav='tickets'; // tickets | clientes
 var clientes=[], comerciales=[];
 
@@ -584,7 +584,7 @@ window.openPanel=function(id){
   selTicket=tickets.find(function(x){return x.ID===id;});
   if(!selTicket)return;
   informeFinalFiles=[];
-  detailComentario=''; detailArchivo=null;
+  detailComentario=''; detailArchivos=[];
   if(selTicket.leido!=='SI'){
     selTicket.leido='SI';
     api({action:'updateTicket',id:selTicket.ID,campos:{leido:'SI'}});
@@ -682,21 +682,32 @@ function renderPanel(){
           ${coms.length===0?'<p style="font-size:12px;color:var(--g400)">Todavía no hay comentarios</p>':
             coms.map(function(c){
               var esCom=c.de==='comercial';
-              // Los comentarios nuevos ya traen su propio fileId. Los viejos
-              // (de antes de la corrección) lo tenían duplicado en
-              // "adjuntos" del ticket — buscamos ahí solo como respaldo.
-              var cFileId = c.fileId || null;
-              if (!cFileId && c.archivo) {
-                var match = adjs.find(function(a){ return a.nombre===c.archivo; });
-                if (match) cFileId = match.fileId||null;
+              // Comentarios nuevos con varios archivos usan c.archivos (array).
+              // Comentarios de un solo archivo (viejos o nuevos) usan
+              // c.archivo/c.fileId. Los más viejos de todos (antes de la
+              // corrección) no tienen fileId propio — buscamos ahí como respaldo.
+              var archivosComentario = [];
+              if (Array.isArray(c.archivos) && c.archivos.length) {
+                archivosComentario = c.archivos;
+              } else if (c.archivo) {
+                var cFileId = c.fileId || null;
+                if (!cFileId) {
+                  var match = adjs.find(function(a){ return a.nombre===c.archivo; });
+                  if (match) cFileId = match.fileId||null;
+                }
+                archivosComentario = [{ nombre: c.archivo, fileId: cFileId }];
               }
               return`<div style="border-left:2px solid ${esCom?'var(--b500)':'var(--p500)'};padding:7px 10px;margin-bottom:6px;background:${esCom?'var(--b50)':'var(--p50)'};border-radius:0 var(--rad) var(--rad) 0">
                 <div style="font-size:10px;font-weight:600;color:${esCom?'var(--b700)':'var(--p600)'};margin-bottom:3px">${esCom?'💼 Comercial':'⚙️ Operaciones'} · ${esc(c.usuario||'')} · ${esc(c.ts||'')}</div>
                 <div style="font-size:12px;color:var(--g700)">${esc(c.texto||'')}</div>
-                ${c.archivo?`<div style="font-size:11px;color:var(--g500);margin-top:3px">
-                  ${cFileId
-                    ? `<a href="#" onclick="abrirAdjunto(event,'${cFileId}','${encodeURIComponent(c.archivo||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(c.archivo)}</a>`
-                    : `📎 ${esc(c.archivo)}`}
+                ${archivosComentario.length?`<div style="display:flex;flex-direction:column;gap:2px;margin-top:4px">
+                  ${archivosComentario.map(function(a){
+                    return `<div style="font-size:11px;color:var(--g500)">
+                      ${a.fileId
+                        ? `<a href="#" onclick="abrirAdjunto(event,'${a.fileId}','${encodeURIComponent(a.nombre||'')}','')" style="color:var(--b600);text-decoration:underline">📎 ${esc(a.nombre)}</a>`
+                        : `📎 ${esc(a.nombre)}`}
+                    </div>`;
+                  }).join('')}
                 </div>`:''}
               </div>`;
             }).join('')}
@@ -704,11 +715,12 @@ function renderPanel(){
             <textarea class="cinp" id="detail-comentario" rows="3" placeholder="Responder a Comercial o sumar información..." oninput="detailComentario=this.value">${esc(detailComentario)}</textarea>
             <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
               <div style="flex:1;border:1.5px dashed var(--g300);border-radius:var(--rad);padding:9px 10px;text-align:center;cursor:pointer;background:#fff;font-size:11px;color:var(--g500)" onclick="document.getElementById('detail-archivo-inp').click()">
-                <input id="detail-archivo-inp" type="file" style="display:none" onchange="syncDetailComentario();if(this.files[0]){detailArchivo=this.files[0];renderPanel()}">
-                <span>${detailArchivo ? '📎 ' + esc(detailArchivo.name) : '📎 Clic para adjuntar un archivo (opcional)'}</span>
+                <input id="detail-archivo-inp" type="file" multiple style="display:none" onchange="syncDetailComentario();setDetailArchivos(this)">
+                <span>📎 ${detailArchivos.length ? detailArchivos.length+' archivo'+(detailArchivos.length!==1?'s':'')+' seleccionado'+(detailArchivos.length!==1?'s':'') : 'Clic para adjuntar uno o más archivos (opcional)'}</span>
               </div>
               <button class="btn btn-p" style="font-size:11px" onclick="agregarComentarioTicket('${t.ID}')" ${saving?'disabled':''}>${saving?'Enviando...':'Enviar'}</button>
             </div>
+            ${detailArchivos.length ? '<div style="display:flex;flex-direction:column;gap:4px;margin-top:7px">' + detailArchivos.map(function(f,i){return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--g700);background:#fff;border:1px solid var(--g100);border-radius:var(--rad);padding:5px 8px"><span>📎 '+esc(f.name)+'</span><span style="cursor:pointer;color:var(--r500);font-weight:600" onclick="quitarDetailArchivo('+i+')">✕</span></div>';}).join('') + '</div>' : ''}
           </div>
         </div>
 
@@ -771,26 +783,47 @@ function syncDetailComentario() {
   if (ta) detailComentario = ta.value;
 }
 
+window.setDetailArchivos = function(input){
+  if (!input.files || !input.files.length) return;
+  detailArchivos = detailArchivos.concat(Array.from(input.files));
+  renderPanel();
+};
+
+window.quitarDetailArchivo = function(i){
+  detailArchivos.splice(i,1);
+  renderPanel();
+};
+
 window.agregarComentarioTicket = async function(id) {
   syncDetailComentario();
   var texto = detailComentario.trim();
-  if (!texto && !detailArchivo) { toast('Escribí un comentario o adjuntá un archivo', 'err'); return; }
+  if (!texto && !detailArchivos.length) { toast('Escribí un comentario o adjuntá un archivo', 'err'); return; }
 
   saving = true; renderPanel();
   try {
     var ahora = new Date();
     var tsStr = ahora.getDate().toString().padStart(2,'0') + '/' + (ahora.getMonth()+1).toString().padStart(2,'0') + '/' + ahora.getFullYear() + ' ' + ahora.getHours().toString().padStart(2,'0') + ':' + ahora.getMinutes().toString().padStart(2,'0');
-    var comentario = { de: 'operaciones', usuario: _u.name||_u.email, ts: tsStr, texto: texto, archivo: detailArchivo ? detailArchivo.name : '' };
 
-    var fileId = null;
-    if (detailArchivo) {
-      var b64 = await fileToBase64(detailArchivo);
-      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:detailArchivo.name, mimeType:getMimeType(detailArchivo.name), ticketId:id });
-      if (ur.ok) fileId = ur.fileId;
-      if (ur.url) comentario.archivoUrl = ur.url;
+    var archivosSubidos = [];
+    for (var i = 0; i < detailArchivos.length; i++) {
+      var f = detailArchivos[i];
+      var b64 = await fileToBase64(f);
+      var ur = await api({ action:'uploadArchivo', base64:b64, nombre:f.name, mimeType:getMimeType(f.name), ticketId:id });
+      if (!ur.ok) throw new Error(ur.error || ('Error al subir ' + f.name));
+      archivosSubidos.push({ nombre:f.name, fileId:ur.fileId, url:ur.url||'' });
     }
 
-    var res = await api({ action:'agregarComentario', id:id, comentario:comentario, fileId:fileId });
+    var comentario = {
+      de: 'operaciones', usuario: _u.name||_u.email, ts: tsStr, texto: texto,
+      // Compatibilidad: si es un solo archivo, también completamos los
+      // campos viejos (archivo/fileId) para que se siga viendo bien en
+      // cualquier vista que todavía no soporte "archivos" (array).
+      archivo: archivosSubidos.length ? archivosSubidos[0].nombre : '',
+      fileId: archivosSubidos.length ? archivosSubidos[0].fileId : null,
+      archivos: archivosSubidos.length ? archivosSubidos : undefined
+    };
+
+    var res = await api({ action:'agregarComentario', id:id, comentario:comentario, archivos:archivosSubidos });
     if (!res.ok) throw new Error(res.error || 'No se pudo guardar el comentario');
 
     var t = tickets.find(function(x){ return x.ID===id; });
@@ -798,14 +831,9 @@ window.agregarComentarioTicket = async function(id) {
       var coms = Array.isArray(t.comentarios) ? t.comentarios : (function(){ try{return JSON.parse(t.comentarios||'[]')}catch(e){return[]} })();
       coms.push(comentario);
       t.comentarios = coms;
-      if (fileId) {
-        var adjs2 = Array.isArray(t.adjuntos) ? t.adjuntos : (function(){ try{return JSON.parse(t.adjuntos||'[]')}catch(e){return[]} })();
-        adjs2.push({ nombre: detailArchivo.name, fileId: fileId, url: comentario.archivoUrl||'', origen:'Operaciones', de:'operaciones' });
-        t.adjuntos = adjs2;
-      }
       selTicket = t;
     }
-    detailComentario = ''; detailArchivo = null;
+    detailComentario = ''; detailArchivos = [];
     toast('Comentario agregado', 'ok');
   } catch (e) {
     toast('Error al agregar comentario: ' + e.message, 'err');
@@ -837,7 +865,7 @@ function confirmarAccion(mensaje, textoOk, textoCancelar) {
 // Hay contenido cargado (comentario/archivo/informe) que todavía no se
 // envió. Se usa para avisar antes de cerrar el detalle sin querer.
 function hayContenidoSinEnviar() {
-  return !!(detailComentario || detailArchivo || informeFinalFiles.length);
+  return !!(detailComentario || detailArchivos.length || informeFinalFiles.length);
 }
 
 // Intenta cerrar el panel de detalle. Si hay contenido cargado sin
@@ -851,25 +879,55 @@ window.intentarCerrarPanel = async function(){
     'Cerrar sin guardar', 'Volver y enviar'
   );
   if (salir) {
-    detailComentario=''; detailArchivo=null; informeFinalFiles=[];
+    detailComentario=''; detailArchivos=[]; informeFinalFiles=[];
     window.closePanel();
     return;
   }
   // "Volver y enviar": mandamos lo que haya cargado (comentario y/o informe)
   // y recién ahí cerramos.
   try {
-    if ((detailComentario || detailArchivo) && id) { await agregarComentarioTicket(id); }
+    if ((detailComentario || detailArchivos.length) && id) { await agregarComentarioTicket(id); }
     if (informeFinalFiles.length && id) { await enviarInformeFinal(id); }
   } catch(e) { /* los propios handlers ya muestran el toast de error */ }
 };
 
 window.closePanel=function(){var o=document.querySelector('.overlay');if(o)o.remove();selTicket=null;};
 
+// Alerta informativa de un solo botón (mismo estilo que confirmarAccion,
+// pero sin opción de cancelar). Devuelve una Promise que resuelve al cerrar.
+function mostrarAlerta(mensaje) {
+  return new Promise(function(resolve) {
+    var div = document.createElement('div');
+    div.className = 'confirm-overlay';
+    div.innerHTML = `
+      <div class="confirm-card">
+        <div style="font-size:14px;color:var(--g900);line-height:1.5;margin-bottom:20px">${mensaje}</div>
+        <div style="display:flex;justify-content:flex-end">
+          <button id="alerta-ok-btn" style="background:var(--b600);color:#fff;border:none;padding:8px 16px;border-radius:var(--rad);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">Entendido</button>
+        </div>
+      </div>`;
+    document.body.appendChild(div);
+    document.getElementById('alerta-ok-btn').onclick = function(){ div.remove(); resolve(); };
+    div.onclick = function(e){ if (e.target === div) { div.remove(); resolve(); } };
+  });
+}
+
 window.guardarEstado=async function(id){
   var estado=(document.getElementById('sel-estado')||{}).value;
   if(!estado)return;
   var t=tickets.find(function(x){return x.ID===id;});
   if(!t||t.estado===estado)return;
+
+  if (estado === 'Finalizado') {
+    var adjsChk = []; try { adjsChk = Array.isArray(t.adjuntos) ? t.adjuntos : JSON.parse(t.adjuntos||'[]'); } catch(e) {}
+    var tieneInformeFinal = adjsChk.some(function(a){ return a.tipo === 'informe_final'; });
+    if (!tieneInformeFinal) {
+      await mostrarAlerta('Sin informe final, el reclamo no puede pasar a estado "Finalizado". Subí el informe final más abajo en el detalle: al enviarlo, el estado se actualiza solo.');
+      var sel = document.getElementById('sel-estado');
+      if (sel) sel.value = t.estado;
+      return;
+    }
+  }
   var ahora=new Date();
   var ts=ahora.getDate().toString().padStart(2,'0')+'/'+(ahora.getMonth()+1).toString().padStart(2,'0')+'/'+ahora.getFullYear()+' '+ahora.getHours().toString().padStart(2,'0')+':'+ahora.getMinutes().toString().padStart(2,'0');
   var hist=[];try{hist=Array.isArray(t.historial)?t.historial:JSON.parse(t.historial||'[]');}catch(e){}
